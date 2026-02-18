@@ -16,6 +16,7 @@ pages:
     - npm ci --prefer-offline
   script:
     - npm run build
+    - rm -rf public
     - mv dist public
   artifacts:
     paths:
