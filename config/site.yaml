@@ -1,0 +1,131 @@
+# =============================================================================
+# CONFIGURATION GÉNÉRALE DU SITE
+# =============================================================================
+# Ce fichier centralise toute la configuration du site.
+# Modifiez-le pour personnaliser l'ensemble du site.
+# =============================================================================
+
+site:
+  title: "adenyrr"
+  description: "About, infra, blog, docu and everything of adenyrr"
+  url: "https://adenyrr.me"
+  author: "adenyrr"
+  email: "adenyrr@proton.me"
+
+# -----------------------------------------------------------------------------
+# FONCTIONNALITÉS ACTIVABLES/DÉSACTIVABLES
+# -----------------------------------------------------------------------------
+features:
+  home: true
+  infra: true
+  blog: true
+  docu: true
+
+# -----------------------------------------------------------------------------
+# THÈME
+# -----------------------------------------------------------------------------
+theme:
+  mode: "auto" # auto | dark | light
+  colors:
+    primary: "#d4845a"
+    secondary: "#c06a3a"
+    accent: "#d4845a"
+    dark:
+      background: "#141416"
+      surface: "#1c1c1f"
+      card: "rgba(255, 255, 255, 0.03)"
+      text: "#e4e4e7"
+      muted: "#737378"
+    light:
+      background: "#f8f8fa"
+      surface: "#ffffff"
+      card: "rgba(255, 255, 255, 0.65)"
+      text: "#18181b"
+      muted: "#71717a"
+  particles:
+    enabled: true
+    count: 50
+    color: "purple" # purple | cyan | mixed
+    connectDistance: 120
+    mouseRadius: 150
+  fonts:
+    body: "Inclusive Sans"
+    code: "JetBrains Mono"
+
+# -----------------------------------------------------------------------------
+# NAVIGATION HEADER
+# -----------------------------------------------------------------------------
+header:
+  show: true
+  brandName: "adenyrr.me"
+  navigation:
+    - label: "home"
+      route: "/"
+      icon: "User"
+      enabled: true
+    - label: "docu"
+      route: "/docu"
+      icon: "Library"
+      enabled: true
+    - label: "infra"
+      route: "/infra"
+      icon: "Server"
+      enabled: true
+    - label: "blog"
+      route: "/blog"
+      icon: "FileText"
+      enabled: true
+  socialLinks:
+    - label: "GitHub"
+      icon: "Github"
+      url: "https://github.com/adenyrr"
+      enabled: true
+    - label: "GitLab"
+      icon: "Gitlab"
+      url: "https://gitlab.com/adenyrr"
+      enabled: true
+    - label: "LinkedIn"
+      icon: "Linkedin"
+      url: "https://be.linkedin.com/in/mvanhede"
+      enabled: true
+    - label: "Discord"
+      icon: "MessageCircle"
+      url: "https://discord.gg/NWVukm7zE2"
+      enabled: true
+    - label: "Email"
+      icon: "Mail"
+      url: "mailto:adenyrr@proton.me"
+      enabled: true
+
+# -----------------------------------------------------------------------------
+# FOOTER
+# -----------------------------------------------------------------------------
+footer:
+  show: true
+  copyright: "Copyleft CC - BY-NC"
+  author: "adenyrr"
+  authorUrl: "https://adenyrr.me"
+  poweredBy:
+    - label: "Astro"
+      url: "https://astro.build/"
+    - label: "GitLab"
+      url: "https://gitlab.com/adenyrr"
+  rss: true
+
+# -----------------------------------------------------------------------------
+# SEO
+# -----------------------------------------------------------------------------
+seo:
+  sitemap: true
+  robots: true
+  openGraph: true
+  twitterCard: true
+
+# -----------------------------------------------------------------------------
+# ANALYTICS (optionnel)
+# -----------------------------------------------------------------------------
+analytics:
+  enabled: false
+  provider: "umami"
+  url: ""
+  websiteId: ""

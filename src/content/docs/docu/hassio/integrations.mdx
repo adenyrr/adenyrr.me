@@ -1,0 +1,36 @@
+---
+title: "Intégrations Home Assistant"
+description: "Intégrations Z-Wave, Zigbee, MQTT et autres."
+---
+
+## Intégrations
+
+Home Assistant supporte des centaines d'intégrations. Voici celles en place dans mon infrastructure :
+
+### Z-Wave
+
+Le protocole Z-Wave est utilisé pour les appareils domotiques basse consommation. Il nécessite un dongle USB compatible (ex: Aeotec Z-Stick 7).
+
+Configuration : **Paramètres** → **Appareils et services** → **Z-Wave JS**
+
+### Zigbee
+
+Le protocole Zigbee est utilisé pour les capteurs, ampoules et prises connectées. Un coordinateur Zigbee (ex: Sonoff ZBDongle-P) est nécessaire.
+
+Integration recommandée : **Zigbee2MQTT** via HACS ou en conteneur séparé.
+
+### MQTT
+
+[Mosquitto](https://mosquitto.org/) est le broker MQTT qui sert de pont entre Zigbee2MQTT, les capteurs et Home Assistant.
+
+```yaml
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    volumes:
+      - ./mosquitto:/mosquitto
+    ports:
+      - 1883:1883
+    restart: unless-stopped
+```

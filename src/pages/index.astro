@@ -1,17 +1,597 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getHomeConfig, getSiteConfig, isFeatureEnabled } from '../utils/config';
+import { fetchCredlyBadges } from '../utils/credly';
+import {
+  Library, Server, FileText, Code, Globe, ExternalLink, Github,
+  GraduationCap, Award, Briefcase, Calendar, MapPin
+} from 'lucide-astro';
 
+const config = getSiteConfig();
+const portfolio = getHomeConfig();
+
+// Fetch Credly badges at build time
+let credlyBadges: any[] = [];
+if (portfolio.credly?.enabled && portfolio.credly?.username) {
+  try {
+    credlyBadges = await fetchCredlyBadges(portfolio.credly.username);
+  } catch (e) {
+    console.warn('[Credly] Failed:', e);
+  }
+}
+
+// Fallback to config certifications if Credly fails
+const certifications = credlyBadges.length > 0
+  ? credlyBadges.map((b: any) => ({
+      id: b.id,
+      title: b.title,
+      issuer: b.issuer,
+      date: b.date,
+      credly_url: b.credlyUrl,
+      badge_image: b.imageUrl,
+    }))
+  : (portfolio.certifications || []);
+
+const sections = portfolio.sections || {};
+const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout title="Home" description={portfolio.profile?.tagline}>
+  <div class="container portfolio">
+    <!-- Terminal Banner -->
+    <section class="banner-scene" aria-label="Introduction">
+      <div class="banner-grid"></div>
+      <div class="banner-blob banner-blob-1"></div>
+      <div class="banner-blob banner-blob-2"></div>
+
+      <div class="banner-card">
+        <div class="banner-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <div class="banner-bar">kitty — zsh</div>
+        <div class="banner-vline"></div>
+
+        <div class="banner-prompt">
+          <span class="prompt-arrow">›</span>~/home
+          <span class="prompt-on">on</span>
+          <span class="prompt-distro"> opensuse</span>
+        </div>
+
+        <h1 class="banner-title">
+          <span class="title-dot">.</span>{portfolio.profile?.pseudo}
+        </h1>
+
+        <div class="banner-tw-wrap">
+          <span class="tw-prefix">›</span>
+          <span class="banner-tw" id="tw"></span>
+          <span class="banner-cursor"></span>
+        </div>
+
+        <div class="bottom-bar">
+          <div class="meta">
+            <div class="meta-item">
+              <span class="lbl">date</span>
+              <span class="val" id="date-disp">—</span>
+            </div>
+            <span class="meta-div">·</span>
+            <div class="meta-item">
+              <span class="lbl">uptime</span>
+              <span class="val" id="uptime-disp">00:00:00</span>
+            </div>
+          </div>
+          <div class="banner-tags">
+            <span class="btag btag-accent">hyprland</span>
+            <span class="btag btag-accent">openSUSE</span>
+            <span class="btag">debian</span>
+            <span class="btag btag-accent">proxmox</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects -->
+    {sections.projects && (
+      <section class="section reveal" aria-label="Projets">
+        <div class="section-header">
+          <h2>
+            <Code size={22} />
+            Projets
+          </h2>
+          <div class="section-divider"></div>
+        </div>
+        <div class="projects-grid">
+          {(portfolio.projects || []).map((project: any) => {
+            const Icon = iconMap[project.icon];
+            return (
+              <div class="card project-card">
+                <div class="project-head">
+                  <div class="project-icon">
+                    {Icon && <Icon size={20} />}
+                  </div>
+                  <span class="project-year">{project.year}</span>
+                </div>
+                <h3>{project.title}</h3>
+                <p class="project-desc">{project.description}</p>
+                <div class="project-tags">
+                  {(project.tech || []).map((tag: string) => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </div>
+                <div class="project-links">
+                  {project.link && (
+                    <a href={project.link} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                      <ExternalLink size={14} />
+                      Voir le projet
+                    </a>
+                  )}
+                  {project.repo && (
+                    <a href={project.repo} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                      <Github size={14} />
+                      Voir le code
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    )}
+
+    <!-- Diplomas -->
+    {sections.diplomas && (
+      <section class="section reveal" aria-label="Diplômes">
+        <div class="section-header">
+          <h2>
+            <GraduationCap size={22} />
+            Diplômes
+          </h2>
+          <div class="section-divider"></div>
+        </div>
+        <div class="timeline">
+          {(portfolio.diplomas || []).map((dip: any) => (
+            <div class="card timeline-item">
+              <div class="timeline-head">
+                <h3>{dip.title}</h3>
+                <span class="timeline-period">
+                  <Calendar size={14} />
+                  {dip.period}
+                </span>
+              </div>
+              <p class="timeline-institution">{dip.institution}</p>
+              <p class="timeline-desc">{dip.description}</p>
+              {dip.tags && (
+                <div class="project-tags">
+                  {dip.tags.map((tag: string) => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Certifications -->
+    {sections.certifications && certifications.length > 0 && (
+      <section class="section reveal" aria-label="Certifications">
+        <div class="section-header">
+          <h2>
+            <Award size={22} />
+            Certifications
+          </h2>
+          <div class="section-divider"></div>
+        </div>
+        <div class="certs-grid">
+          {certifications.map((cert: any) => (
+            <a
+              href={cert.credly_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="card cert-card"
+            >
+              <img src={cert.badge_image} alt={cert.title} width="80" height="80" loading="lazy" />
+              <div class="cert-info">
+                <h3>{cert.title}</h3>
+                <p class="cert-issuer">{cert.issuer}</p>
+                <p class="cert-date">{cert.date}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Jobs -->
+    {sections.jobs && (
+      <section class="section reveal" aria-label="Expériences">
+        <div class="section-header">
+          <h2>
+            <Briefcase size={22} />
+            Expériences
+          </h2>
+          <div class="section-divider"></div>
+        </div>
+        <div class="timeline">
+          {(portfolio.jobs || []).map((job: any) => (
+            <div class="card timeline-item">
+              <div class="timeline-head">
+                <h3>{job.title}</h3>
+                <span class="timeline-period">
+                  <Calendar size={14} />
+                  {job.period}
+                </span>
+              </div>
+              <p class="timeline-institution">
+                {job.company}
+                {job.location && (
+                  <span class="job-location">
+                    <MapPin size={12} />
+                    {job.location}
+                  </span>
+                )}
+              </p>
+              <p class="timeline-desc">{job.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</BaseLayout>
+
+
+<style>
+  .portfolio { max-width: 900px; padding-bottom: 4rem; }
+
+  /* ══════════════════════════════
+     BANNER SCENE
+  ══════════════════════════════ */
+  .banner-scene {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin: 3rem auto 3rem;
+  }
+
+  .banner-grid {
+    position: absolute;
+    inset: -60px;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%);
+    animation: gridDrift 20s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes gridDrift { to { transform: translate(48px, 48px); } }
+
+  .banner-blob {
+    position: absolute; border-radius: 50%;
+    filter: blur(60px); opacity: 0;
+    pointer-events: none;
+  }
+  .banner-blob-1 {
+    width: 320px; height: 220px;
+    background: radial-gradient(circle, var(--blob-teal) 0%, transparent 70%);
+    top: -60px; left: -80px;
+    animation: blobIn .8s ease .1s forwards;
+  }
+  .banner-blob-2 {
+    width: 260px; height: 180px;
+    background: radial-gradient(circle, var(--blob-salmon) 0%, transparent 70%);
+    bottom: -40px; right: -40px;
+    animation: blobIn .8s ease .4s forwards;
+  }
+  @keyframes blobIn { to { opacity: 1; } }
+
+  /* ── Glass Card ── */
+  .banner-card {
+    position: relative; width: 100%;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow:
+      0 0 0 1px var(--glass-edge),
+      0 8px 48px var(--glass-shadow),
+      inset 0 1px 0 var(--glass-inner);
+    overflow: hidden;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 44px 56px 58px;
+  }
+  .banner-card::before {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 280px; height: 130px;
+    background: radial-gradient(ellipse at top right, var(--glass-glow), transparent 70%);
+    border-radius: 0 20px 0 0; pointer-events: none;
+  }
+  .banner-card::after {
+    content: ''; position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--scan-color), transparent);
+    top: -2px;
+    animation: scanDown 6s ease-in-out 1.8s infinite;
+  }
+  @keyframes scanDown {
+    0%   { top: -2px; opacity: 0; }
+    5%   { opacity: 1; }
+    95%  { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  /* ── Terminal dots — pop + bounce ── */
+  .banner-dots {
+    position: absolute; top: 18px; left: 22px;
+    display: flex; gap: 7px;
+  }
+  .banner-dots span {
+    width: 11px; height: 11px; border-radius: 50%;
+    opacity: 0;
+    animation: dotPop .5s cubic-bezier(.36,.07,.19,.97) both;
+  }
+  .banner-dots span:nth-child(1) { background: var(--banner-salmon); animation-delay: .3s; }
+  .banner-dots span:nth-child(2) { background: #d67e8a; animation-delay: .46s; }
+  .banner-dots span:nth-child(3) { background: var(--banner-teal); animation-delay: .62s; }
+  @keyframes dotPop {
+    0%   { opacity: 0; transform: scale(0); }
+    55%  { opacity: 1; transform: scale(1.4); }
+    75%  { transform: scale(0.85); }
+    90%  { transform: scale(1.08); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* ── Win-bar — CRT flicker ── */
+  .banner-bar {
+    position: absolute; top: 15px; left: 0; right: 0;
+    text-align: center; font-family: var(--font-code);
+    font-size: 11px; color: var(--banner-muted);
+    letter-spacing: .08em;
+    opacity: 0;
+    animation: flicker .7s ease .9s forwards;
+  }
+  @keyframes flicker {
+    0%   { opacity: 0; }
+    15%  { opacity: .5; }
+    20%  { opacity: 0; }
+    38%  { opacity: .7; }
+    42%  { opacity: .1; }
+    58%  { opacity: 1; }
+    100% { opacity: 1; }
+  }
+
+  /* ── Vertical line — draws top to bottom ── */
+  .banner-vline {
+    position: absolute; left: 46px; top: 48px; bottom: 46px;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--banner-teal-dim) 30%, var(--banner-teal-dim) 70%, transparent);
+    transform-origin: top center;
+    opacity: 0;
+    animation: drawLine .6s ease .8s forwards;
+  }
+  @keyframes drawLine {
+    from { transform: scaleY(0); opacity: 0; }
+    5%   { opacity: 1; }
+    to   { transform: scaleY(1); opacity: 1; }
+  }
+
+  /* ── Prompt — slides from left ── */
+  .banner-prompt {
+    font-family: var(--font-code); font-size: 12px;
+    color: var(--banner-teal-dim); letter-spacing: .06em;
+    margin-bottom: 8px; opacity: 0;
+    animation: fromLeft .45s ease 1s forwards;
+  }
+  .prompt-arrow { color: var(--banner-salmon); margin-right: 6px; }
+  .prompt-on { color: var(--banner-muted); }
+  .prompt-distro { color: var(--banner-salmon); }
+  @keyframes fromLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ── Title — clip-path wipe ── */
+  .banner-title {
+    font-family: 'JetBrains Mono', var(--font-code), monospace;
+    font-size: clamp(2.6rem, 5.5vw, 5rem);
+    font-weight: 700; color: var(--banner-text);
+    letter-spacing: -.02em; line-height: 1;
+    margin-bottom: 18px;
+    clip-path: inset(0 100% 0 0);
+    animation: wipeIn .55s cubic-bezier(.77,0,.18,1) 1.2s forwards;
+  }
+  .title-dot { color: var(--banner-teal); }
+  @keyframes wipeIn {
+    from { clip-path: inset(0 100% 0 0); }
+    to   { clip-path: inset(0 0% 0 0); }
+  }
+
+  /* ── Typewriter — glitch entrance ── */
+  .banner-tw-wrap {
+    display: flex; align-items: center; gap: 8px;
+    min-height: 24px;
+    opacity: 0;
+    animation: glitchIn .5s ease 1.75s forwards;
+  }
+  .tw-prefix { color: var(--banner-teal-dim); font-family: var(--font-code); font-size: 13px; flex-shrink: 0; }
+  .banner-tw {
+    font-family: var(--font-code); font-size: 13px;
+    color: var(--banner-text-dim); letter-spacing: .04em;
+    white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+  .banner-cursor {
+    display: inline-block; width: 8px; height: 14px;
+    background: var(--banner-teal); vertical-align: middle;
+    margin-left: 2px; flex-shrink: 0;
+    animation: blink .7s step-end infinite;
+  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+  @keyframes glitchIn {
+    0%   { opacity: 0; transform: translateX(6px) skewX(4deg); }
+    30%  { opacity: .8; transform: translateX(-3px) skewX(-2deg); }
+    55%  { opacity: .5; transform: translateX(2px) skewX(1deg); }
+    80%  { opacity: .95; transform: translateX(-1px) skewX(0deg); }
+    100% { opacity: 1; transform: translateX(0) skewX(0deg); }
+  }
+
+  /* ── Bottom bar — rises from below ── */
+  .bottom-bar {
+    position: absolute; bottom: 14px; left: 24px; right: 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    opacity: 0;
+    animation: riseUp .5s ease 2.1s forwards;
+  }
+  @keyframes riseUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .meta { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
+  .meta-item {
+    font-family: var(--font-code); font-size: 10px; color: var(--banner-muted);
+    letter-spacing: .06em; display: flex; align-items: center; gap: 4px;
+  }
+  .meta-item .lbl { opacity: .55; }
+  .meta-item .val { color: var(--banner-teal-dim); }
+  .meta-div { color: var(--banner-muted); opacity: .3; font-size: 10px; }
+
+  /* ── Tags (inside bottom-bar) ── */
+  .banner-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .btag {
+    font-family: var(--font-code); font-size: 10px;
+    color: var(--banner-muted);
+    border: 1px solid var(--banner-muted);
+    padding: 2px 8px; border-radius: 4px;
+    letter-spacing: .09em; text-transform: uppercase;
+    cursor: pointer; user-select: none;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .btag:hover {
+    color: var(--banner-teal); border-color: var(--banner-teal);
+    background: rgba(94, 207, 186, 0.07);
+  }
+  .btag.btag-accent { color: var(--banner-teal-dim); border-color: var(--banner-teal-dim); }
+  .btag.btag-accent:hover { color: var(--banner-teal); border-color: var(--banner-teal); }
+
+  @media (max-width: 768px) {
+    .banner-card { padding: 36px 24px 50px; }
+    .banner-vline { left: 20px; }
+    .bottom-bar { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .banner-tags { display: none; }
+  }
+
+  .section { margin-bottom: 3.5rem; }
+  .section-header { margin-bottom: 1.5rem; }
+  .section-header h2 { display: flex; align-items: center; gap: 0.5rem; font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .section-divider { height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--accent), transparent 80%); opacity: 0.3; }
+
+  .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; max-width: 740px; margin: 0 auto; }
+  .project-card { display: flex; flex-direction: column; height: 100%; }
+  .project-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+  .project-icon { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 0.5rem; background: var(--glow); color: var(--accent); }
+  .project-year { font-family: var(--font-code); font-size: 0.8rem; color: var(--muted-text); }
+  .project-card h3 { font-size: 1.15rem; margin-bottom: 0.5rem; }
+  .project-desc { color: var(--muted-text); font-size: 0.9rem; margin-bottom: 0.75rem; flex: 1; }
+  .project-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1rem; }
+  .project-links { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: auto; }
+  .btn-sm { padding: 0.5rem 1rem; font-size: 0.8rem; min-height: 44px; display: inline-flex; align-items: center; }
+
+  .timeline { display: flex; flex-direction: column; gap: 1rem; }
+  .timeline-item { position: relative; padding-left: 1.5rem; border-left: 2px solid var(--card-border); }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -5px; top: 1.2rem;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .timeline-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+  .timeline-head h3 { font-size: 1.1rem; margin-bottom: 0.25rem; }
+  .timeline-period { display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--font-code); font-size: 0.8rem; color: var(--muted-text); white-space: nowrap; }
+  .timeline-institution { font-family: var(--font-code); font-size: 0.9rem; color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .job-location { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--muted-text); font-size: 0.85rem; }
+  .timeline-desc { color: var(--muted-text); font-size: 0.9rem; margin-bottom: 0.5rem; line-height: 1.6; }
+
+  .certs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+  .cert-card { display: flex; align-items: center; gap: 1rem; text-decoration: none; color: var(--text); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .cert-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  .cert-card img { width: 70px; height: 70px; border-radius: 0.5rem; object-fit: contain; }
+  .cert-info h3 { font-size: 0.95rem; margin-bottom: 0.15rem; }
+  .cert-issuer { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.1rem; }
+  .cert-date { font-family: var(--font-code); font-size: 0.75rem; color: var(--muted-text); }
+
+  @media (max-width: 768px) {
+    .hero { padding: 4rem 0 2.5rem; }
+    .hero-name { font-size: 2.2rem; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .certs-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+  /* ── Date display ── */
+  const dateEl = document.getElementById('date-disp');
+  if (dateEl) {
+    dateEl.textContent = new Date().toLocaleDateString('fr-FR', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+  }
+
+  /* ── Uptime (visit duration) ── */
+  const start = Date.now();
+  const upEl = document.getElementById('uptime-disp');
+  function tick() {
+    const e = Math.floor((Date.now() - start) / 1000);
+    const h = String(Math.floor(e / 3600)).padStart(2, '0');
+    const m = String(Math.floor((e % 3600) / 60)).padStart(2, '0');
+    const s = String(e % 60).padStart(2, '0');
+    if (upEl) upEl.textContent = `${h}:${m}:${s}`;
+  }
+  setInterval(tick, 1000);
+
+  /* ── Typewriter — infinite loop ── */
+  (async function () {
+    const tw = document.getElementById('tw');
+    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+    if (!tw) return;
+
+    const phrases = [
+      "sysadmin | infra & cloud",
+      "open source | privacy | sovereignty",
+      "sysadmin | infra & cloud; open source | privacy | sovereignty",
+    ];
+
+    const TYPE_SPEED = { min: 34, rnd: 22 };
+    const DEL_SPEED  = { min: 14, rnd: 10 };
+    const HOLD_SHORT = 1400;
+    const HOLD_LONG  = 2800;
+
+    await sleep(2200);
+
+    while (true) {
+      for (let i = 0; i < phrases.length; i++) {
+        const txt = phrases[i];
+        const hold = i === phrases.length - 1 ? HOLD_LONG : HOLD_SHORT;
+
+        for (let c = 0; c <= txt.length; c++) {
+          tw.textContent = txt.slice(0, c);
+          await sleep(TYPE_SPEED.min + Math.random() * TYPE_SPEED.rnd);
+        }
+
+        await sleep(hold);
+
+        for (let c = txt.length; c >= 0; c--) {
+          tw.textContent = txt.slice(0, c);
+          await sleep(DEL_SPEED.min + Math.random() * DEL_SPEED.rnd);
+        }
+
+        await sleep(260);
+      }
+    }
+  })();
+</script>

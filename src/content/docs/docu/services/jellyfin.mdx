@@ -1,0 +1,196 @@
+---
+title: "Jellyfin — Serveur multimédia"
+description: "Installation et configuration de Jellyfin comme serveur multimédia auto-hébergé."
+---
+
+## Introduction
+
+### C'est quoi ?
+
+[Jellyfin](https://jellyfin.org/) est un serveur multimédia *open-source entièrement gratuit*, capable de gérer et diffuser des films, séries, musique, livres et photos. C'est un fork libre de *Emby* créé en 2018.
+
+> Contrairement à Plex ou Emby, Jellyfin est 100 % libre et ne nécessite aucun abonnement pour accéder à toutes ses fonctionnalités (transcodage matériel, accès distant, téléchargement...).
+
+:::note[Pourquoi Jellyfin et pas Plex ?]
+Plex nécessite un compte et un abonnement pour les fonctionnalités avancées (transcodage matériel, téléchargement, etc.). Jellyfin est entièrement libre et gratuit.
+:::
+
+### Avantages & inconvénients
+
+**Avantages :**
+- 100% gratuit et open-source
+- Pas de collecte de données
+- Transcodage matériel inclus (GPU)
+- Applications disponibles sur tous les supports
+
+**Inconvénients :**
+- Moins de clients natifs que Plex
+- Interface moins "polie" par défaut, mais personnalisable
+- Pas de synchronisation cloud (c'est aussi un avantage !)
+
+### Alternatives
+
+- [Plex](https://www.plex.tv/) : propriétaire, freemium
+- [Emby](https://emby.media/) : propriétaire, freemium (fork source de Jellyfin)
+- [Kodi](https://kodi.tv/) : open-source, mais orienté client local
+
+---
+
+## Installation
+
+### Prérequis
+
+- Un serveur sous Debian / Ubuntu avec *au minimum* 2 cœurs et 2 Go de RAM
+- Docker (recommandé)
+- Stockage suffisant pour les médias
+- Optionnel : un GPU pour le transcodage matériel
+
+### Docker Compose (recommandé)
+
+```yaml
+services:
+  jellyfin:
+    container_name: jellyfin
+    image: jellyfin/jellyfin:latest
+    ports:
+      - 8096:8096
+    volumes:
+      - ./config:/config
+      - ./cache:/cache
+      - /chemin/vers/medias:/media
+    restart: unless-stopped
+    environment:
+      - JELLYFIN_PublishedServerUrl=http://IP:8096
+```
+
+```bash
+docker compose up -d
+```
+
+### Docker Run
+
+```bash
+docker run -d \
+  --name jellyfin \
+  -p 8096:8096 \
+  -v ./config:/config \
+  -v ./cache:/cache \
+  -v /chemin/vers/medias:/media \
+  --restart=unless-stopped \
+  jellyfin/jellyfin:latest
+```
+
+### Addon Home Assistant
+
+Jellyfin est également disponible comme addon Home Assistant. Dans **Paramètres → Modules complémentaires → Boutique** , recherchez "Jellyfin" et suivez l'installation guidée.
+
+### Installation par exécutable
+
+```bash
+curl https://repo.jellyfin.org/install-debuntu.sh | sudo bash
+```
+
+:::caution
+L'installation par le script automatique est pratique pour un environnement dédié, mais Docker est recommandé pour la portabilité et l'isolation.
+:::
+
+---
+
+## Configuration
+
+### Premier démarrage
+
+Rendez-vous sur `http://IP:8096`. L'assistant de configuration vous demandera :
+
+1. **Langue** : choisissez la langue de l'interface
+2. **Compte administrateur** : créez le compte principal
+3. **Bibliothèques** : ajoutez vos dossiers de médias (Films, Séries, Musique...)
+4. **Métadonnées** : laissez les paramètres par défaut pour les sources de métadonnées
+5. **Accès distant** : activez si nécessaire
+
+### Skins & addons
+
+#### ElegantFin (CSS personnalisé)
+
+Pour un thème plus moderne, ajoutez le CSS [ElegantFin](https://github.com/loof2736/elegantfin) dans **Tableau de bord → Général → CSS personnalisé** :
+
+```css
+@import url('https://cdn.jsdelivr.net/gh/loof2736/elegantfin@latest/elegantfin.css');
+```
+
+#### Plugins recommandés
+
+Dans **Tableau de bord → Plugins → Catalogue** :
+
+- **Intro Skipper** : détecte et passe automatiquement les intros de séries
+- **LDAP Authentication** : connecte Jellyfin à un annuaire LDAP
+- **Reports** : génère des rapports sur la bibliothèque
+
+:::tip[Catalogue de plugins]
+Le catalogue officiel est limité. Pour accéder à plus de plugins, ajoutez des dépôts tiers dans **Plugins → Dépôts**.
+:::
+
+### Transcodage matériel
+
+Le transcodage matériel utilise le GPU pour convertir les flux vidéo en temps réel, ce qui réduit considérablement la charge CPU.
+
+Dans **Tableau de bord → Lecture → Transcodage** :
+1. Sélectionnez l'accélération matérielle correspondant à votre GPU
+2. Cochez les codecs à accélérer (H.264, HEVC, etc.)
+
+#### GPU NVIDIA
+
+```bash
+# Vérifier que le GPU est détecté
+nvidia-smi
+
+# Installer le toolkit container
+sudo apt install nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+Ajoutez dans votre Docker Compose :
+
+```yaml
+deploy:
+  resources:
+    reservations:
+      devices:
+        - driver: nvidia
+          count: all
+          capabilities:
+            - gpu
+```
+
+Sélectionnez **NVIDIA NVENC** dans les paramètres de transcodage Jellyfin.
+
+#### GPU AMD
+
+Les pilotes AMD (AMDGPU) sont inclus dans le noyau Linux. Passez les devices dans Docker :
+
+```yaml
+devices:
+  - /dev/dri/renderD128:/dev/dri/renderD128
+```
+
+Sélectionnez **Video Acceleration API (VAAPI)** dans Jellyfin.
+
+#### GPU Intel (Quick Sync)
+
+Les processeurs Intel avec iGPU supportent Quick Sync :
+
+```yaml
+devices:
+  - /dev/dri/renderD128:/dev/dri/renderD128
+```
+
+Sélectionnez **Intel Quick Sync (QSV)** dans Jellyfin.
+
+#### Raspberry Pi
+
+Sur Raspberry Pi 4/5, le transcodage matériel est limité. Utilisez **Video4Linux2 (V4L2)** si disponible, ou privilégiez des fichiers compatibles directement (H.264 Baseline).
+
+:::caution[Performances]
+Le transcodage matériel nécessite que le GPU soit correctement passé au conteneur Docker. Consultez la [documentation officielle](https://jellyfin.org/docs/general/administration/hardware-acceleration/) pour les configurations avancées.
+:::

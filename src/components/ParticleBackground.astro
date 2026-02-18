@@ -1,0 +1,138 @@
+---
+import { getSiteConfig } from '../utils/config';
+const config = getSiteConfig();
+const particles = config.theme?.particles || {};
+const enabled = particles.enabled !== false;
+const count = particles.count || 50;
+const connectDistance = particles.connectDistance || 120;
+const mouseRadius = particles.mouseRadius || 150;
+---
+
+{enabled && (
+  <canvas id="particle-canvas" aria-hidden="true"></canvas>
+)}
+
+<style>
+  #particle-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: transparent;
+  }
+</style>
+
+{enabled && (
+  <script is:inline define:vars={{ count, connectDistance, mouseRadius }}>
+    (function() {
+      const canvas = document.getElementById('particle-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      let particles = [];
+      let animationId = null;
+      const mouse = { x: null, y: null, radius: mouseRadius };
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resize();
+
+      function createParticles() {
+        particles = [];
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speedX: (Math.random() - 0.5) * 0.4,
+            speedY: (Math.random() - 0.5) * 0.4,
+            opacity: Math.random() * 0.5 + 0.2,
+            hue: Math.random() * 30 + 165
+          });
+        }
+      }
+      createParticles();
+
+      function drawParticle(p) {
+        const color = 'hsla(' + p.hue + ', 70%, 60%, ' + (p.opacity * 0.6) + ')';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = color;
+      }
+
+      function connectParticles() {
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < connectDistance) {
+              const opacity = (1 - dist / connectDistance) * 0.12;
+              ctx.beginPath();
+              ctx.strokeStyle = 'rgba(94, 207, 186, ' + opacity + ')';
+              ctx.lineWidth = 1;
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      function updateParticles() {
+        for (const p of particles) {
+          p.x += p.speedX;
+          p.y += p.speedY;
+          if (mouse.x !== null && mouse.y !== null) {
+            const dx = p.x - mouse.x;
+            const dy = p.y - mouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < mouse.radius) {
+              const force = (mouse.radius - dist) / mouse.radius;
+              p.x += dx * force * 0.02;
+              p.y += dy * force * 0.02;
+            }
+          }
+          if (p.x < 0) p.x = canvas.width;
+          if (p.x > canvas.width) p.x = 0;
+          if (p.y < 0) p.y = canvas.height;
+          if (p.y > canvas.height) p.y = 0;
+        }
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        updateParticles();
+        connectParticles();
+        ctx.shadowBlur = 0;
+        for (const p of particles) {
+          drawParticle(p);
+        }
+        animationId = requestAnimationFrame(animate);
+      }
+
+      function onResize() { resize(); createParticles(); }
+      function onMouseMove(e) { mouse.x = e.clientX; mouse.y = e.clientY; }
+      function onMouseLeave() { mouse.x = null; mouse.y = null; }
+
+      window.addEventListener('resize', onResize);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseleave', onMouseLeave);
+      animate();
+
+      // Cleanup for Astro View Transitions
+      document.addEventListener('astro:before-swap', function() {
+        window.removeEventListener('resize', onResize);
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseleave', onMouseLeave);
+        if (animationId) cancelAnimationFrame(animationId);
+      });
+    })();
+  </script>
+)}

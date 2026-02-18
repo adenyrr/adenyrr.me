@@ -1,0 +1,157 @@
+---
+title: "step-ca — PKI interne"
+description: "Autorité de certification privée pour le chiffrement mTLS end-to-end."
+---
+
+## Introduction
+
+### Avant-propos
+
+Contrairement aux approches traditionnelles qui sécurisent principalement les entrées (pare-feu) et font confiance à tout ce qui est à l'intérieur, le Zero Trust part du principe que la menace peut être partout, y compris à l'intérieur du réseau.
+
+Dans cette optique, si un attaquant est *déjà* dans le réseau, il serait de bon ton que tout le trafic interne soit chiffré, y compris entre le proxy et les conteneurs : c'est ici que *step-ca* intervient en nous permettant de déployer une *Private Key Infrastructure* (PKI) avec renouvellement des certificats automatique et chiffrement mTLS entre les points d'exposition.
+
+### C'est quoi ?
+
+[Step-ca](https://smallstep.com/docs/step-ca/) est un ensemble d'utilitaires pour gérer et administrer une infrastructure de clefs privées automatisée.
+
+> *Step-ca est une autorité de certification (CA) en ligne qui permet une gestion sécurisée et automatisée des certificats X.509 et SSH. Il s'agit de l'équivalent serveur de step CLI. Il est sécurisé par TLS et offre plusieurs fournisseurs de certificats configurables, des modèles de certificats flexibles et des bases de données backend enfichables pour s'adapter à une grande variété de contextes et de flux de travail.*
+
+### Avantages & inconvénients
+
+**Avantages :**
+- Chiffrement intégral des communications conteneurs-proxy
+- Le renouvellement des certificats SSL est automatique
+- Le mTLS (*mutual* TLS) tend à devenir le standard
+- On peut aussi générer des certificats SSH
+
+**Inconvénients :**
+- Les concepts de certificat sont complexes à prendre en main
+- Les certificats ne sont valides que localement
+- Le déploiement du mTLS augmente la complexité et la maintenabilité d'une infra
+
+### Alternatives
+
+L'alternative la plus courante est d'utiliser, plus simplement, des certificats Let's Encrypt — mais elle ne permet plus de faire du mTLS.
+
+---
+
+## Installation
+
+### Prérequis
+
+Une LXC ou une machine virtuelle, qui ne servira QUE pour ça, très légère (512 Mo de DDR suffiront) sous debian :
+
+```bash
+apt-get update && apt-get install -y --no-install-recommends \
+  curl gpg ca-certificates jq openssl
+```
+
+### Méthode recommandée : bare-metal
+
+Sous debian (et dérivées), un mini-script permet d'ajouter le dépôt officiel et d'installer la dernière version :
+
+```bash
+curl -fsSL https://packages.smallstep.com/keys/apt/repo-signing-key.gpg \
+  -o /etc/apt/keyrings/smallstep.asc
+
+cat << EOF > /etc/apt/sources.list.d/smallstep.sources
+Types: deb
+URIs: https://packages.smallstep.com/stable/debian
+Suites: debs
+Components: main
+Signed-By: /etc/apt/keyrings/smallstep.asc
+EOF
+
+apt-get update && apt-get -y install step-cli step-ca
+```
+
+Vérification : `step version` → `Smallstep CLI/0.29.0 (linux/amd64)`
+
+---
+
+## Configuration et génération des certificats
+
+:::tip[Bonnes pratiques]
+On crée un utilisateur dédié avec des permissions limitées : principe du moindre privilège. Jamais en root !
+:::
+
+```bash
+# Créer un utilisateur dédié
+useradd -r -m -d /etc/step-ca -s /bin/bash step
+
+# Initialiser la CA en tant qu'utilisateur step
+su - step
+export STEPPATH=/etc/step-ca
+
+step ca init \
+  --name="DOMAIN Internal CA" \
+  --dns="acme.domain.internal" \
+  --address=":443" \
+  --provisioner="admin@domain.internal" \
+  --password-file=<(echo "CHANGEZ_CE_MOT_DE_PASSE_FORT") \
+  --remote-management
+```
+
+:::danger[Password]
+Le mot de passe choisi DOIT rester secret. Si ce password est compromis, c'est toute la PKI qui l'est !
+:::
+
+Déployer ACME pour la génération automatique :
+
+```bash
+step ca provisioner add acme --type=ACME
+```
+
+Configuration des durées de certificats (28j par défaut, max 1 an) :
+
+```bash
+step ca provisioner update acme --x509-default-dur=672h --x509-max-dur=8760h
+```
+
+Créer le service systemd (en root) :
+
+```bash
+cat > /etc/systemd/system/step-ca.service << 'EOF'
+[Unit]
+Description=smallstep Certificate Authority
+Documentation=https://smallstep.com/docs/step-ca
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=step
+Group=step
+Environment=STEPPATH=/etc/step-ca
+WorkingDirectory=/etc/step-ca
+ExecStart=/usr/bin/step-ca config/ca.json --password-file /etc/step-ca/secrets/password
+Restart=on-failure
+RestartSec=10
+
+# Sécurité
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/etc/step-ca/db
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+Finalement :
+
+```bash
+mkdir -p /etc/step-ca/secrets /var/log/step-ca
+echo "CHANGEZ_CE_MOT_DE_PASSE_FORT" > /etc/step-ca/secrets/password
+chmod 600 /etc/step-ca/secrets/password
+chown -R step:step /etc/step-ca /var/log/step-ca
+chmod 700 /etc/step-ca/secrets
+
+systemctl daemon-reload
+systemctl enable step-ca
+systemctl start step-ca
+systemctl status step-ca
+```

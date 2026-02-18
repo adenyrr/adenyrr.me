@@ -1,0 +1,101 @@
+---
+import { getSiteConfig } from '../utils/config';
+
+const config = getSiteConfig();
+const lang = 'fr';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  article?: boolean;
+}
+
+const { title, description, image, article = false } = Astro.props;
+
+const siteTitle = title 
+  ? `${title} — ${config.site.title}` 
+  : config.site.title;
+const siteDescription = description || config.site.description;
+const siteImage = image || '/images/og-default.jpg';
+const canonicalURL = new URL(Astro.url.pathname, config.site.url);
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="generator" content={Astro.generator} />
+
+<!-- Primary -->
+<title>{siteTitle}</title>
+<meta name="title" content={siteTitle} />
+<meta name="description" content={siteDescription} />
+<meta name="author" content={config.site.author} />
+<link rel="canonical" href={canonicalURL} />
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inclusive+Sans:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap"
+  rel="stylesheet"
+/>
+
+<!-- Open Graph / Facebook -->
+{config.seo?.openGraph && (
+  <>
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={siteTitle} />
+    <meta property="og:description" content={siteDescription} />
+    <meta property="og:image" content={new URL(siteImage, config.site.url)} />
+    <meta property="og:locale" content={lang} />
+    <meta property="og:site_name" content={config.site.title} />
+  </>
+)}
+
+<!-- Twitter -->
+{config.seo?.twitterCard && (
+  <>
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={siteTitle} />
+    <meta name="twitter:description" content={siteDescription} />
+    <meta name="twitter:image" content={new URL(siteImage, config.site.url)} />
+  </>
+)}
+
+<!-- Sitemap -->
+{config.seo?.sitemap && (
+  <link rel="sitemap" href="/sitemap-index.xml" />
+)}
+
+<!-- RSS -->
+{config.footer?.rss && (
+  <link rel="alternate" type="application/rss+xml" title={config.site.title} href="/rss.xml" />
+)}
+
+<!-- Theme initialization (inline to prevent FOUC) -->
+<script is:inline>
+  (function() {
+    function applyTheme() {
+      var stored = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = stored || (prefersDark ? 'dark' : 'light');
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.dataset.theme = 'dark';
+        document.documentElement.style.backgroundColor = '#141416';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.dataset.theme = 'light';
+        document.documentElement.style.backgroundColor = '#f8f8fa';
+      }
+      localStorage.setItem('starlight-theme', theme);
+    }
+    applyTheme();
+    // Re-apply immediately after View Transition DOM swap (before paint)
+    document.addEventListener('astro:after-swap', applyTheme);
+  })();
+</script>

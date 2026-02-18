@@ -1,0 +1,652 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   TAILWIND v4 — shadcn/ui theme tokens
+   Maps custom properties to Tailwind utilities: bg-card, text-muted, etc.
+   ============================================================================ */
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card: var(--card-bg);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--accent);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--surface-raised);
+  --color-secondary-foreground: var(--text-secondary);
+  --color-muted: var(--surface-raised);
+  --color-muted-foreground: var(--muted-text);
+  --color-accent: var(--glow);
+  --color-accent-foreground: var(--accent);
+  --color-destructive: #e07d6a;
+  --color-destructive-foreground: #ffffff;
+  --color-border: var(--card-border);
+  --color-input: var(--card-border);
+  --color-ring: var(--accent);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}
+
+/* ============================================================================
+   FONTS
+   ============================================================================ */
+@font-face {
+  font-family: 'Inclusive Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://fonts.googleapis.com/css2?family=Inclusive+Sans&display=swap');
+}
+
+/* ============================================================================
+   CSS CUSTOM PROPERTIES (Theme tokens)
+   Palette: Neutral gray + orange accent — green links
+   ============================================================================ */
+:root {
+  /* ---- Light theme (cool gray) ---- */
+  --bg: #f8f8fa;
+  --surface: #ffffff;
+  --surface-raised: #f0f0f3;
+  --card-bg: rgba(255, 255, 255, 0.65);
+  --card-border: rgba(0, 0, 0, 0.07);
+  --card-border-hover: rgba(192, 106, 58, 0.22);
+
+  --text: #18181b;
+  --text-secondary: #3f3f46;
+  --muted-text: #71717a;
+
+  /* Accent = orange, links = green */
+  --accent: #c06a3a;
+  --accent-mid: #d4845a;
+  --accent-secondary: #a85a30;
+  --accent-warm: #e09a6f;
+  --link-color: #1a8a7a;
+
+  --glow: rgba(192, 106, 58, 0.09);
+  --glow-hover: rgba(192, 106, 58, 0.18);
+  --glow-cyan: rgba(26, 138, 122, 0.06);
+
+  --gradient-start: #c06a3a;
+  --gradient-mid:   #d4845a;
+  --gradient-end:   #e09a6f;
+
+  /* Code blocks */
+  --code-bg: #ededf0;
+  --code-text: #18181b;
+
+  --selection-bg: rgba(192, 106, 58, 0.16);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 18px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-glow: 0 0 24px var(--glow-hover);
+
+  /* Font families */
+  --font-body: 'Inclusive Sans', system-ui, -apple-system, sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Transitions */
+  --transition-colors: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  --transition-all: all 0.3s ease;
+  --transition-transform: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Banner-specific tokens (light) */
+  --banner-teal: #1a8a7a;
+  --banner-teal-dim: #2a7a6a;
+  --banner-salmon: #c06a3a;
+  --banner-text: #18181b;
+  --banner-text-dim: #71717a;
+  --banner-muted: #9a9aa0;
+  --glass-bg: rgba(0, 0, 0, 0.02);
+  --glass-border: rgba(0, 0, 0, 0.07);
+  --glass-edge: rgba(192, 106, 58, 0.06);
+  --glass-shadow: rgba(0,0,0,0.06);
+  --glass-inner: rgba(255,255,255,0.55);
+  --glass-glow: rgba(192, 106, 58, 0.08);
+  --scan-color: rgba(192, 106, 58, 0.18);
+  --grid-line: rgba(0, 0, 0, 0.03);
+  --blob-teal: rgba(26, 138, 122, 0.04);
+  --blob-salmon: rgba(192, 106, 58, 0.05);
+}
+
+/* ---- Dark theme (neutral gray + orange accent) ---- */
+.dark,
+:root[data-theme="dark"] {
+  --bg: #141416;
+  --surface: #1c1c1f;
+  --surface-raised: #242428;
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-border-hover: rgba(212, 132, 90, 0.24);
+
+  --text: #e4e4e7;
+  --text-secondary: #a8a8b0;
+  --muted-text: #737378;
+
+  --accent: #d4845a;
+  --accent-mid: #e09a6f;
+  --accent-secondary: #c06a3a;
+  --accent-warm: #e09a6f;
+  --link-color: #5ecfba;
+
+  --glow: rgba(212, 132, 90, 0.10);
+  --glow-hover: rgba(212, 132, 90, 0.18);
+  --glow-cyan: rgba(94, 207, 186, 0.06);
+
+  --gradient-start: #d4845a;
+  --gradient-mid:   #e09a6f;
+  --gradient-end:   #c06a3a;
+
+  --code-bg: #111113;
+  --code-text: #e4e4e7;
+  --selection-bg: rgba(212, 132, 90, 0.18);
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.40), 0 2px 8px rgba(0,0,0,0.25);
+  --shadow-glow: 0 0 30px var(--glow-hover);
+
+  /* Banner-specific tokens (dark) */
+  --banner-teal: #5ecfba;
+  --banner-teal-dim: #3a9e8a;
+  --banner-salmon: #d4845a;
+  --banner-text: #e4e4e7;
+  --banner-text-dim: #737378;
+  --banner-muted: #505055;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-edge: rgba(212, 132, 90, 0.06);
+  --glass-shadow: rgba(0,0,0,0.50);
+  --glass-inner: rgba(255,255,255, 0.04);
+  --glass-glow: rgba(212, 132, 90, 0.08);
+  --scan-color: rgba(212, 132, 90, 0.20);
+  --grid-line: rgba(255, 255, 255, 0.025);
+  --blob-teal: rgba(94, 207, 186, 0.06);
+  --blob-salmon: rgba(212, 132, 90, 0.10);
+}
+
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* scroll-behavior handled by Lenis */
+  scroll-behavior: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  line-height: 1.7;
+  transition: var(--transition-colors);
+  /* Subtle mesh gradient — neutral */
+  background-image:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(192, 106, 58, 0.02) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(120, 120, 130, 0.015) 0%, transparent 55%);
+  background-attachment: fixed;
+}
+
+.dark body,
+body.dark,
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(212, 132, 90, 0.015) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 85% 100%, rgba(120, 120, 130, 0.012) 0%, transparent 55%);
+}
+
+::selection {
+  background: var(--selection-bg);
+}
+
+/* ============================================================================
+   PAGE ENTER ANIMATION — handled by GSAP in Animations.astro
+   ============================================================================ */
+.page-content {
+  padding-top: 60px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================================
+   TYPOGRAPHY
+   ============================================================================ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.4rem; }
+
+code, pre, .font-code {
+  font-family: var(--font-code);
+}
+
+pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-sm);
+}
+
+code:not(pre code) {
+  background: var(--code-bg);
+  color: var(--link-color);
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+  font-size: 0.88em;
+  border: 1px solid var(--card-border);
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  transition: var(--transition-colors);
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+/* ============================================================================
+   LAYOUT UTILITIES
+   ============================================================================ */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ============================================================================
+   CARDS — Glassmorphism (Hyprland-inspired frosted panels)
+   ============================================================================ */
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
+              border-color 0.3s ease,
+              box-shadow 0.35s ease;
+}
+
+.card:hover {
+  border-color: var(--card-border-hover);
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* ============================================================================
+   GRADIENT TEXT
+   ============================================================================ */
+.gradient-text {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 5s linear infinite;
+}
+
+@keyframes shimmer-text {
+  0%   { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ============================================================================
+   BUTTONS — with shimmer on primary
+   ============================================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.3rem;
+  border-radius: 0.8rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s ease,
+              opacity 0.2s ease,
+              border-color 0.2s ease,
+              color 0.2s ease;
+  text-decoration: none;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%);
+  background-size: 200% auto;
+  color: white;
+  box-shadow: 0 2px 12px var(--glow);
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.btn-primary:hover {
+  background-position: right center;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--glow-hover);
+  color: white;
+}
+
+.btn-primary:hover::after {
+  transform: translateX(100%);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--card-border);
+}
+
+.btn-outline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 12px var(--glow);
+  transform: translateY(-1px);
+}
+
+/* ============================================================================
+   TAGS
+   ============================================================================ */
+.tag {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  background: rgba(212, 132, 90, 0.08);
+  color: var(--accent);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(212, 132, 90, 0.15);
+}
+
+/* ============================================================================
+   STATUS BADGES
+   ============================================================================ */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-online .status-dot {
+  background: #5ecfba;
+  box-shadow: 0 0 8px rgba(94, 207, 186, 0.4);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+.status-offline .status-dot { background: #e07d6a; }
+.status-maintenance .status-dot { background: #e0c06a; animation: pulse-dot 1.5s ease-in-out infinite; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.2); }
+}
+
+/* ============================================================================
+   TABS — animated underline slide
+   ============================================================================ */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: relative;
+}
+
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted-text);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.tab:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab.active::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  border-radius: 1px 1px 0 0;
+  animation: tab-slide-in 0.2s ease;
+}
+
+@keyframes tab-slide-in {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+/* ============================================================================
+   SECTION HEADERS
+   ============================================================================ */
+.section-header {
+  margin-bottom: 2rem;
+}
+
+.section-header h2 {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.section-divider {
+  height: 3px;
+  width: 60px;
+  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  border-radius: 2px;
+  animation: divider-grow 0.6s ease both;
+}
+
+@keyframes divider-grow {
+  from { width: 0; opacity: 0; }
+  to   { width: 60px; opacity: 1; }
+}
+
+/* ============================================================================
+   GLOBAL REVEAL ANIMATION — driven by GSAP ScrollTrigger in Animations.astro
+   CSS provides the initial hidden state as a no-JS fallback
+   ============================================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+/* Stagger helpers */
+.stagger-1 { transition-delay: 0.05s; }
+.stagger-2 { transition-delay: 0.12s; }
+.stagger-3 { transition-delay: 0.19s; }
+.stagger-4 { transition-delay: 0.26s; }
+.stagger-5 { transition-delay: 0.33s; }
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.4rem; }
+  h3 { font-size: 1.2rem; }
+  .container { padding: 0 1rem; }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* ============================================================================
+   SCROLLBAR
+   ============================================================================ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ============================================================================
+   VIEW TRANSITIONS — Astro native
+   ============================================================================ */
+@keyframes vt-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vt-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes vt-slide-in  { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes vt-slide-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-10px); opacity: 0; } }
+
+::view-transition-old(root) {
+  animation: 180ms ease-out both vt-fade-out;
+}
+::view-transition-new(root) {
+  animation: 220ms ease-out both vt-fade-in;
+}
+
+/* Header stays put during page transitions */
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+#site-header {
+  view-transition-name: site-header;
+}
+
+/* ============================================================================
+   HEADER — will-change hint for GSAP scroll hide/show
+   ============================================================================ */
+#site-header {
+  will-change: transform;
+}
+
+/* ============================================================================
+   SMOOTH LINK TRANSITIONS (page-level)
+   ============================================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  a[href]:not([href^="#"]):not([href^="mailto"]):not([href^="http"]) {
+    transition: color 0.2s ease;
+  }
+}
+
+/* ============================================================================
+   SHADCN/UI ANIMATION UTILITIES (Tailwind v4)
+   Required by Sheet, Tooltip, Tabs and other Radix-based shadcn components.
+   ============================================================================ */
+@keyframes shadcn-in   { from { opacity: var(--tw-enter-opacity, 1); transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0) scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), 1) rotate(var(--tw-enter-rotate, 0)); } }
+@keyframes shadcn-out  { to   { opacity: var(--tw-exit-opacity, 1);  transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), 1) rotate(var(--tw-exit-rotate, 0)); } }
+
+@utility animate-in  { animation: shadcn-in 200ms ease forwards; }
+@utility animate-out { animation: shadcn-out 150ms ease forwards; }
+
+@utility fade-in-0  { --tw-enter-opacity: 0; }
+@utility fade-out-0 { --tw-exit-opacity: 0; }
+
+@utility zoom-in-95  { --tw-enter-scale: .95; }
+@utility zoom-out-95 { --tw-exit-scale: .95; }
+
+@utility slide-in-from-top      { --tw-enter-translate-y: -100%; }
+@utility slide-in-from-top-2    { --tw-enter-translate-y: -0.5rem; }
+@utility slide-in-from-bottom   { --tw-enter-translate-y: 100%; }
+@utility slide-in-from-bottom-2 { --tw-enter-translate-y: 0.5rem; }
+@utility slide-in-from-left     { --tw-enter-translate-x: -100%; }
+@utility slide-in-from-left-2   { --tw-enter-translate-x: -0.5rem; }
+@utility slide-in-from-right    { --tw-enter-translate-x: 100%; }
+@utility slide-in-from-right-2  { --tw-enter-translate-x: 0.5rem; }
+
+@utility slide-out-to-top    { --tw-exit-translate-y: -100%; }
+@utility slide-out-to-bottom { --tw-exit-translate-y: 100%; }
+@utility slide-out-to-left   { --tw-exit-translate-x: -100%; }
+@utility slide-out-to-right  { --tw-exit-translate-x: 100%; }
+
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}

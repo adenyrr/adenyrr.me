@@ -1,0 +1,176 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { isFeatureEnabled } from '../../utils/config';
+import { getCollection } from 'astro:content';
+import { Calendar, Clock } from 'lucide-astro';
+
+// Redirect if blog is disabled
+if (!isFeatureEnabled('blog')) {
+  return Astro.redirect('/');
+}
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => (b.data.pubDate?.valueOf() || 0) - (a.data.pubDate?.valueOf() || 0)
+);
+---
+
+<BaseLayout title="Blog" description="Blog articles">
+  <div class="container blog-page reveal">
+    <header class="blog-header">
+      <h1 class="gradient-text">Blog</h1>
+    </header>
+
+    {posts.length === 0 ? (
+      <p class="no-articles">Aucun article publié.</p>
+    ) : (
+      <div class="posts-list">
+        {posts.map((post) => (
+          <a href={`/blog/${post.id}`} class="card post-card">
+            {post.data.heroImage && (
+              <div class="post-image">
+                <img src={post.data.heroImage} alt={post.data.title} loading="lazy" />
+              </div>
+            )}
+            <div class="post-content">
+              <h2>{post.data.title}</h2>
+              <p class="post-description">{post.data.description}</p>
+              <div class="post-meta">
+                {post.data.pubDate && (
+                  <span class="post-date">
+                    <Calendar size={14} />
+                    <time datetime={post.data.pubDate.toISOString()}>
+                      {post.data.pubDate.toLocaleDateString('fr-FR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </time>
+                  </span>
+                )}
+                {post.data.readingMinutes && (
+                  <span class="post-reading">
+                    <Clock size={14} />
+                    {post.data.readingMinutes} min de lecture
+                  </span>
+                )}
+              </div>
+              <span class="read-more">Lire la suite →</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .blog-page {
+    max-width: 800px;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+  }
+
+  .blog-header {
+    margin-bottom: 2rem;
+  }
+
+  .blog-header h1 {
+    font-size: 2rem;
+  }
+
+  .no-articles {
+    color: var(--muted-text);
+    text-align: center;
+    padding: 4rem 0;
+  }
+
+  .posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .post-card {
+    display: flex;
+    gap: 1.5rem;
+    text-decoration: none;
+    color: var(--text);
+    padding: 1.25rem;
+  }
+
+  .post-image {
+    flex-shrink: 0;
+    width: 200px;
+    height: 140px;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .post-content h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    transition: color 0.2s ease;
+  }
+
+  .post-card:hover h2 {
+    color: var(--accent);
+  }
+
+  .post-description {
+    color: var(--muted-text);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+    flex: 1;
+  }
+
+  .post-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .post-date,
+  .post-reading {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-code);
+    font-size: 0.8rem;
+    color: var(--muted-text);
+  }
+
+  .read-more {
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+    color: var(--accent);
+    transition: color 0.2s ease;
+  }
+
+  .post-card:hover .read-more {
+    color: var(--accent-secondary);
+  }
+
+  @media (max-width: 640px) {
+    .post-card {
+      flex-direction: column;
+    }
+
+    .post-image {
+      width: 100%;
+      height: 180px;
+    }
+  }
+</style>

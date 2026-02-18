@@ -1,0 +1,219 @@
+<script>
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
+
+/* ── Lenis instance (module-level so we can kill+recreate) ── */
+let lenis: Lenis | null = null;
+let ctx: gsap.Context | null = null;
+let isFirstLoad = true;
+
+/* ── Reduced-motion preference ── */
+const prefersReducedMotion = () =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ════════════════════════════════════════════════════════════
+   INIT — called on first load and after every View Transition
+   ════════════════════════════════════════════════════════════ */
+function init() {
+  /* Cleanup previous context cleanly (kills all tweens & ScrollTriggers in scope) */
+  if (ctx) { ctx.revert(); ctx = null; }
+  if (lenis) { lenis.destroy(); lenis = null; }
+
+  /* Shortened durations when user prefers reduced motion */
+  const reduced = prefersReducedMotion();
+  const dur = (d: number) => (reduced ? Math.min(d * 0.25, 0.1) : d);
+
+  /* ── Lenis smooth scroll ── */
+  lenis = new Lenis({
+    duration: reduced ? 0.01 : 1.15,
+    easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    wheelMultiplier: 0.9,
+    touchMultiplier: 1.4,
+  });
+
+  /* Connect Lenis RAF to GSAP ticker (single callback, no leaks) */
+  const lenisRaf = (time: number) => { lenis!.raf(time * 1000); };
+  gsap.ticker.add(lenisRaf);
+  gsap.ticker.lagSmoothing(0);
+
+  /* Forward Lenis scroll to ScrollTrigger */
+  lenis.on('scroll', ScrollTrigger.update);
+
+  /* Tell ScrollTrigger to use Lenis's scroll position */
+  ScrollTrigger.scrollerProxy(document.documentElement, {
+    scrollTop(value?: number) {
+      if (arguments.length && value !== undefined) {
+        lenis!.scrollTo(value, { immediate: true });
+      }
+      return lenis!.scroll;
+    },
+    getBoundingClientRect() {
+      return { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight };
+    },
+  });
+  ScrollTrigger.defaults({ scroller: document.documentElement });
+
+  /* On View Transition navigation, skip hiding elements already in viewport */
+  const isVT = !isFirstLoad;
+  isFirstLoad = false;
+  const skipIfVisible = (el: Element) =>
+    isVT && el.getBoundingClientRect().top < window.innerHeight + 50;
+
+  /* ── gsap.context scopes all animations for clean teardown ── */
+  ctx = gsap.context(() => {
+    /* ── Header hide/show on scroll (throttled via ScrollTrigger) ── */
+    const header = document.getElementById('site-header');
+    if (header) {
+      let lastDir = 0;
+      ScrollTrigger.create({
+        start: 'top -80px',
+        onUpdate(self) {
+          const dir = self.direction; // 1 = down, -1 = up
+          if (dir !== lastDir) {
+            lastDir = dir;
+            gsap.to(header, {
+              y: dir === 1 && self.scroll() > 120 ? '-100%' : '0%',
+              duration: dur(0.35),
+              ease: dir === 1 ? 'power2.inOut' : 'power2.out',
+              overwrite: true,
+            });
+          }
+        },
+      });
+    }
+
+    /* ── Scroll reveal — .reveal elements ── */
+    const reveals = gsap.utils.toArray<Element>('.reveal');
+    reveals.forEach((el) => {
+      if (skipIfVisible(el)) return;
+      gsap.set(el, { opacity: 0, y: reduced ? 0 : 28 });
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top 88%',
+        once: true,
+        onEnter() {
+          gsap.to(el, { opacity: 1, y: 0, duration: dur(0.65), ease: 'power3.out' });
+        },
+      });
+    });
+
+    /* ── Cards stagger on scroll ── */
+    const cardSelectors = '.projects-grid, .certs-grid, .nodes-grid, .vlans-grid, .services-grid, .stats-grid';
+    document.querySelectorAll<Element>(cardSelectors).forEach((group) => {
+      if (skipIfVisible(group)) return;
+      const cards = group.querySelectorAll<Element>(':scope > *');
+      if (!cards.length) return;
+      gsap.set(cards, { opacity: 0, y: reduced ? 0 : 32, scale: 0.97 });
+      ScrollTrigger.create({
+        trigger: group,
+        start: 'top 85%',
+        once: true,
+        onEnter() {
+          gsap.to(cards, {
+            opacity: 1, y: 0, scale: 1,
+            duration: dur(0.55), ease: 'power3.out', stagger: 0.07,
+          });
+        },
+      });
+    });
+
+    /* ── Section headers slide in from left ── */
+    gsap.utils.toArray<Element>('.section-header').forEach((el) => {
+      if (skipIfVisible(el)) return;
+      gsap.set(el, { opacity: 0, x: reduced ? 0 : -24 });
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top 90%',
+        once: true,
+        onEnter() {
+          gsap.to(el, { opacity: 1, x: 0, duration: dur(0.5), ease: 'power3.out' });
+        },
+      });
+    });
+
+    /* ── Section divider width animation ── */
+    document.querySelectorAll<HTMLElement>('.section-divider').forEach((el) => {
+      if (el.tagName === 'DIV' && !el.querySelector('span')) {
+        if (skipIfVisible(el)) return;
+        gsap.set(el, { scaleX: 0, transformOrigin: 'left center' });
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 92%',
+          once: true,
+          onEnter() {
+            gsap.to(el, { scaleX: 1, duration: dur(0.6), ease: 'power3.inOut' });
+          },
+        });
+      }
+    });
+
+    /* ── Timeline items ── */
+    const timelineItems = gsap.utils.toArray<Element>('.timeline-item');
+    if (timelineItems.length) {
+      timelineItems.forEach((el, i) => {
+        if (skipIfVisible(el)) return;
+        gsap.set(el, { opacity: 0, x: reduced ? 0 : -20 });
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 88%',
+          once: true,
+          onEnter() {
+            gsap.to(el, {
+              opacity: 1, x: 0, duration: dur(0.5), ease: 'power3.out',
+              delay: i * 0.04,
+            });
+          },
+        });
+      });
+    }
+
+    /* ── Stat cards count-up ── */
+    document.querySelectorAll<HTMLElement>('.stat-value[data-target]').forEach((el) => {
+      const target = parseInt(el.dataset.target || '0', 10);
+      if (!target) return;
+      const small = el.querySelector('small');
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top 90%',
+        once: true,
+        onEnter() {
+          const obj = { val: 0 };
+          gsap.to(obj, {
+            val: target,
+            duration: dur(1.4),
+            ease: 'power2.out',
+            onUpdate() {
+              el.textContent = Math.round(obj.val).toString();
+              if (small) el.appendChild(small);
+            },
+          });
+        },
+      });
+    });
+
+    /* ── Subtle parallax on banner blobs ── */
+    document.querySelectorAll<Element>('.banner-blob').forEach((blob, i) => {
+      gsap.to(blob, {
+        y: i % 2 === 0 ? '-30%' : '20%',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.banner-scene',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1.5,
+        },
+      });
+    });
+
+    ScrollTrigger.refresh();
+  }); // end gsap.context
+}
+
+/* ════════════════════════════════════════════════════════════
+   LIFECYCLE — Astro View Transitions hooks
+   ════════════════════════════════════════════════════════════ */
+document.addEventListener('astro:page-load', init);
+</script>

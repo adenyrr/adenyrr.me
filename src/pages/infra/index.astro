@@ -1,0 +1,681 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getInfraConfig, getSiteConfig, isFeatureEnabled } from '../../utils/config';
+import InfraViz from '../../components/InfraViz.tsx';
+import {
+  Server, Network, Boxes, Cpu, HardDrive, Monitor, Globe,
+  GitBranch, Shield, Wifi, Printer, ExternalLink, BookOpen,
+  Lock, ChevronRight, ArrowRight
+} from 'lucide-astro';
+
+if (!isFeatureEnabled('infra')) {
+  return Astro.redirect('/');
+}
+
+const infra = getInfraConfig();
+const tabs = infra.tabs || {};
+const enabledTabs = Object.entries(tabs).filter(([_, v]: any) => v.enabled);
+
+const colorMap: Record<string, string> = {
+  cyan: '#5ecfba', purple: '#b08fcf', green: '#7fd9c0',
+  red: '#e07d6a', orange: '#e0a86a', blue: '#6ab0e0',
+};
+
+const categoryLabels: Record<string, string> = {
+  critical: '.critical',
+  production: '.prod',
+  network: '.net',
+  access: '.access',
+};
+
+const categoryColors: Record<string, string> = {
+  critical: '#e07d6a', production: '#6ab0e0', network: '#7fd9c0', access: '#b08fcf',
+};
+
+const wan = infra.wanExposure || {};
+const chainStepColors: Record<string, string> = {
+  red: '#e07d6a', orange: '#e0a86a', purple: '#b08fcf', green: '#7fd9c0', cyan: '#5ecfba',
+};
+
+const docLinks: Record<string, string> = {
+  'Jellyfin': '/docu/services/jellyfin',
+  'Ollama': '/docu/services/ollama',
+  'Open WebUI': '/docu/services/ollama',
+  'step-ca': '/docu/reseau/stepca',
+  'Nginx Proxy Manager': '/docu/reseau/swag',
+  'CrowdSec': '/docu/reseau/swag',
+  'Fail2ban': '/docu/reseau/swag',
+  'Home Assistant': '/docu/hassio/install',
+};
+---
+
+<BaseLayout title="Infrastructure" description="Infrastructure homelab">
+  <div class="container infra-page">
+    <!-- Stats banner -->
+    <div class="stats-banner reveal">
+      <div class="stats-grid">
+        <div class="stat-card" style="--stat-color: #d4845a; --stat-delay: 0s">
+          <div class="stat-icon"><Cpu size={22} /></div>
+          <div class="stat-body">
+            <span class="stat-value" data-target={infra.stats?.totalCpuCores || 0}>{infra.stats?.totalCpuCores}</span>
+            <span class="stat-label">CPU Cores</span>
+          </div>
+          <div class="stat-bar"></div>
+        </div>
+        <div class="stat-card" style="--stat-color: #5ecfba; --stat-delay: 0.08s">
+          <div class="stat-icon"><Server size={22} /></div>
+          <div class="stat-body">
+            <span class="stat-value" data-target={infra.stats?.totalRamGB || 0}>{infra.stats?.totalRamGB} <small>Go</small></span>
+            <span class="stat-label">DDR4</span>
+          </div>
+          <div class="stat-bar"></div>
+        </div>
+        <div class="stat-card" style="--stat-color: #b08fcf; --stat-delay: 0.16s">
+          <div class="stat-icon"><Boxes size={22} /></div>
+          <div class="stat-body">
+            <span class="stat-value">{infra.stats?.cephStorage}</span>
+            <span class="stat-label">CEPH</span>
+          </div>
+          <div class="stat-bar"></div>
+        </div>
+        <div class="stat-card" style="--stat-color: #6ab0e0; --stat-delay: 0.24s">
+          <div class="stat-icon"><HardDrive size={22} /></div>
+          <div class="stat-body">
+            <span class="stat-value">{infra.stats?.nasStorage}</span>
+            <span class="stat-label">NAS</span>
+          </div>
+          <div class="stat-bar"></div>
+        </div>
+        <div class="stat-card" style="--stat-color: #7fd9c0; --stat-delay: 0.32s">
+          <div class="stat-icon"><Network size={22} /></div>
+          <div class="stat-body">
+            <span class="stat-value" data-target={(infra.vlans || []).length}>{(infra.vlans || []).length}</span>
+            <span class="stat-label">VLANs</span>
+          </div>
+          <div class="stat-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" role="tablist">
+      {enabledTabs.map(([key, tab]: any, i: number) => (
+        <button
+          class:list={['tab', { active: i === 0 }]}
+          role="tab"
+          aria-selected={i === 0 ? 'true' : 'false'}
+          data-tab={key}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+
+    <!-- Infrastructure Tab -->
+    {tabs.infrastructure?.enabled && (
+      <div class="tab-panel" data-panel="infrastructure" role="tabpanel">
+        <h2 class="gradient-text">Infrastructure</h2>
+        <div class="nodes-grid">
+          {(infra.proxmoxNodes || []).map((node: any, ni: number) => (
+            <div class="card node-card slide-in" style={`border-left: 3px solid ${colorMap[node.color] || '#8b5cf6'}; --stage-delay: ${ni * 0.07}s`}>
+              <div class="node-header">
+                <div class="node-title-row">
+                  <div class="node-color-dot" style={`background: ${colorMap[node.color] || '#8b5cf6'}`}></div>
+                  <h3>{node.name}</h3>
+                </div>
+                <Server size={18} class="node-type-icon" />
+              </div>
+              <div class="node-specs">
+                <span class="spec"><Cpu size={14} /> {node.cpu}</span>
+                <span class="spec"><HardDrive size={14} /> {node.ram}</span>
+              </div>
+              <div class="node-services">
+                {(node.services || []).map((svc: any) => (
+                  <div class="node-service">
+                    <span class="service-name">{svc.name}</span>
+                    <span class="tag">{svc.type}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div class="nodes-grid" style="margin-top: 2rem;">
+          {(infra.networkDevices || []).map((device: any, di: number) => (
+            <div class="card node-card slide-in" style={`border-left: 3px solid ${colorMap[device.color] || '#8b5cf6'}; --stage-delay: ${di * 0.07}s`}>
+              <div class="node-header">
+                <div class="node-title-row">
+                  <div class="node-color-dot" style={`background: ${colorMap[device.color] || '#8b5cf6'}`}></div>
+                  <h3>{device.name}</h3>
+                </div>
+              </div>
+              <div class="node-specs">
+                <span class="spec"><Cpu size={14} /> {device.cpu}</span>
+                <span class="spec">{device.ram}</span>
+              </div>
+              <div class="node-services">
+                {(device.services || []).map((svc: any) => (
+                  <div class="node-service">
+                    <span class="service-name">{svc.name}</span>
+                    <span class="tag">{svc.type}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- LAN Tab -->
+    {tabs.lan?.enabled && (
+      <div class="tab-panel hidden" data-panel="lan" role="tabpanel">
+        <h2 class="gradient-text">LAN — Réseau local</h2>
+        {Object.entries(categoryLabels).map(([cat, label], ci) => {
+          const categoryVlans = (infra.vlans || []).filter((v: any) => v.category === cat);
+          if (categoryVlans.length === 0) return null;
+          return (
+            <div class="vlan-category slide-in" style={`--stage-delay: ${ci * 0.05}s`}>
+              <div class="vlan-cat-header" style={`--cat-color: ${categoryColors[cat]}`}>
+                <span class="vlan-cat-badge">{label}</span>
+                <span class="vlan-cat-count">{categoryVlans.length}</span>
+              </div>
+              <div class="vlans-grid">
+                {categoryVlans.map((vlan: any, vi: number) => (
+                  <div class="card vlan-card slide-in" style={`border-left: 3px solid ${colorMap[vlan.color] || '#8b5cf6'}; --stage-delay: ${ci * 0.05 + vi * 0.04}s`}>
+                    <div class="vlan-header">
+                      <h4>{vlan.name}</h4>
+                      <span class="tag">{vlan.subnet}</span>
+                    </div>
+                    <div class="vlan-devices">
+                      {(vlan.devices || []).map((dev: string) => (
+                        <span class="vlan-device">{dev}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+
+    <!-- WAN Tab -->
+    {tabs.wan?.enabled && (() => {
+      /* Group exposed services by VM */
+      const svcByVm = (wan.exposedServices || []).reduce((acc: any, svc: any) => {
+        const key = svc.vm;
+        if (!acc[key]) acc[key] = { vm: svc.vm, node: svc.node, services: [] };
+        acc[key].services.push(svc);
+        return acc;
+      }, {});
+      const vmGroups = Object.values(svcByVm) as any[];
+
+      return (
+        <div class="tab-panel hidden" data-panel="wan" role="tabpanel">
+          <h2 class="gradient-text">WAN — Exposition des services</h2>
+          {wan.description && <p class="wan-description">{wan.description}</p>}
+
+          <!-- Schema diagram -->
+          <div class="wan-schema">
+            <!-- WAN entry -->
+            <div class="schema-row schema-entry slide-in">
+              <div class="schema-node schema-wan">
+                <Globe size={22} />
+                <span>WAN / Internet</span>
+              </div>
+            </div>
+            <div class="schema-connector-v"></div>
+
+            <!-- nginx (edge) -->
+            <div class="schema-row slide-in" style="--stage-delay: 0.1s">
+              <div class="schema-node schema-nginx">
+                <Shield size={20} />
+                <div class="schema-node-content">
+                  <span class="schema-node-title">nginx (Edge)</span>
+                  <span class="schema-node-sub">CrowdSec · Fail2Ban · db-ip</span>
+                </div>
+              </div>
+            </div>
+            <div class="schema-connector-v"></div>
+
+            <!-- Shared services row (ACME + Authentik) -->
+            <div class="schema-shared-row slide-in" style="--stage-delay: 0.15s">
+              <div class="schema-node schema-shared">
+                <Lock size={16} />
+                <div class="schema-node-content">
+                  <span class="schema-node-title">step-ca (ACME)</span>
+                  <span class="schema-node-sub">PKI interne — TLS end-to-end</span>
+                </div>
+              </div>
+              <div class="schema-node schema-shared">
+                <Shield size={16} />
+                <div class="schema-node-content">
+                  <span class="schema-node-title">Authentik (SSO)</span>
+                  <span class="schema-node-sub">Authentification centralisée</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fan-out lines -->
+            <div class="schema-fanout">
+              <div class="schema-fanout-line"></div>
+            </div>
+
+            <!-- VMs with Traefik -->
+            <div class="schema-vms-row slide-in" style="--stage-delay: 0.2s">
+              {vmGroups.map((group: any) => (
+                <div class="schema-vm-col">
+                  <div class="schema-node schema-traefik">
+                    <Network size={16} />
+                    <div class="schema-node-content">
+                      <span class="schema-node-title">Traefik</span>
+                      <span class="schema-node-sub">{group.vm} @ {group.node}</span>
+                    </div>
+                  </div>
+                  <div class="schema-connector-v schema-connector-sm"></div>
+                  <div class="schema-services-list">
+                    {group.services.map((svc: any) => (
+                      <div class="schema-service">
+                        <span class="schema-svc-dot"></span>
+                        <span class="schema-svc-name">{svc.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    })()}
+
+    <!-- Services Tab -->
+    {tabs.services?.enabled && (
+      <div class="tab-panel hidden" data-panel="services" role="tabpanel">
+        <h2 class="gradient-text">Services</h2>
+        <div class="services-grid">
+          {(infra.serviceGroups || []).map((group: any, gi: number) => (
+            <div class="service-group slide-in" style={`--group-color: ${colorMap[group.color] || '#8b5cf6'}; --stage-delay: ${gi * 0.05}s`}>
+              <div class="sg-header">
+                <div class="sg-title-row">
+                  <div class="sg-accent-bar"></div>
+                  <div class="sg-title">
+                    <span class="sg-vm">{group.vm}</span>
+                    <span class="sg-node">@ {group.node}</span>
+                  </div>
+                </div>
+                <span class="tag sg-tag">{group.type}</span>
+              </div>
+              <div class="sg-service-list">
+                {(group.services || []).map((svc: any) => (
+                  <div class="sg-service-row">
+                    <div class="sg-svc-left">
+                      <span class:list={['sg-status-dot', `status-${svc.status}`]}></span>
+                      <span class="sg-svc-name">{svc.name}</span>
+                    </div>
+                    <span class="sg-svc-desc">{svc.description}</span>
+                    <div class="sg-svc-end">
+                      {docLinks[svc.name] ? (
+                        <a href={docLinks[svc.name]} class="service-doc-link" title="Documentation">
+                          <BookOpen size={11} />
+                          <span>doc</span>
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Graph Tab -->
+    {tabs.graph?.enabled && (
+      <div class="tab-panel hidden" data-panel="graph" role="tabpanel">
+        <InfraViz client:only="react" />
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .infra-page { max-width: 1100px; padding-top: 2rem; padding-bottom: 4rem; }
+
+  /* slide-in is CSS-driven (tab switch); reveal is GSAP-driven via Animations.astro */
+  .slide-in { animation: slideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: var(--stage-delay, 0s); }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* ── Stats banner ── */
+  .stats-banner {
+    margin-bottom: 2rem;
+  }
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem;
+  }
+  .stat-card {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    background: var(--card-bg); backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid var(--card-border); border-radius: 0.85rem;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+    animation: statPop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--stat-delay, 0s);
+  }
+  @keyframes statPop {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to   { opacity: 1; transform: none; }
+  }
+  .stat-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--stat-color) 40%, transparent);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--stat-color) 10%, transparent),
+                0 0 0 1px color-mix(in srgb, var(--stat-color) 15%, transparent);
+  }
+  .stat-bar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--stat-color), transparent);
+    opacity: 0; transition: opacity 0.3s ease;
+  }
+  .stat-card:hover .stat-bar { opacity: 0.7; }
+  .stat-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; flex-shrink: 0;
+    border-radius: 0.6rem;
+    background: color-mix(in srgb, var(--stat-color) 10%, transparent);
+    color: var(--stat-color);
+    transition: background 0.3s ease;
+  }
+  .stat-card:hover .stat-icon {
+    background: color-mix(in srgb, var(--stat-color) 18%, transparent);
+  }
+  .stat-body { min-width: 0; }
+  .stat-value {
+    font-family: var(--font-code); font-size: 1.15rem; font-weight: 700;
+    color: var(--text); display: block; line-height: 1.2;
+  }
+  .stat-value small { font-size: 0.7rem; font-weight: 400; color: var(--muted-text); }
+  .stat-label { font-size: 0.65rem; color: var(--muted-text); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-top: 0.1rem; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 0.25rem; margin-bottom: 2rem;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 0;
+  }
+  .tab {
+    font-family: var(--font-code); font-size: 0.82rem;
+    padding: 0.6rem 1.1rem; border: none; background: none;
+    color: var(--muted-text); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s ease, border-color 0.3s ease;
+    position: relative;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Nodes (/infra) ── */
+  .nodes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 1rem; }
+  .node-card {
+    padding: 1.25rem;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+  }
+  .node-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+  .node-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+  .node-title-row { display: flex; align-items: center; gap: 0.6rem; }
+  .node-color-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .node-header h3 { font-size: 1.1rem; margin: 0; }
+  .node-type-icon { color: var(--muted-text); margin-top: 2px; }
+  .node-specs { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
+  .spec { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-code); font-size: 0.78rem; color: var(--muted-text); }
+
+  .node-services { display: flex; flex-direction: column; }
+  .node-service {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.83rem; padding: 0.3rem 0.25rem;
+    border-bottom: 1px solid var(--card-border);
+    border-radius: 0.25rem;
+    transition: padding-left 0.2s ease, background 0.15s ease;
+  }
+  .node-service:hover { padding-left: 0.5rem; background: var(--card-bg); }
+  .node-service:last-child { border-bottom: none; }
+  .service-name { color: var(--text); }
+
+  /* ── VLANs (/lan) ── */
+  .vlan-category { margin-bottom: 2.5rem; }
+  .vlan-cat-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+  .vlan-cat-badge {
+    font-family: var(--font-code); font-size: 0.9rem; font-weight: 700;
+    color: var(--cat-color);
+  }
+  .vlan-cat-count {
+    font-family: var(--font-code); font-size: 0.65rem;
+    background: color-mix(in srgb, var(--cat-color) 12%, transparent);
+    color: var(--cat-color);
+    border: 1px solid color-mix(in srgb, var(--cat-color) 25%, transparent);
+    padding: 0.1rem 0.4rem; border-radius: 0.25rem;
+  }
+  .vlans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.85rem; }
+  .vlan-card {
+    padding: 0.9rem 1.1rem;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+  }
+  .vlan-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .vlan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+  .vlan-header h4 { font-size: 0.9rem; margin: 0; font-family: var(--font-code); }
+  .vlan-devices { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .vlan-device { font-family: var(--font-code); font-size: 0.72rem; color: var(--muted-text); background: rgba(255,255,255,0.04); padding: 0.1rem 0.4rem; border-radius: 0.2rem; border: 1px solid var(--card-border); }
+
+  /* ── WAN Schema ── */
+  .wan-description { color: var(--muted-text); margin-bottom: 2rem; line-height: 1.7; }
+
+  .wan-schema {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0; padding: 1rem 0 2rem;
+  }
+
+  .schema-row { display: flex; justify-content: center; }
+
+  .schema-connector-v {
+    width: 2px; height: 28px;
+    background: linear-gradient(to bottom, var(--accent), rgba(212, 132, 90, 0.2));
+    margin: 0 auto;
+  }
+  .schema-connector-sm { height: 16px; }
+
+  .schema-node {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.8rem 1.25rem;
+    background: var(--card-bg); backdrop-filter: blur(16px) saturate(1.3);
+    border: 1px solid var(--card-border); border-radius: 0.75rem;
+    font-family: var(--font-code); font-size: 0.85rem;
+    color: var(--text); white-space: nowrap;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .schema-node:hover {
+    border-color: var(--card-border-hover);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .schema-wan { border-color: rgba(224, 125, 106, 0.3); color: #e07d6a; }
+  .schema-nginx { border-left: 3px solid var(--accent); }
+
+  .schema-node-content { display: flex; flex-direction: column; gap: 0.15rem; }
+  .schema-node-title { font-weight: 600; font-size: 0.85rem; }
+  .schema-node-sub { font-size: 0.7rem; color: var(--muted-text); font-weight: 400; }
+
+  .schema-shared-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .schema-shared { border-left: 3px solid #5ecfba; font-size: 0.8rem; }
+
+  .schema-fanout {
+    display: flex; justify-content: center;
+    width: 100%; max-width: 900px; padding: 0 2rem;
+    position: relative; height: 32px;
+  }
+  .schema-fanout-line {
+    position: absolute; top: 0; left: 10%; right: 10%; height: 100%;
+    border-left: 2px solid rgba(212, 132, 90, 0.2);
+    border-right: 2px solid rgba(212, 132, 90, 0.2);
+    border-bottom: 2px solid rgba(212, 132, 90, 0.2);
+    border-radius: 0 0 1rem 1rem;
+  }
+
+  .schema-vms-row {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    justify-content: center; width: 100%; padding: 0.5rem 0;
+  }
+
+  .schema-vm-col {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0; min-width: 140px; flex: 1; max-width: 200px;
+  }
+
+  .schema-traefik {
+    border-left: 3px solid #b08fcf;
+    font-size: 0.78rem; padding: 0.6rem 0.9rem; width: 100%;
+  }
+
+  .schema-services-list {
+    display: flex; flex-direction: column; gap: 0.3rem; width: 100%;
+    background: var(--card-bg); backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border); border-radius: 0.6rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .schema-service {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-family: var(--font-code); font-size: 0.68rem; line-height: 1.4;
+  }
+  .schema-svc-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #5ecfba; flex-shrink: 0;
+    box-shadow: 0 0 4px rgba(94, 207, 186, 0.3);
+  }
+  .schema-svc-name { color: var(--text); font-weight: 500; white-space: nowrap; }
+
+  /* ── Services (/srv) ── */
+  .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+
+  .service-group {
+    background: var(--card-bg); backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid var(--card-border); border-radius: 0.9rem;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .service-group:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.35), 0 0 0 1px color-mix(in srgb, var(--group-color) 20%, transparent);
+    border-color: color-mix(in srgb, var(--group-color) 25%, transparent);
+  }
+
+  .sg-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.85rem 1rem 0.75rem;
+    border-bottom: 1px solid var(--card-border);
+    background: color-mix(in srgb, var(--group-color) 4%, transparent);
+  }
+  .sg-title-row { display: flex; align-items: center; gap: 0.6rem; }
+  .sg-accent-bar {
+    width: 3px; height: 28px; border-radius: 2px;
+    background: var(--group-color); flex-shrink: 0;
+  }
+  .sg-title { display: flex; flex-direction: column; gap: 0.05rem; }
+  .sg-vm { font-size: 0.92rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+  .sg-node { font-family: var(--font-code); font-size: 0.62rem; color: var(--muted-text); }
+  .sg-tag { font-size: 0.6rem !important; }
+
+  .sg-service-list { padding: 0.4rem 0; }
+  .sg-service-row {
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: center; gap: 0.5rem;
+    padding: 0.35rem 1rem;
+    transition: background 0.15s ease;
+  }
+  .sg-service-row:hover { background: color-mix(in srgb, var(--group-color) 5%, transparent); }
+
+  .sg-svc-left { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+  .sg-status-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    background: var(--muted-text);
+  }
+  .sg-status-dot.status-online  { background: #5ecfba; box-shadow: 0 0 4px rgba(94,207,186,0.5); }
+  .sg-status-dot.status-offline { background: #e07d6a; }
+  .sg-svc-name {
+    font-size: 0.83rem; color: var(--text); font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .sg-svc-desc {
+    font-family: var(--font-code); font-size: 0.68rem; color: var(--muted-text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sg-svc-end {
+    display: flex; align-items: center; justify-content: flex-end; min-width: 42px;
+  }
+
+  /* Doc link badge */
+  .service-doc-link {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-family: var(--font-code); font-size: 0.6rem; font-weight: 600;
+    text-decoration: none; white-space: nowrap; flex-shrink: 0;
+    padding: 0.12rem 0.38rem; border-radius: 0.25rem;
+    background: rgba(94,207,186,0.08); color: var(--link-color);
+    border: 1px solid rgba(94,207,186,0.2);
+    transition: all 0.2s ease;
+  }
+  .service-doc-link:hover {
+    background: rgba(212,132,90,0.12); color: var(--accent);
+    border-color: rgba(212,132,90,0.3); transform: translateY(-1px);
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .stat-card:last-child { grid-column: span 2; }
+    .nodes-grid, .vlans-grid, .services-grid { grid-template-columns: 1fr; }
+    .schema-vms-row { flex-direction: column; align-items: center; }
+    .schema-vm-col { max-width: 100%; min-width: unset; width: 80%; }
+    .schema-fanout { display: none; }
+    .schema-shared-row { flex-direction: column; }
+    .sg-svc-desc { max-width: 80px; }
+  }
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .stat-card:last-child { grid-column: span 1; }
+  }
+</style>
+
+<script>
+  // Tab switching
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = (tab as HTMLElement).dataset.tab;
+      tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+      panels.forEach(p => p.classList.add('hidden'));
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      const panel = document.querySelector(`[data-panel="${target}"]`);
+      panel?.classList.remove('hidden');
+      // Re-trigger slide-in animations on tab switch
+      panel?.querySelectorAll('.slide-in').forEach(el => {
+        el.classList.remove('slide-in');
+        void (el as HTMLElement).offsetWidth;
+        el.classList.add('slide-in');
+      });
+    });
+  });
+
+  // Scroll reveal + counter animation handled globally by Animations.astro (GSAP)
+</script>

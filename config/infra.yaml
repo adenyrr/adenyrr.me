@@ -1,0 +1,459 @@
+# =============================================================================
+# CONFIGURATION DE L'INFRASTRUCTURE
+# =============================================================================
+# Modifiez ce fichier pour mettre à jour toutes les informations affichées.
+# Chaque onglet peut être activé/désactivé individuellement.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# PARAMÈTRES GÉNÉRAUX
+# -----------------------------------------------------------------------------
+documentation:
+  url: "https://docu.adenyrr.me"
+  label: "Documentation complète"
+
+stats:
+  totalCpuCores: 32
+  totalRamGB: 80
+  totalServices: 18
+  cephStorage: "3×2 To"
+  nasStorage: "2×12 To"
+
+# -----------------------------------------------------------------------------
+# OPTIONS D'AFFICHAGE
+# -----------------------------------------------------------------------------
+display:
+  hideMonitoring: true
+  hideThroughput: true
+
+# -----------------------------------------------------------------------------
+# ONGLETS (activables/désactivables)
+# -----------------------------------------------------------------------------
+tabs:
+  infrastructure:
+    enabled: true
+    label: "/infra"
+    icon: "Server"
+  lan:
+    enabled: true
+    label: "/lan"
+    icon: "Network"
+  wan:
+    enabled: true
+    label: "/wan"
+    icon: "Globe"
+  services:
+    enabled: true
+    label: "/srv"
+    icon: "Boxes"
+  graph:
+    enabled: true
+    label: "/graph"
+    icon: "GitBranch"
+
+# -----------------------------------------------------------------------------
+# NODES PROXMOX
+# -----------------------------------------------------------------------------
+proxmoxNodes:
+  - name: "Amélia"
+    cpu: "Intel i7-6700K"
+    ram: "8c / 16 GB"
+    color: "cyan"
+    services:
+      - { name: "CEPH (mon, mgr, osd)", type: "Natif" }
+      - { name: "Opensense", type: "VM" }
+      - { name: "SIEM", type: "VM" }
+      - { name: "DNS", type: "LXC" }
+      - { name: "Net-tools", type: "LXC" }
+      - { name: "Proxy", type: "LXC" }
+      - { name: "ACME", type: "LXC" }
+
+  - name: "Anne"
+    cpu: "AMD Ryzen 5 3500 GE Pro"
+    ram: "8c / 16 GB"
+    color: "purple"
+    services:
+      - { name: "CEPH (mon, mgr)", type: "Natif" }
+      - { name: "Forgejo", type: "LXC" }
+      - { name: "Deploy", type: "LXC" }
+      - { name: "Analytics", type: "LXC" }
+      - { name: "Monitoring", type: "LXC" }
+      - { name: "DCManager", type: "LXC" }
+      - { name: "PVE-Export", type: "LXC" }
+
+  - name: "Grace"
+    cpu: "AMD Ryzen 7 2700X"
+    ram: "16c / 48 GB"
+    color: "green"
+    services:
+      - { name: "CEPH (mon, mgr, osd)", type: "Natif" }
+      - { name: "Stockage", type: "VM" }
+      - { name: "Médias", type: "VM" }
+      - { name: "Cloud", type: "VM" }
+      - { name: "Frontend", type: "VM" }
+      - { name: "LLM", type: "VM" }
+      - { name: "Lab", type: "VM" }
+      - { name: "KubeMaster", type: "VM" }
+      - { name: "KubeWorker", type: "VM" }
+
+# -----------------------------------------------------------------------------
+# PÉRIPHÉRIQUES RÉSEAU
+# -----------------------------------------------------------------------------
+networkDevices:
+  - name: "RPi 4"
+    cpu: "ARM Cortex-A72"
+    ram: "4 GB"
+    color: "red"
+    icon: "Server"
+    services:
+      - { name: "Home Assistant", type: "Natif" }
+
+  - name: "Routeur Opensense"
+    cpu: "NIC Intel 4x2.5G"
+    ram: "Full open-source"
+    color: "orange"
+    icon: "Router"
+    services:
+      - { name: "Firewall", type: "Natif" }
+      - { name: "VPN", type: "Natif" }
+      - { name: "DHCP/DNS", type: "Natif" }
+
+  - name: "Ubiquiti Unifi AP"
+    cpu: "WiFi 6 - MESH"
+    ram: "Point d'accès"
+    color: "blue"
+    icon: "Wifi"
+    services:
+      - { name: "WiFi 2.4GHz", type: "Natif" }
+      - { name: "WiFi 5GHz", type: "Natif" }
+
+# -----------------------------------------------------------------------------
+# VLANS
+# -----------------------------------------------------------------------------
+vlans:
+  # Infrastructure Critique
+  - name: "LAN 10 (INFRA)"
+    subnet: "/29"
+    icon: "Server"
+    devices: ["Amélia", "Anne", "Grâce"]
+    category: "critical"
+    color: "red"
+
+  - name: "LAN 20 (ADMIN)"
+    subnet: "/29"
+    icon: "Monitor"
+    devices: ["Komodo", "Cockpit", "Grafana", "..."]
+    category: "critical"
+    color: "red"
+
+  - name: "LAN 30 (POULE)"
+    subnet: "/30"
+    icon: "HardDrive"
+    devices: ["OpenMediaVault", "CEPH", "SMB"]
+    category: "critical"
+    color: "red"
+
+  # Production
+  - name: "LAN 40 (FORGE)"
+    subnet: "/24"
+    icon: "GitBranch"
+    devices: ["ForgeJo"]
+    category: "production"
+    color: "blue"
+
+  - name: "LAN 50 (SERVICES)"
+    subnet: "/24"
+    icon: "Boxes"
+    devices: ["Authentik", "Jellyfin", "Immich", "..."]
+    category: "production"
+    color: "blue"
+
+  - name: "LAN 60 (KUBE)"
+    subnet: "/29"
+    icon: "Workflow"
+    devices: ["Cluster Kubernetes", "Réservé MetalLB"]
+    category: "production"
+    color: "blue"
+
+  # Réseau
+  - name: "LAN 1 (NATIF)"
+    subnet: "/28"
+    icon: "Network"
+    devices: ["Switch"]
+    category: "network"
+    color: "green"
+
+  - name: "LAN 80 (DNSPROXY)"
+    subnet: "/30"
+    icon: "HardDrive"
+    devices: ["DNS", "Proxy"]
+    category: "network"
+    color: "green"
+
+  - name: "LAN 150 (IoT)"
+    subnet: "/24"
+    icon: "Wifi"
+    devices: ["IoT"]
+    category: "access"
+    color: "purple"
+
+  # Accès
+  - name: "LAN 90 (PRINT)"
+    subnet: "/29"
+    icon: "Printer"
+    devices: ["PRINT", "PRINT3D"]
+    category: "access"
+    color: "purple"
+
+  - name: "LAN 100 (W.Fi)"
+    subnet: "/24"
+    icon: "Wifi"
+    devices: ["Amplifi Mesh"]
+    category: "access"
+    color: "purple"
+
+# -----------------------------------------------------------------------------
+# SERVICES DÉTAILLÉS (par VM/LXC)
+# -----------------------------------------------------------------------------
+serviceGroups:
+  # Amélia
+  - vm: "Opensense"
+    node: "Amélia"
+    type: "VM"
+    color: "cyan"
+    services:
+      - { name: "Firewall", description: "OPNsense Firewall", status: "online" }
+      - { name: "VPN WireGuard", description: "VPN Server", status: "online" }
+      - { name: "DHCP/DNS", description: "Network Services", status: "online" }
+
+  - vm: "SIEM"
+    node: "Amélia"
+    type: "VM"
+    color: "cyan"
+    services:
+      - { name: "Wazuh", description: "Security Monitoring", status: "online" }
+      - { name: "Suricata", description: "IDS/IPS", status: "online" }
+
+  - vm: "DNS"
+    node: "Amélia"
+    type: "LXC"
+    color: "cyan"
+    services:
+      - { name: "AdGuard Home", description: "DNS Filtering", status: "online" }
+
+  - vm: "Net-tools"
+    node: "Amélia"
+    type: "LXC"
+    color: "cyan"
+    services:
+      - { name: "Speedtest Tracker", description: "Network Speed Monitoring", status: "online" }
+
+  - vm: "Proxy"
+    node: "Amélia"
+    type: "LXC"
+    color: "cyan"
+    services:
+      - { name: "Nginx Proxy Manager", description: "Reverse Proxy", status: "online" }
+      - { name: "CrowdSec", description: "Security Engine", status: "online" }
+      - { name: "Fail2ban", description: "Intrusion Prevention", status: "online" }
+
+  - vm: "ACME"
+    node: "Amélia"
+    type: "LXC"
+    color: "cyan"
+    services:
+      - { name: "step-ca", description: "ACME Certificate Authority", status: "online" }
+
+  # Anne
+  - vm: "Forgejo"
+    node: "Anne"
+    type: "LXC"
+    color: "purple"
+    services:
+      - { name: "ForgeJo", description: "Git Forge", status: "online" }
+
+  - vm: "Deploy"
+    node: "Anne"
+    type: "LXC"
+    color: "purple"
+    services:
+      - { name: "Komodo", description: "Docker from git", status: "online" }
+      - { name: "Semaphore", description: "Infra from git", status: "online" }
+
+  - vm: "Analytics"
+    node: "Anne"
+    type: "LXC"
+    color: "purple"
+    services:
+      - { name: "Umami", description: "RGPD-ok tracking", status: "online" }
+
+  - vm: "Monitoring"
+    node: "Anne"
+    type: "VM"
+    color: "purple"
+    services:
+      - { name: "Grafana", description: "Metrics Visualization", status: "online" }
+      - { name: "Prometheus", description: "Metrics Collection", status: "online" }
+      - { name: "InfluxDB", description: "Metrics Database", status: "online" }
+
+  - vm: "DCManager"
+    node: "Anne"
+    type: "VM"
+    color: "purple"
+    services:
+      - { name: "PDM", description: "Proxmox Datacenter Manager", status: "online" }
+
+  - vm: "PVE-Export"
+    node: "Anne"
+    type: "VM"
+    color: "purple"
+    services:
+      - { name: "PVE-export", description: "PVE prometheus exporter", status: "online" }
+
+  # Grace
+  - vm: "Stockage"
+    node: "Grace"
+    type: "VM"
+    color: "green"
+    services:
+      - { name: "OpenMediaVault", description: "NAS System", status: "online" }
+      - { name: "CEPH", description: "Distributed Storage", status: "online" }
+      - { name: "SMB/NFS", description: "File Sharing", status: "online" }
+
+  - vm: "Médias"
+    node: "Grace"
+    type: "VM"
+    color: "green"
+    services:
+      - { name: "Jellyfin", description: "Media Server", status: "online" }
+      - { name: "Qbittorrent", description: "Qbit + exporter", status: "online" }
+
+  - vm: "Cloud"
+    node: "Grace"
+    type: "VM"
+    color: "green"
+    services:
+      - { name: "Immich", description: "Photo Management", status: "online" }
+      - { name: "OpenCloud", description: "Cloud Storage", status: "online" }
+      - { name: "LinkWarden", description: "Links bookmark manager", status: "online" }
+      - { name: "Vaultwarden", description: "Password Management", status: "online" }
+
+  - vm: "Frontend"
+    node: "Grace"
+    type: "VM"
+    color: "green"
+    services:
+      - { name: "Homepage", description: "Dashboard", status: "online" }
+
+  - vm: "LLM"
+    node: "Grace"
+    type: "VM"
+    color: "green"
+    services:
+      - { name: "Ollama", description: "Local LLM Server", status: "online" }
+      - { name: "Open WebUI", description: "LLM Interface", status: "online" }
+
+  - vm: "Lab"
+    node: "Grace"
+    type: "VM"
+    color: "green"
+    services:
+      - { name: "Win Server", description: "Pas le choix", status: "online" }
+
+  - vm: "KubeMaster"
+    node: "Grace"
+    type: "VM"
+    color: "green"
+    services:
+      - { name: "K8s Control Plane", description: "Kubernetes Master", status: "online" }
+      - { name: "MetalLB", description: "Load Balancer", status: "online" }
+
+  - vm: "KubeWorker"
+    node: "Grace"
+    type: "VM"
+    color: "green"
+    services:
+      - { name: "K8s Worker Node", description: "Kubernetes Worker", status: "online" }
+
+  # RPi 4
+  - vm: "Home Assistant"
+    node: "RPi 4"
+    type: "Natif"
+    color: "red"
+    services:
+      - { name: "Home Assistant", description: "Smart Home Hub", status: "online" }
+
+# -----------------------------------------------------------------------------
+# EXPOSITION WAN (Onglet WAN)
+# -----------------------------------------------------------------------------
+wanExposure:
+  description: "Tous les services exposés sur Internet transitent par une chaîne de sécurité multicouche avant d'atteindre les VMs."
+  chain:
+    - step: "WAN / Internet"
+      icon: "Globe"
+      color: "red"
+      description: "Trafic entrant depuis Internet"
+    - step: "nginx (Edge)"
+      icon: "Shield"
+      color: "orange"
+      description: "Reverse-proxy frontal"
+      features:
+        - "CrowdSec — blocage IPs malveillantes & comportements anormaux"
+        - "Fail2Ban (F2B) — anti-brute-force"
+        - "db-ip — géolocalisation IP & filtrage géographique"
+        - "Rate limiting & headers sécurité"
+    - step: "Traefik (par VM)"
+      icon: "Network"
+      color: "purple"
+      description: "Reverse-proxy interne — une instance par VM"
+      features:
+        - "Routage par nom de domaine interne"
+        - "TLS end-to-end via PKI interne (step-ca)"
+        - "Certificats HTTPS pour chaque service"
+        - "Middlewares d'authentification (Authentik)"
+    - step: "PKI Interne (step-ca)"
+      icon: "Lock"
+      color: "green"
+      description: "Autorité de certification privée"
+      features:
+        - "Génération & renouvellement automatique des certificats"
+        - "HTTPS end-to-end garanti sur tout le LAN"
+        - "Certificats X.509 pour chaque service"
+    - step: "Services"
+      icon: "Boxes"
+      color: "cyan"
+      description: "Chaque service exposé en HTTPS uniquement"
+
+  exposedServices:
+    - name: "Homepage"
+      domain: "home.adenyrr.me"
+      vm: "Frontend"
+      node: "Grace"
+    - name: "Grafana"
+      domain: "metrics.adenyrr.me"
+      vm: "Monitoring"
+      node: "Anne"
+    - name: "Immich"
+      domain: "photos.adenyrr.me"
+      vm: "Cloud"
+      node: "Grace"
+    - name: "OpenCloud"
+      domain: "cloud.adenyrr.me"
+      vm: "Cloud"
+      node: "Grace"
+    - name: "Jellyfin"
+      domain: "media.adenyrr.me"
+      vm: "Médias"
+      node: "Grace"
+    - name: "Open WebUI"
+      domain: "ai.adenyrr.me"
+      vm: "LLM"
+      node: "Grace"
+    - name: "Vaultwarden"
+      domain: "vault.adenyrr.me"
+      vm: "Cloud"
+      node: "Grace"
+    - name: "Authentik"
+      domain: "auth.adenyrr.me"
+      vm: "Cloud"
+      node: "Grace"

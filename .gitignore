@@ -1,5 +1,6 @@
 # build output
 dist/
+
 # generated types
 .astro/
 
@@ -7,18 +8,24 @@ dist/
 node_modules/
 
 # logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-
 # environment variables
 .env
-.env.production
+.env.*
+!.env.example
 
-# macOS-specific files
-.DS_Store
-
-# jetbrains setting folder
+# editor / IDE
+.vscode/
 .idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# pagefind (generated at build time by Starlight)
+public/pagefind/

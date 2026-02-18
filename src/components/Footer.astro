@@ -1,0 +1,103 @@
+---
+import { getSiteConfig } from '../utils/config';
+import { Rss } from 'lucide-astro';
+
+const config = getSiteConfig();
+const year = new Date().getFullYear();
+const footer = config.footer || {};
+---
+
+<footer>
+  <div class="footer-content">
+    <div class="copyright">
+      {footer.rss && (
+        <a href="/rss.xml" aria-label="RSS" title="RSS" class="rss-link">
+          <Rss size={16} />
+        </a>
+      )}
+      <span>
+        {footer.copyright || `© ${year}`}{' '}
+        <a href={footer.authorUrl || '/'} target="_blank" rel="noopener noreferrer">
+          {footer.author || config.site.author}
+        </a>
+      </span>
+    </div>
+    <div class="credits">
+      <span>
+        fait avec <span class="heart">❤️</span> par{' '}
+        <a href={footer.authorUrl || '/'} target="_blank" rel="noopener noreferrer">
+          {footer.author || config.site.author}
+        </a>
+        {' — '}
+        {(footer.poweredBy || []).map((item: any, i: number) => (
+          <>
+            <a href={item.url} target="_blank" rel="noopener noreferrer">{item.label}</a>
+            {i < (footer.poweredBy?.length || 0) - 1 ? ' · ' : ''}
+          </>
+        ))}
+      </span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  footer {
+    padding: 2.5rem 1rem;
+    background: transparent;
+    color: var(--muted-text);
+    text-align: center;
+    font-family: var(--font-code);
+    font-size: 0.8rem;
+    margin-top: auto;
+    border-top: 1px solid var(--card-border);
+    transition: var(--transition-colors);
+  }
+
+  .footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .copyright {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .rss-link {
+    color: var(--muted-text);
+    transition: color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .rss-link:hover { color: var(--accent); }
+
+  .credits a,
+  .copyright a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .credits a:hover,
+  .copyright a:hover {
+    color: var(--accent);
+  }
+
+  .heart {
+    margin: 0 0.15rem;
+  }
+
+  @media (min-width: 720px) {
+    .footer-content {
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+    }
+  }
+</style>
