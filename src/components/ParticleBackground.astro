@@ -126,13 +126,14 @@ const mouseRadius = particles.mouseRadius || 150;
       window.addEventListener('mouseleave', onMouseLeave);
       animate();
 
-      // Cleanup for Astro View Transitions
+      // Cleanup for Astro View Transitions — { once: true } prevents
+      // stale handlers from accumulating across multiple navigations
       document.addEventListener('astro:before-swap', function() {
         window.removeEventListener('resize', onResize);
         window.removeEventListener('mousemove', onMouseMove);
         window.removeEventListener('mouseleave', onMouseLeave);
         if (animationId) cancelAnimationFrame(animationId);
-      });
+      }, { once: true });
     })();
   </script>
 )}

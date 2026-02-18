@@ -517,11 +517,13 @@ a:hover {
 
 /* ============================================================================
    GLOBAL REVEAL ANIMATION — driven by GSAP ScrollTrigger in Animations.astro
-   CSS provides the initial hidden state as a no-JS fallback
+   Elements start VISIBLE by default (opacity:1). GSAP sets opacity:0 only on
+   elements that are BELOW the fold, then scroll-reveals them. Above-fold
+   elements are never touched. Do NOT set opacity:0 here — it would make
+   above-fold content permanently invisible on View Transition navigation.
    ============================================================================ */
 .reveal {
-  opacity: 0;
-  transform: translateY(22px);
+  /* intentionally empty — GSAP controls visibility for below-fold elements only */
 }
 
 /* Stagger helpers */

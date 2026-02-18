@@ -5,22 +5,36 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ── Lenis instance (module-level so we can kill+recreate) ── */
+/* ── Module-level state — persists across View Transitions ── */
 let lenis: Lenis | null = null;
+let lenisRaf: ((time: number) => void) | null = null;
 let ctx: gsap.Context | null = null;
-let isFirstLoad = true;
 
 /* ── Reduced-motion preference ── */
 const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ════════════════════════════════════════════════════════════
+   CLEANUP — must run before every re-init
+   ════════════════════════════════════════════════════════════ */
+function cleanup() {
+  /* Kill GSAP context (all tweens + ScrollTriggers created inside it) */
+  if (ctx) { ctx.revert(); ctx = null; }
+  /* Remove lenisRaf from ticker BEFORE destroying Lenis —
+     critical: without this, stale callbacks accumulate across navigations
+     and eventually call .raf() on a destroyed Lenis instance           */
+  if (lenisRaf) { gsap.ticker.remove(lenisRaf); lenisRaf = null; }
+  if (lenis) { lenis.destroy(); lenis = null; }
+  /* Kill any stray ScrollTriggers not captured by ctx (safety net) */
+  ScrollTrigger.getAll().forEach((st) => st.kill());
+  ScrollTrigger.clearScrollMemory();
+}
+
+/* ════════════════════════════════════════════════════════════
    INIT — called on first load and after every View Transition
    ════════════════════════════════════════════════════════════ */
 function init() {
-  /* Cleanup previous context cleanly (kills all tweens & ScrollTriggers in scope) */
-  if (ctx) { ctx.revert(); ctx = null; }
-  if (lenis) { lenis.destroy(); lenis = null; }
+  cleanup();
 
   /* Shortened durations when user prefers reduced motion */
   const reduced = prefersReducedMotion();
@@ -34,33 +48,22 @@ function init() {
     touchMultiplier: 1.4,
   });
 
-  /* Connect Lenis RAF to GSAP ticker (single callback, no leaks) */
-  const lenisRaf = (time: number) => { lenis!.raf(time * 1000); };
+  /* Connect Lenis RAF to GSAP ticker.
+     - Store reference so we can remove it on cleanup (prevents accumulation).
+     - No scrollerProxy needed: Lenis v1+ dispatches native scroll events,
+       GSAP ScrollTrigger reads window.scrollY directly and works correctly. */
+  lenisRaf = (time: number) => { lenis!.raf(time * 1000); };
   gsap.ticker.add(lenisRaf);
   gsap.ticker.lagSmoothing(0);
 
-  /* Forward Lenis scroll to ScrollTrigger */
+  /* Forward Lenis scroll events to ScrollTrigger for position updates */
   lenis.on('scroll', ScrollTrigger.update);
 
-  /* Tell ScrollTrigger to use Lenis's scroll position */
-  ScrollTrigger.scrollerProxy(document.documentElement, {
-    scrollTop(value?: number) {
-      if (arguments.length && value !== undefined) {
-        lenis!.scrollTo(value, { immediate: true });
-      }
-      return lenis!.scroll;
-    },
-    getBoundingClientRect() {
-      return { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight };
-    },
-  });
-  ScrollTrigger.defaults({ scroller: document.documentElement });
-
-  /* On View Transition navigation, skip hiding elements already in viewport */
-  const isVT = !isFirstLoad;
-  isFirstLoad = false;
+  /* Always skip hiding elements already visible in viewport — both on first
+     load AND on VT navigation. Without this, GSAP would set opacity:0 on
+     elements that are already painted, causing a visible flash.           */
   const skipIfVisible = (el: Element) =>
-    isVT && el.getBoundingClientRect().top < window.innerHeight + 50;
+    el.getBoundingClientRect().top < window.innerHeight + 100;
 
   /* ── gsap.context scopes all animations for clean teardown ── */
   ctx = gsap.context(() => {
@@ -88,7 +91,12 @@ function init() {
     /* ── Scroll reveal — .reveal elements ── */
     const reveals = gsap.utils.toArray<Element>('.reveal');
     reveals.forEach((el) => {
-      if (skipIfVisible(el)) return;
+      if (skipIfVisible(el)) {
+        /* Element is already in the viewport — clear any stale GSAP inline
+           styles from a previous navigation so CSS defaults (opacity:1) apply */
+        gsap.set(el, { clearProps: 'opacity,transform,y' });
+        return;
+      }
       gsap.set(el, { opacity: 0, y: reduced ? 0 : 28 });
       ScrollTrigger.create({
         trigger: el,
@@ -103,7 +111,10 @@ function init() {
     /* ── Cards stagger on scroll ── */
     const cardSelectors = '.projects-grid, .certs-grid, .nodes-grid, .vlans-grid, .services-grid, .stats-grid';
     document.querySelectorAll<Element>(cardSelectors).forEach((group) => {
-      if (skipIfVisible(group)) return;
+      if (skipIfVisible(group)) {
+        gsap.set(group.querySelectorAll(':scope > *'), { clearProps: 'opacity,transform,y,scale' });
+        return;
+      }
       const cards = group.querySelectorAll<Element>(':scope > *');
       if (!cards.length) return;
       gsap.set(cards, { opacity: 0, y: reduced ? 0 : 32, scale: 0.97 });
@@ -122,7 +133,10 @@ function init() {
 
     /* ── Section headers slide in from left ── */
     gsap.utils.toArray<Element>('.section-header').forEach((el) => {
-      if (skipIfVisible(el)) return;
+      if (skipIfVisible(el)) {
+        gsap.set(el, { clearProps: 'opacity,transform,x' });
+        return;
+      }
       gsap.set(el, { opacity: 0, x: reduced ? 0 : -24 });
       ScrollTrigger.create({
         trigger: el,
@@ -154,7 +168,10 @@ function init() {
     const timelineItems = gsap.utils.toArray<Element>('.timeline-item');
     if (timelineItems.length) {
       timelineItems.forEach((el, i) => {
-        if (skipIfVisible(el)) return;
+        if (skipIfVisible(el)) {
+          gsap.set(el, { clearProps: 'opacity,transform,x' });
+          return;
+        }
         gsap.set(el, { opacity: 0, x: reduced ? 0 : -20 });
         ScrollTrigger.create({
           trigger: el,
