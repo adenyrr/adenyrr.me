@@ -99,7 +99,7 @@ export default defineConfig({
       ],
       components: {
         SiteTitle: './src/components/starlight/SiteTitle.astro',
-        Header: './src/components/starlight/Header.astro',
+        Header: './src/components/Header.astro',
         Footer: './src/components/starlight/Footer.astro',
         MobileMenuToggle: './src/components/starlight/MobileMenuToggle.astro',
         Pagination: './src/components/starlight/Pagination.astro',

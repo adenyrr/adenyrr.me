@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { z } from "zod";
 
 /* ═══════════════════════════════════════════════════════════════
    DATA
@@ -107,6 +108,101 @@ const EDGE_STYLES = {
 };
 
 const TYPE_COLORS = { VM: "#a78bfa", LXC: "#38bdf8", Natif: "#4ecca3" };
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA VALIDATION (runtime)
+═══════════════════════════════════════════════════════════════ */
+
+const ContainerSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  type: z.enum(["VM", "LXC", "Natif"]),
+  wan: z.boolean(),
+  services: z.array(z.string().min(1)),
+  vlans: z.array(z.string().min(1)).optional(),
+  desc: z.string().min(1),
+});
+
+const ServerSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  color: z.string().min(1),
+  cpu: z.string().min(1),
+  cores: z.number().int().positive(),
+  ram: z.string().min(1),
+  containers: z.array(ContainerSchema),
+});
+
+const NetDeviceSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  icon: z.string().min(1),
+  color: z.string().min(1),
+  sub: z.string().min(1),
+  desc: z.string().min(1),
+  vlans: z.array(z.string().min(1)).optional(),
+  services: z.array(z.string().min(1)).optional(),
+  type: z.enum(["VM", "LXC", "Natif"]).optional(),
+});
+
+const VlanSchema = z.object({
+  id: z.string().min(1),
+  color: z.string().min(1),
+  num: z.number().int().positive(),
+  cidr: z.string().min(1),
+  desc: z.string().min(1),
+});
+
+const EdgeSchema = z.object({
+  from: z.string().min(1),
+  to: z.string().min(1),
+  type: z.enum(["wan", "expose", "ceph", "manage", "network"]),
+  label: z.string().min(1).optional(),
+});
+
+function validateInfraData() {
+  const serversRes = z.array(ServerSchema).safeParse(SERVERS);
+  if (!serversRes.success) throw new Error(`[InfraViz] SERVERS invalid: ${serversRes.error.message}`);
+
+  const netRes = z.array(NetDeviceSchema).safeParse(NET_DEVICES);
+  if (!netRes.success) throw new Error(`[InfraViz] NET_DEVICES invalid: ${netRes.error.message}`);
+
+  const vlanRes = z.array(VlanSchema).safeParse(VLANS);
+  if (!vlanRes.success) throw new Error(`[InfraViz] VLANS invalid: ${vlanRes.error.message}`);
+
+  const edgesRes = z.array(EdgeSchema).safeParse(EDGES);
+  if (!edgesRes.success) throw new Error(`[InfraViz] EDGES invalid: ${edgesRes.error.message}`);
+
+  const vlanIds = new Set(VLANS.map(v => v.id));
+  const knownIds = new Set<string>();
+
+  for (const srv of SERVERS) {
+    if (knownIds.has(srv.id)) throw new Error(`[InfraViz] Duplicate node id: ${srv.id}`);
+    knownIds.add(srv.id);
+    for (const c of srv.containers) {
+      if (knownIds.has(c.id)) throw new Error(`[InfraViz] Duplicate node id: ${c.id}`);
+      knownIds.add(c.id);
+      for (const vlan of c.vlans || []) {
+        if (!vlanIds.has(vlan)) throw new Error(`[InfraViz] Unknown VLAN '${vlan}' used by container '${c.id}'`);
+      }
+    }
+  }
+
+  for (const n of NET_DEVICES) {
+    if (knownIds.has(n.id)) throw new Error(`[InfraViz] Duplicate node id: ${n.id}`);
+    knownIds.add(n.id);
+    for (const vlan of n.vlans || []) {
+      if (!vlanIds.has(vlan)) throw new Error(`[InfraViz] Unknown VLAN '${vlan}' used by net device '${n.id}'`);
+    }
+  }
+
+  for (const e of EDGES) {
+    if (!knownIds.has(e.from)) throw new Error(`[InfraViz] Unknown edge.from '${e.from}'`);
+    if (!knownIds.has(e.to)) throw new Error(`[InfraViz] Unknown edge.to '${e.to}'`);
+  }
+}
+
+validateInfraData();
 
 /* ═══════════════════════════════════════════════════════════════
    LAYOUT — desktop
@@ -535,7 +631,7 @@ function DesktopView({ selected, onSelect }) {
    MOBILE VIEW
 ═══════════════════════════════════════════════════════════════ */
 
-function MobileView({ selected, onSelect }) {
+function MobileView({ selected, onSelect, focusMode, onToggleFocus, onClearSelection }) {
   const [open, setOpen] = useState({ amelie: true, anne: false, grace: false });
   const [vlanFilter, setVlanFilter] = useState(null);
   const [search, setSearch] = useState("");
@@ -545,26 +641,106 @@ function MobileView({ selected, onSelect }) {
     c.services.some(s => s.toLowerCase().includes(sl)) ||
     c.vlans?.some(v => v.toLowerCase().includes(sl));
   const inVlan = c => !vlanFilter || c.vlans?.includes(vlanFilter);
+  const focusEdges = selected ? EDGES.filter(e => e.from === selected || e.to === selected) : [];
+  const relatedIds = selected
+    ? new Set([selected, ...focusEdges.map(e => (e.from === selected ? e.to : e.from))])
+    : new Set<string>();
+  const inFocus = (id) => !focusMode || !selected || relatedIds.has(id);
+  const visibleContainersCount = SERVERS
+    .flatMap(s => s.containers)
+    .filter(c => match(c) && inVlan(c) && inFocus(c.id)).length;
+  const visibleServersCount = SERVERS
+    .filter(srv => inFocus(srv.id) || srv.containers.some(c => match(c) && inVlan(c) && inFocus(c.id))).length;
+  const selectedLabel = selected
+    ? (SERVERS.flatMap(s => s.containers).find(c => c.id === selected)?.label
+      || NET_DEVICES.find(n => n.id === selected)?.label
+      || SERVERS.find(s => s.id === selected)?.label
+      || selected)
+    : null;
 
   return (
-    <div style={{ padding: "12px 12px 60px", overflowY: "auto", WebkitOverflowScrolling: "touch",
+    <div style={{ padding: "12px 12px calc(72px + env(safe-area-inset-bottom))", overflowY: "auto", WebkitOverflowScrolling: "touch",
+      overscrollBehavior: "contain",
+      touchAction: "pan-y",
       flex: 1, minHeight: 0 }}>
 
-      <input value={search} onChange={e => setSearch(e.target.value)}
-        placeholder="🔍 Service, VLAN, label…"
-        style={{ width: "100%", background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
-          padding: "10px 14px", color: "#e2e8f0", fontSize: 13,
-          fontFamily: "inherit", outline: "none", marginBottom: 12, boxSizing: "border-box" }} />
+      <div style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 8,
+        marginBottom: 12,
+        paddingTop: 2,
+        paddingBottom: 8,
+        background: "linear-gradient(180deg, rgba(9,12,19,0.98) 0%, rgba(9,12,19,0.86) 72%, rgba(9,12,19,0) 100%)",
+        backdropFilter: "blur(10px)",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+      }}>
+        <input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="🔍 Service, VLAN, label…"
+          style={{ width: "100%", background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
+            padding: "11px 14px", color: "#e2e8f0", fontSize: 13,
+            fontFamily: "inherit", outline: "none", marginBottom: 9, boxSizing: "border-box" }} />
+
+        <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+        <button
+          onClick={onToggleFocus}
+          disabled={!selected}
+          style={{
+            padding: "8px 10px",
+            borderRadius: 8,
+            fontSize: 11.5,
+            fontFamily: "inherit",
+            border: `1px solid ${focusMode ? "#38bdf8" : "rgba(255,255,255,0.10)"}`,
+            background: focusMode ? "rgba(56,189,248,0.16)" : "rgba(255,255,255,0.02)",
+            color: focusMode ? "#38bdf8" : "#64748b",
+            cursor: selected ? "pointer" : "not-allowed",
+            opacity: selected ? 1 : 0.55,
+            minHeight: 36,
+          }}
+          title={selected ? "Limiter l'affichage au nœud sélectionné et ses connexions" : "Sélectionne d'abord un nœud"}
+        >
+          {focusMode ? "Focus ON" : "Focus OFF"}
+        </button>
+
+        {selected && (
+          <button
+            onClick={onClearSelection}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 8,
+              fontSize: 11.5,
+              fontFamily: "inherit",
+              border: "1px solid rgba(255,255,255,0.10)",
+              background: "rgba(255,255,255,0.02)",
+              color: "#64748b",
+              cursor: "pointer",
+              minHeight: 36,
+            }}
+          >
+            Réinitialiser
+          </button>
+        )}
+      </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 10.5, color: "#475569", paddingInline: 2 }}>
+          <span>{visibleServersCount} nœuds · {visibleContainersCount} services</span>
+          {selectedLabel && (
+            <span style={{ color: "#94a3b8", maxWidth: "46%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              Sélection: {selectedLabel}
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* VLAN filter chips */}
       <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 16 }}>
         {VLANS.map(v => (
           <button key={v.id} onClick={() => setVlanFilter(vlanFilter === v.id ? null : v.id)} title={v.desc}
-            style={{ padding: "4px 9px", borderRadius: 20, fontSize: 10, fontFamily: "inherit",
+            style={{ padding: "6px 10px", borderRadius: 20, fontSize: 10.5, fontFamily: "inherit",
               border: `1px solid ${vlanFilter === v.id ? v.color : "rgba(255,255,255,0.09)"}`,
               background: vlanFilter === v.id ? `${v.color}20` : "transparent",
-              color: vlanFilter === v.id ? v.color : "#64748b", cursor: "pointer" }}>
+              color: vlanFilter === v.id ? v.color : "#64748b", cursor: "pointer", minHeight: 32 }}>
             {v.num} {v.id}
           </button>
         ))}
@@ -577,7 +753,7 @@ function MobileView({ selected, onSelect }) {
           { id: "internet", label: "Internet / WAN",     sub: "Point d'entrée",             color: "#e07b39", icon: "◈" },
           { id: "router",   label: "Routeur OPNsense",   sub: "Firewall · VPN · DHCP",      color: "#e07b39", icon: "⟳" },
           { id: "proxy",    label: "Proxy — Nginx Edge", sub: "CrowdSec · Fail2ban · ACME", color: "#4ecca3", icon: "⇄" },
-        ].map((n, i) => (
+        ].filter(n => inFocus(n.id)).map((n, i) => (
           <div key={n.id}>
             <MRow id={n.id} label={n.label} sub={n.sub} color={n.color} icon={n.icon}
               selected={selected === n.id} onTap={() => onSelect(selected === n.id ? null : n.id)}
@@ -593,13 +769,13 @@ function MobileView({ selected, onSelect }) {
       <div style={{ marginTop: 10, marginBottom: 16 }}>
         <MLabelSection>SERVICES EXPOSÉS INTERNET</MLabelSection>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-          {SERVERS.flatMap(s => s.containers).filter(c => c.wan).map(c => (
+          {SERVERS.flatMap(s => s.containers).filter(c => c.wan && inFocus(c.id)).map(c => (
             <button key={c.id} onClick={() => onSelect(selected === c.id ? null : c.id)}
-              style={{ padding: "5px 11px", borderRadius: 20, fontSize: 11, fontFamily: "inherit",
+              style={{ padding: "6px 11px", borderRadius: 20, fontSize: 11.5, fontFamily: "inherit",
                 border: `1px solid ${selected === c.id ? "#4ecca3" : "rgba(78,204,163,0.22)"}`,
                 background: selected === c.id ? "rgba(78,204,163,0.14)" : "transparent",
                 color: selected === c.id ? "#4ecca3" : "#4a5568", cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 5 }}>
+                display: "flex", alignItems: "center", gap: 5, minHeight: 34 }}>
               <span style={{ color: "#e07b39", fontSize: 7 }}>●</span>{c.label}
             </button>
           ))}
@@ -609,7 +785,7 @@ function MobileView({ selected, onSelect }) {
       {/* CEPH mesh */}
       <MLabelSection>RÉPLICATION CEPH — 3 NŒUDS</MLabelSection>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 16 }}>
-        {SERVERS.map(srv => (
+        {SERVERS.filter(srv => inFocus(srv.id) || srv.containers.some(c => inFocus(c.id))).map(srv => (
           <div key={srv.id} style={{ background: "rgba(13,17,27,0.9)",
             border: `1px solid ${srv.color}38`, borderRadius: 8, padding: "9px 7px", textAlign: "center" }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: srv.color, marginBottom: 5,
@@ -627,15 +803,17 @@ function MobileView({ selected, onSelect }) {
       {/* Server accordions */}
       <MLabelSection>SERVEURS PROXMOX</MLabelSection>
       {SERVERS.map(srv => {
-        const visible = srv.containers.filter(c => match(c) && inVlan(c));
+        const visible = srv.containers.filter(c => match(c) && inVlan(c) && inFocus(c.id));
+        const visibleServer = inFocus(srv.id) || visible.length > 0;
+        if (!visibleServer && focusMode && selected) return null;
         const isOpen = open[srv.id];
         return (
           <div key={srv.id} style={{ marginBottom: 8, borderRadius: 12, overflow: "hidden",
             border: `1px solid ${isOpen ? srv.color : `${srv.color}28`}`, transition: "border-color .2s" }}>
             <button onClick={() => setOpen(o => ({ ...o, [srv.id]: !o[srv.id] }))}
-              style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px",
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 14px",
                 background: `${srv.color}0b`, cursor: "pointer", width: "100%",
-                border: "none", textAlign: "left", fontFamily: "inherit" }}>
+                border: "none", textAlign: "left", fontFamily: "inherit", minHeight: 44 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: srv.color,
                 boxShadow: `0 0 7px ${srv.color}`, flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
@@ -708,7 +886,7 @@ function MobileView({ selected, onSelect }) {
           { id: "rpi4",     label: "Raspberry Pi 4",   sub: "ARM Cortex-A72 · 4 GB · Home Assistant (Natif)", color: "#f87171", icon: "◉" },
           { id: "ap",       label: "Ubiquiti Unifi AP", sub: "WiFi 6 MESH · 2.4 GHz & 5 GHz",                  color: "#38bdf8", icon: "◎" },
           { id: "printers", label: "Printers",          sub: "Samsung ML · Sidewinder X2 (Natif)",              color: "#84cc16", icon: "⎙" },
-        ].map(n => (
+        ].filter(n => inFocus(n.id)).map(n => (
           <MRow key={n.id} id={n.id} label={n.label} sub={n.sub} color={n.color} icon={n.icon}
             selected={selected === n.id} radius="9px"
             onTap={() => onSelect(selected === n.id ? null : n.id)} />
@@ -718,10 +896,10 @@ function MobileView({ selected, onSelect }) {
   );
 }
 
-function MLabelSection({ children }) {
+function MLabelSection({ children, style }) {
   return (
     <div style={{ fontSize: 9.5, color: "#4a5568", letterSpacing: ".1em", fontWeight: 700,
-      marginBottom: 7, marginTop: 4 }}>{children}</div>
+      marginBottom: 7, marginTop: 4, ...style }}>{children}</div>
   );
 }
 
@@ -730,7 +908,7 @@ function MRow({ id, label, sub, color, icon, selected, onTap, radius }) {
     <div onClick={onTap} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 13px",
       background: selected ? `${color}16` : "rgba(13,17,27,0.88)",
       border: `1px solid ${selected ? color : "rgba(255,255,255,0.07)"}`,
-      borderRadius: radius || "8px", cursor: "pointer" }}>
+      borderRadius: radius || "8px", cursor: "pointer", minHeight: 46 }}>
       <span style={{ fontSize: 18, color, lineHeight: 1 }}>{icon}</span>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color }}>{label}</div>
@@ -859,8 +1037,9 @@ function DetailPanel({ selected, onClose, isMobile }) {
         onClick={onClose} />
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50,
         background: "rgba(9,12,19,0.99)", borderTop: `2px solid ${color}`,
-        borderRadius: "16px 16px 0 0", padding: "16px 16px 36px",
-        maxHeight: "72vh", overflowY: "auto" }}>
+        borderRadius: "16px 16px 0 0", padding: "16px 16px calc(36px + env(safe-area-inset-bottom))",
+        maxHeight: "74vh", overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain",
+        boxShadow: "0 -10px 30px rgba(0,0,0,0.35)" }}>
         {inner}
       </div>
     </>
@@ -902,6 +1081,7 @@ function TBtn({ active, color = "#64748b", onClick, children, title }) {
 export default function InfraViz() {
   const isMobile = useIsMobile();
   const [selected, setSelected] = useState(null);
+  const [focusMode, setFocusMode] = useState(false);
 
   useEffect(() => {
     const fontLinkId = "infra-viz-fonts";
@@ -945,15 +1125,21 @@ export default function InfraViz() {
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 10, alignItems: "center" }}>
-          {SERVERS.map(s => (
-            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: s.color,
-                boxShadow: `0 0 6px ${s.color}` }} />
-              <span style={{ fontSize: 10, color: s.color, fontFamily: "Syne,sans-serif", fontWeight: 800 }}>
-                {s.label}
-              </span>
-            </div>
-          ))}
+          {isMobile ? (
+            <span style={{ fontSize: 10.5, color: "#64748b", letterSpacing: ".02em" }}>
+              {SERVERS.length} nœuds
+            </span>
+          ) : (
+            SERVERS.map(s => (
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: s.color,
+                  boxShadow: `0 0 6px ${s.color}` }} />
+                <span style={{ fontSize: 10, color: s.color, fontFamily: "Syne,sans-serif", fontWeight: 800 }}>
+                  {s.label}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -967,7 +1153,16 @@ export default function InfraViz() {
       }}>
         {isMobile ? (
           <>
-            <MobileView selected={selected} onSelect={setSelected} />
+            <MobileView
+              selected={selected}
+              onSelect={setSelected}
+              focusMode={focusMode}
+              onToggleFocus={() => setFocusMode(v => !v)}
+              onClearSelection={() => {
+                setSelected(null);
+                setFocusMode(false);
+              }}
+            />
             <DetailPanel selected={selected} onClose={() => setSelected(null)} isMobile />
           </>
         ) : (

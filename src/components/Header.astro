@@ -9,6 +9,7 @@ import {
 
 const config = getSiteConfig();
 const currentPath = Astro.url.pathname;
+const isDocSection = currentPath.startsWith('/docu');
 
 // Filter enabled navigation items based on features
 const navItems = (config.header?.navigation || []).filter(
@@ -69,12 +70,35 @@ const iconMap: Record<string, any> = {
         })}
       </div>
       <ThemeToggle />
-      <MobileNav
-        client:load
-        navItems={navItems.map((item: any) => ({ label: item.label, route: item.route }))}
-        socialLinks={socialLinks.map((link: any) => ({ label: link.label, url: link.url, icon: link.icon }))}
-        currentPath={currentPath}
-      />
+      {isDocSection ? (
+        <button
+          id="docs-mobile-menu-btn"
+          class="mobile-nav-trigger docs-mobile-menu-trigger"
+          aria-label="Navigation documentation"
+          aria-expanded="false"
+          aria-controls="starlight__sidebar"
+          title="Navigation documentation"
+        >
+          <svg class="docs-mobile-menu-icon docs-mobile-menu-icon--open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="4" x2="20" y1="6" y2="6" />
+            <line x1="4" x2="20" y1="12" y2="12" />
+            <line x1="4" x2="20" y1="18" y2="18" />
+          </svg>
+          <svg class="docs-mobile-menu-icon docs-mobile-menu-icon--close" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      ) : (
+        <MobileNav
+          client:load
+          navItems={navItems.map((item: any) => ({ label: item.label, route: item.route }))}
+          socialLinks={socialLinks.map((link: any) => ({ label: link.label, url: link.url, icon: link.icon }))}
+          currentPath={currentPath}
+        />
+      )}
     </div>
   </div>
 </header>
@@ -213,6 +237,34 @@ const iconMap: Record<string, any> = {
     .social-links { display: none; }
   }
 
+  .docs-mobile-menu-trigger {
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem;
+    background: none;
+    border: none;
+    border-radius: 0.5rem;
+    color: var(--muted-text);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .docs-mobile-menu-trigger:hover {
+    color: var(--accent);
+  }
+
+  .docs-mobile-menu-trigger[aria-expanded='true'] {
+    color: var(--accent);
+    background: var(--glow);
+  }
+
+  .docs-mobile-menu-icon--close { display: none; }
+  .docs-mobile-menu-trigger[aria-expanded='true'] .docs-mobile-menu-icon--open { display: none; }
+  .docs-mobile-menu-trigger[aria-expanded='true'] .docs-mobile-menu-icon--close { display: block; }
+
   /* Hide mobile nav trigger on desktop — more reliable than Tailwind md:hidden
      inside a React island (Tailwind v4 scan may miss it). */
   :global(.mobile-nav-trigger) {
@@ -226,15 +278,64 @@ const iconMap: Record<string, any> = {
 </style>
 
 <script>
-  // Scroll-shadow effect
-  const header = document.getElementById('site-header');
-  const onScroll = () => {
-    if (window.scrollY > 8) {
-      header?.classList.add('scrolled');
-    } else {
-      header?.classList.remove('scrolled');
+  (function () {
+    const bootState = ((window as any).__siteHeaderBoot ??= {} as { scroll?: boolean; docs?: boolean });
+
+    const refreshHeaderShadow = () => {
+      const header = document.getElementById('site-header');
+      if (window.scrollY > 8) {
+        header?.classList.add('scrolled');
+      } else {
+        header?.classList.remove('scrolled');
+      }
+    };
+
+    if (!bootState.scroll) {
+      bootState.scroll = true;
+      window.addEventListener('scroll', refreshHeaderShadow, { passive: true });
+      document.addEventListener('astro:page-load', refreshHeaderShadow);
     }
-  };
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+    refreshHeaderShadow();
+
+    const setDocsExpanded = (expanded: boolean) => {
+      const btn = document.getElementById('docs-mobile-menu-btn');
+      if (btn) btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      document.body.toggleAttribute('data-mobile-menu-expanded', expanded);
+    };
+
+    const syncDocsButton = () => {
+      const btn = document.getElementById('docs-mobile-menu-btn');
+      if (!btn) return;
+      btn.setAttribute('aria-expanded', document.body.hasAttribute('data-mobile-menu-expanded') ? 'true' : 'false');
+    };
+
+    const bindDocsButton = () => {
+      const btn = document.getElementById('docs-mobile-menu-btn');
+      if (!btn) return;
+      if (btn.getAttribute('data-bound') === 'true') return;
+      btn.setAttribute('data-bound', 'true');
+      syncDocsButton();
+      btn.addEventListener('click', () => {
+        const isOpen = btn.getAttribute('aria-expanded') === 'true';
+        setDocsExpanded(!isOpen);
+      });
+    };
+
+    if (!bootState.docs) {
+      bootState.docs = true;
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setDocsExpanded(false);
+      });
+      document.addEventListener('click', (e) => {
+        const target = e.target;
+        if (!(target instanceof Element)) return;
+        if (target.closest('#starlight__sidebar a')) {
+          setDocsExpanded(false);
+        }
+      });
+      document.addEventListener('astro:page-load', bindDocsButton);
+    }
+
+    bindDocsButton();
+  })();
 </script>

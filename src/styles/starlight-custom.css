@@ -473,13 +473,12 @@ body {
   top: var(--sl-nav-height);
 }
 
-/* --- Hide only the .mobile-preferences panel (keyboard shortcuts etc.)
-     The starlight-menu-button is replaced by our custom doc-nav-fab above. --- */
+/* --- Hide only the .mobile-preferences panel (keyboard shortcuts etc.) --- */
 .mobile-preferences {
   display: none !important;
 }
 
-/* --- Mobile sidebar — force visibility via body attribute set by our FAB.
+/* --- Mobile sidebar — force visibility via body attribute set by header menu.
      Starlight's CSS uses [aria-expanded='true'] ~ .sidebar-pane inside
      @layer starlight.core; we add an unlayered rule (higher priority) to
      ensure it works regardless of layer ordering. --- */
@@ -487,6 +486,10 @@ body {
   body[data-mobile-menu-expanded] #starlight__sidebar {
     --sl-sidebar-visibility: visible !important;
     visibility: visible !important;
+  }
+
+  body[data-mobile-menu-expanded] {
+    overflow: hidden !important;
   }
 }
 

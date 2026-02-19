@@ -1,45 +1,11 @@
 ---
 /**
  * Custom Starlight Footer — keeps Starlight pagination (prev/next)
- * then renders the SAME site-wide footer as the rest of the site,
- * wrapped in a styled container for proper docu integration.
+ * then renders the SAME site-wide footer as the rest of the site.
  */
-import type { Props } from '@astrojs/starlight/props';
 import Default from '@astrojs/starlight/components/Footer.astro';
-import Footer from '../Footer.astro';
+import SiteFooter from '../SiteFooter.astro';
 ---
 
 <Default {...Astro.props}><slot /></Default>
-<div class="docu-footer-wrap">
-  <Footer />
-</div>
-
-<style>
-  .docu-footer-wrap {
-    margin-top: 2rem;
-    border-top: 1px solid var(--sl-color-hairline-light);
-    background: var(--sl-color-gray-6);
-    backdrop-filter: blur(12px) saturate(1.2);
-    border-radius: 0 0 0.75rem 0.75rem;
-  }
-
-  .docu-footer-wrap :global(footer) {
-    background: transparent;
-    border-top: none;
-    padding: 1.5rem 1.5rem;
-    font-size: 0.75rem;
-    color: var(--sl-color-gray-2);
-  }
-
-  .docu-footer-wrap :global(footer a) {
-    color: var(--link-color, #5ecfba);
-  }
-
-  .docu-footer-wrap :global(footer a:hover) {
-    color: var(--accent, #d4845a);
-  }
-
-  [data-theme='light'] .docu-footer-wrap :global(footer a) {
-    color: var(--link-color, #1a8a7a);
-  }
-</style>
+<SiteFooter />
