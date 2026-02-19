@@ -162,8 +162,10 @@ const mouseRadius = particles.mouseRadius || 150;
     }
 
     /* Re-initialize on every page load / View Transition navigation.
-       Module scripts run once; astro:page-load fires after each VT swap,
-       so the canvas is always re-animated without is:inline deduplication issues. */
-    document.addEventListener('astro:page-load', init);
+       Double rAF ensures layout is settled and VT pseudo-elements are gone
+       before we query the canvas and decide whether to restart. */
+    document.addEventListener('astro:page-load', () => {
+      requestAnimationFrame(() => requestAnimationFrame(init));
+    });
   </script>
 )}

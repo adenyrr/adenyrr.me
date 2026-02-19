@@ -31,25 +31,25 @@ export default defineConfig({
       ],
       sidebar: [
         {
-          label: '/calamares',
+          label: '~/calamares',
           slug: 'docu',
         },
         {
-          label: '/network',
+          label: '~/network',
           items: [
             { slug: 'docu/reseau/swag' },
             { slug: 'docu/reseau/stepca' },
           ],
         },
         {
-          label: '/srv',
+          label: '~/srv',
           items: [
             { slug: 'docu/services/jellyfin' },
             { slug: 'docu/services/ollama' },
           ],
         },
         {
-          label: '/assist',
+          label: '~/assist',
           items: [
             { slug: 'docu/hassio/install' },
             { slug: 'docu/hassio/hacs' },
@@ -58,13 +58,13 @@ export default defineConfig({
           ],
         },
         {
-          label: '/virtu',
+          label: '~/virtu',
           items: [
             { slug: 'docu/virtu/pve' },
           ],
         },
         {
-          label: '/tools',
+          label: '~/tools',
           items: [
             { slug: 'docu/outils/commandes' },
             { slug: 'docu/outils/softwares' },
@@ -93,6 +93,7 @@ export default defineConfig({
         Footer: './src/components/starlight/Footer.astro',
         MobileMenuToggle: './src/components/starlight/MobileMenuToggle.astro',
         Pagination: './src/components/starlight/Pagination.astro',
+        PageTitle: './src/components/starlight/PageTitle.astro',
       },
     }),
     mdx(),

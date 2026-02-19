@@ -180,6 +180,10 @@ html {
   scroll-behavior: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Background on html ensures no flash during VT DOM swap */
+  background-color: var(--bg);
+  /* Prevent any child element from creating horizontal overflow */
+  overflow-x: hidden;
 }
 
 body {
@@ -191,6 +195,7 @@ body {
   min-height: 100vh;
   line-height: 1.7;
   transition: var(--transition-colors);
+  overflow-x: hidden;
   /* Subtle mesh gradient — neutral */
   background-image:
     radial-gradient(ellipse 80% 50% at 10% -10%, rgba(192, 106, 58, 0.02) 0%, transparent 60%),
@@ -606,10 +611,12 @@ a:hover {
 @keyframes vt-fade-out { from { opacity: 1; } to { opacity: 0; } }
 
 ::view-transition-old(root) {
-  animation: 150ms ease-out both vt-fade-out;
+  animation: 120ms ease-out both vt-fade-out;
 }
 ::view-transition-new(root) {
-  animation: 150ms ease-in both vt-fade-in;
+  animation: 120ms ease-in  both vt-fade-in;
+  /* Ensure bg is never transparent during VT reveal */
+  background-color: var(--bg);
 }
 
 /* CRITICAL FIX — suppress all CSS transitions during a View Transition.
@@ -617,6 +624,7 @@ a:hover {
    fire on every DOM swap and cause a visible color flash.
    :active-view-transition is a native pseudo-class applied to <html> by the
    browser for the entire duration of the VT (Chrome 111+, Firefox 126+). */
+:root:active-view-transition,
 :root:active-view-transition body,
 :root:active-view-transition body *,
 :root:active-view-transition body *::before,
@@ -631,6 +639,23 @@ a:hover {
    Excluding it from View Transitions avoids a double-snapshot flash. */
 #particle-canvas {
   view-transition-name: none;
+}
+
+/* ============================================================================
+   BLOG PAGE ENTRY ANIMATION
+   Used by blog/index and BlogPost — CSS-driven so it's immune to VT timing.
+   ============================================================================ */
+@keyframes blog-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.blog-enter {
+  animation: blog-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Small delay lets VT pseudo-elements clear before we start */
+  animation-delay: 80ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .blog-enter { animation: none; }
 }
 
 /* ============================================================================

@@ -13,7 +13,7 @@ const { title, description, pubDate, heroImage, readingTime } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description} image={heroImage} article={true}>
-  <article class="container blog-article">
+  <article class="container blog-article blog-enter">
     <header class="article-header">
       <a href="/blog" class="back-link">← Retour aux articles</a>
       <h1 class="gradient-text">{title}</h1>

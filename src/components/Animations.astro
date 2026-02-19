@@ -236,5 +236,11 @@ function init() {
 /* ════════════════════════════════════════════════════════════
    LIFECYCLE — Astro View Transitions hooks
    ════════════════════════════════════════════════════════════ */
-document.addEventListener('astro:page-load', init);
+// astro:page-load fires after VT is complete and scripts have run.
+// We add a rAF delay so layout is fully settled before GSAP queries
+// getBoundingClientRect() — critical during View Transitions where
+// pseudo-elements may still be compositing when the event fires.
+document.addEventListener('astro:page-load', () => {
+  requestAnimationFrame(() => requestAnimationFrame(init));
+});
 </script>

@@ -1,6 +1,152 @@
 ---
 /**
- * Empty MobileMenuToggle — mobile navigation is handled by the site-wide
- * Header component (MobileNav Sheet), so Starlight's hamburger is removed.
+ * Custom Starlight MobileMenuToggle — restores the native sidebar toggle
+ * but renders it as a FAB (floating action button) at the bottom of the screen
+ * on mobile, since our custom site Header replaces the Starlight header and
+ * doesn't include its own doc-navigation controls.
+ *
+ * Uses Starlight's native StarlightMenuButton custom element + data-mobile-menu-expanded
+ * attribute so the sidebar panel works exactly as expected.
  */
+import Icon from '@astrojs/starlight/components/Icon.astro';
 ---
+
+<starlight-menu-button class="doc-nav-fab print:hidden">
+  <button
+    aria-expanded="false"
+    aria-label="Navigation"
+    aria-controls="starlight__sidebar"
+    class="doc-nav-fab__btn"
+    title="Navigation de la documentation"
+  >
+    <span class="doc-nav-fab__icon doc-nav-fab__icon--open">
+      <!-- Menu icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <line x1="4" x2="20" y1="6" y2="6" />
+        <line x1="4" x2="20" y1="12" y2="12" />
+        <line x1="4" x2="20" y1="18" y2="18" />
+      </svg>
+    </span>
+    <span class="doc-nav-fab__icon doc-nav-fab__icon--close">
+      <!-- Close icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </span>
+    <span class="doc-nav-fab__label">Docs</span>
+  </button>
+</starlight-menu-button>
+
+<script>
+  class StarlightMenuButton extends HTMLElement {
+    btn = this.querySelector('button')!;
+
+    constructor() {
+      super();
+      this.btn.addEventListener('click', () => this.toggleExpanded());
+      const parentNav = this.closest('nav');
+      if (parentNav) {
+        parentNav.addEventListener('keyup', (e: KeyboardEvent) => this.closeOnEscape(e));
+      }
+    }
+
+    setExpanded(expanded: boolean) {
+      this.setAttribute('aria-expanded', String(expanded));
+      document.body.toggleAttribute('data-mobile-menu-expanded', expanded);
+    }
+
+    toggleExpanded() {
+      this.setExpanded(this.getAttribute('aria-expanded') !== 'true');
+    }
+
+    closeOnEscape(e: KeyboardEvent) {
+      if (e.code === 'Escape') {
+        this.setExpanded(false);
+        this.btn.focus();
+      }
+    }
+  }
+
+  if (!customElements.get('starlight-menu-button')) {
+    customElements.define('starlight-menu-button', StarlightMenuButton);
+  }
+</script>
+
+<style is:global>
+  /* ── Doc nav FAB — only visible on mobile in /docu ── */
+  .doc-nav-fab {
+    display: none;
+  }
+
+  @media (max-width: 50rem) {
+    .doc-nav-fab {
+      display: block;
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.25rem;
+      z-index: 200;
+    }
+  }
+
+  .doc-nav-fab__btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem 0.6rem 0.9rem;
+    background: var(--sl-color-accent, #d4845a);
+    color: #fff;
+    border: none;
+    border-radius: 2rem;
+    font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .doc-nav-fab__btn:hover,
+  .doc-nav-fab__btn:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.42), 0 0 0 1px rgba(255,255,255,0.12);
+    outline: none;
+  }
+
+  .doc-nav-fab__btn:active {
+    transform: translateY(0);
+  }
+
+  .doc-nav-fab__icon--close { display: none; }
+  .doc-nav-fab__icon--open  { display: flex; }
+
+  [aria-expanded='true'] .doc-nav-fab__icon--close { display: flex; }
+  [aria-expanded='true'] .doc-nav-fab__icon--open  { display: none; }
+  [aria-expanded='true'] .doc-nav-fab__label       { display: none; }
+
+  /* Sidebar behaviour when expanded — Starlight's own CSS handles the
+     panel visibility; we just need the body attribute and aria state. */
+  [data-mobile-menu-expanded] {
+    overflow: hidden;
+  }
+
+  @media (min-width: 50rem) {
+    [data-mobile-menu-expanded] {
+      overflow: auto;
+    }
+  }
+
+  /* Make the Starlight sidebar panel slide correctly when triggered by our
+     custom button (it reads aria-expanded via its own CSS layers) */
+  @media (max-width: 50rem) {
+    #starlight__sidebar {
+      /* Starlight normally hides this at mobile — ensure transition is smooth */
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+</style>

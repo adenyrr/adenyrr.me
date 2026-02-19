@@ -1,0 +1,80 @@
+---
+/**
+ * Custom Starlight PageTitle — renders page h1 as terminal-style ~/title
+ */
+const title = Astro.locals.starlightRoute.entry.data.title;
+---
+
+<h1 id="_top" class="sl-term-title">
+  <span class="sl-term-tilde">~/</span><span class="sl-term-name">{title}</span>
+</h1>
+
+<style is:global>
+  /* Title container */
+  .sl-term-title {
+    font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    line-height: 1.25;
+    margin: 0 0 1.75rem;
+    /* Reset any Starlight h1 background/text-fill */
+    background: transparent !important;
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+    animation: none !important;
+  }
+
+  /* Teal ~/ prefix */
+  .sl-term-tilde {
+    color: var(--link-color, #5ecfba);
+    -webkit-text-fill-color: var(--link-color, #5ecfba);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* Gradient title text */
+  .sl-term-name {
+    background: linear-gradient(
+      135deg,
+      var(--gradient-start, #d4845a),
+      var(--gradient-mid, #e09a6f),
+      var(--gradient-end, #c06a3a)
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: sl-shimmer 5s linear infinite;
+  }
+
+  @keyframes sl-shimmer {
+    0%   { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+
+  /* Light mode gradient */
+  [data-theme='light'] .sl-term-tilde {
+    color: var(--link-color, #1a8a7a);
+    -webkit-text-fill-color: var(--link-color, #1a8a7a);
+  }
+
+  [data-theme='light'] .sl-term-name {
+    background: linear-gradient(135deg, #c06a3a, #d4845a, #e09a6f);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Suppress the old starlight-content h1 gradient rule */
+  starlight-content .sl-term-title {
+    background: transparent !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: initial !important;
+    background-clip: initial !important;
+    animation: none !important;
+  }
+</style>

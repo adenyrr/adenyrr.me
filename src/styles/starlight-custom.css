@@ -100,12 +100,110 @@
   --gradient-end: #e09a6f;
 }
 
+/* ============================================================================
+   BACKGROUND — persistent so no white flash on navigation
+   ============================================================================ */
+html {
+  background-color: #141416;
+}
+html[data-theme='light'] {
+  background-color: #f3ece6;
+}
+
+/* ============================================================================
+   VIEW TRANSITIONS — suppress the dissolve that flashes white between pages
+   The content fade-in is handled by .sl-markdown-content animation below.
+   ============================================================================ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* ============================================================================
+   READING PROGRESS BAR — CSS scroll-driven animation (no JS)
+   ============================================================================ */
+@keyframes sl-reading-progress {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@supports (animation-timeline: scroll()) {
+  body::before {
+    content: '';
+    position: fixed;
+    top: var(--sl-nav-height, 50px);
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      var(--sl-color-accent, #d4845a),
+      var(--link-color, #5ecfba)
+    );
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation: sl-reading-progress linear both;
+    animation-timeline: scroll(root);
+    z-index: 999;
+    pointer-events: none;
+  }
+}
+
 /* --- Typography --- */
-starlight-content h1 {
+/* Fallback for any h1 not using our custom PageTitle component */
+starlight-content h1:not(.sl-term-title) {
   background: linear-gradient(135deg, var(--sl-color-accent), #e09a6f, #c06a3a);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+}
+
+/* --- h2 / h3 — terminal prefix motif --- */
+.sl-markdown-content h2 {
+  font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-top: 2.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--sl-color-hairline-light);
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.sl-markdown-content h2::before {
+  content: '#';
+  color: var(--link-color, #5ecfba);
+  font-weight: 400;
+  font-size: 0.85em;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.sl-markdown-content h3 {
+  font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.sl-markdown-content h3::before {
+  content: '##';
+  color: var(--sl-color-accent, #d4845a);
+  font-weight: 400;
+  font-size: 0.8em;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* Anchor links on headings — don't let the hash icon break the flex layout */
+.sl-markdown-content h2 a,
+.sl-markdown-content h3 a {
+  display: contents;
 }
 
 /* --- Code blocks — richer styling --- */
@@ -122,22 +220,78 @@ code:not(pre code) {
 /* --- Sidebar polish --- */
 .sidebar-pane {
   backdrop-filter: blur(20px) saturate(1.3);
+  border-right: 1px solid var(--sl-color-hairline-light);
 }
 
-nav.sidebar a[aria-current="page"] {
+/* Group labels (~/calamares, ~/network …) */
+.group-label {
+  font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: none !important;
+}
+
+.group-label span {
+  color: var(--link-color, #5ecfba) !important;
+  -webkit-text-fill-color: var(--link-color, #5ecfba) !important;
+}
+
+[data-theme='light'] .group-label span {
+  color: var(--link-color, #1a8a7a) !important;
+  -webkit-text-fill-color: var(--link-color, #1a8a7a) !important;
+}
+
+/* Sidebar items */
+nav.sidebar a {
+  border-radius: 0.35rem;
+  transition: background 0.18s ease, color 0.18s ease, padding-left 0.18s ease;
+  font-size: 0.85rem;
+}
+
+nav.sidebar a:hover {
+  background: var(--sl-color-hairline-light);
+  padding-left: 0.8rem;
+}
+
+nav.sidebar a[aria-current='page'] {
   font-weight: 600;
   border-left: 2px solid var(--sl-color-accent);
   padding-left: calc(0.5rem - 2px);
+  background: var(--sl-color-accent-low);
+}
+
+/* Details open indicator */
+nav.sidebar details[open] > summary {
+  color: var(--sl-color-accent);
 }
 
 /* --- Content area --- */
 .sl-markdown-content {
-  animation: doc-fade-in 0.4s ease both;
+  animation: doc-fade-in 0.35s ease both;
+}
+
+/* No flash: make sure content panel has a background during transition */
+.content-panel {
+  background-color: var(--sl-color-bg, var(--sl-color-black, #141416));
 }
 
 @keyframes doc-fade-in {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Lists — subtle terminal markers */
+.sl-markdown-content ul > li::marker {
+  content: '› ';
+  color: var(--sl-color-accent, #d4845a);
+  font-family: var(--sl-font-mono, monospace);
+}
+
+.sl-markdown-content ol > li::marker {
+  color: var(--sl-color-accent, #d4845a);
+  font-family: var(--sl-font-mono, monospace);
+  font-size: 0.85em;
 }
 
 /* --- Links — keep green for links, orange for hover --- */
@@ -171,20 +325,105 @@ nav.sidebar a[aria-current="page"] {
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--sl-color-accent); }
 
+/* --- Right sidebar — Table of Contents --- */
+.right-sidebar-panel {
+  padding-inline: 0.5rem;
+}
+
+.right-sidebar-panel h2 {
+  font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sl-color-gray-2);
+  margin-bottom: 0.75rem;
+  /* override the h2::before prefix rule */
+  display: block;
+  border: none;
+  padding: 0;
+}
+
+.right-sidebar-panel h2::before {
+  display: none;
+}
+
+starlight-toc a {
+  font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 0.78rem;
+  transition: color 0.18s ease, border-color 0.18s ease, padding-left 0.18s ease;
+  border-radius: 0.25rem;
+}
+
+starlight-toc a:hover {
+  color: var(--sl-color-accent);
+  padding-left: 0.25rem;
+}
+
+starlight-toc a[aria-current='true'] {
+  color: var(--sl-color-accent);
+  border-left: 2px solid var(--sl-color-accent);
+  padding-left: calc(var(--depth, 0) * 0.75rem + 0.25rem);
+  font-weight: 600;
+}
+
 /* --- Page transitions --- */
 .content-panel {
-  animation: panel-in 0.35s ease both;
+  animation: panel-in 0.3s ease both;
 }
 @keyframes panel-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* Admonitions / callouts — enhanced borders */
+/* Admonitions / callouts — enhanced */
 .starlight-aside {
   border-radius: 0.75rem;
   border-left-width: 3px;
   backdrop-filter: blur(12px) saturate(1.2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle glow behind the aside icon */
+.starlight-aside::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background: currentColor;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.starlight-aside .starlight-aside__title {
+  font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+/* Blockquotes — terminal style */
+.sl-markdown-content blockquote {
+  border-left: 3px solid var(--sl-color-accent);
+  background: var(--sl-color-gray-6);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 0.75rem 1rem;
+  margin: 1.25rem 0;
+  font-style: normal;
+  position: relative;
+}
+
+.sl-markdown-content blockquote::before {
+  content: '$';
+  position: absolute;
+  left: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--sl-color-accent);
+  font-family: var(--sl-font-mono, monospace);
+  font-size: 0.8em;
+  opacity: 0.5;
 }
 
 /* Back-to-top smoothness */
@@ -211,8 +450,8 @@ body {
   top: var(--sl-nav-height);
 }
 
-/* --- Hide Starlight mobile menu (navigation handled by site header) --- */
-starlight-menu-button,
+/* --- Hide only the .mobile-preferences panel (keyboard shortcuts etc.)
+     The starlight-menu-button is replaced by our custom doc-nav-fab above. --- */
 .mobile-preferences {
   display: none !important;
 }
