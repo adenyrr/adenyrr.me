@@ -9,7 +9,13 @@ const mouseRadius = particles.mouseRadius || 150;
 ---
 
 {enabled && (
-  <canvas id="particle-canvas" aria-hidden="true"></canvas>
+  <canvas
+    id="particle-canvas"
+    data-count={count}
+    data-connect-distance={connectDistance}
+    data-mouse-radius={mouseRadius}
+    aria-hidden="true"
+  ></canvas>
 )}
 
 <style>
@@ -23,75 +29,99 @@ const mouseRadius = particles.mouseRadius || 150;
 </style>
 
 {enabled && (
-  <script is:inline define:vars={{ count, connectDistance, mouseRadius }}>
-    (function() {
-      const canvas = document.getElementById('particle-canvas');
-      if (!canvas) return;
+  <script>
+    /* ── Module-level state — persists across View Transitions ── */
+    let _animationId: number | null = null;
+    let _onResize:     (() => void)           | null = null;
+    let _onMouseMove:  ((e: MouseEvent) => void) | null = null;
+    let _onMouseLeave: (() => void)           | null = null;
+
+    function cleanup() {
+      if (_animationId !== null) { cancelAnimationFrame(_animationId); _animationId = null; }
+      if (_onResize)     { window.removeEventListener('resize',      _onResize);     _onResize     = null; }
+      if (_onMouseMove)  { window.removeEventListener('mousemove',   _onMouseMove);  _onMouseMove  = null; }
+      if (_onMouseLeave) { window.removeEventListener('mouseleave',  _onMouseLeave); _onMouseLeave = null; }
+    }
+
+    function init() {
+      const canvas = document.getElementById('particle-canvas') as HTMLCanvasElement | null;
+      if (!canvas) { cleanup(); return; }
+
+      /* If the animation loop is already running (canvas survived via transition:persist),
+         skip full re-init — particles keep their positions and velocity unchanged. */
+      if (_animationId !== null) return;
+
+      cleanup();
+
+      const count          = parseInt(canvas.dataset.count          ?? '50',  10);
+      const connectDistance = parseInt(canvas.dataset.connectDistance ?? '120', 10);
+      const mouseRadius    = parseInt(canvas.dataset.mouseRadius    ?? '150', 10);
+
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      let particles = [];
-      let animationId = null;
-      const mouse = { x: null, y: null, radius: mouseRadius };
+      let pts: { x: number; y: number; size: number; speedX: number; speedY: number; opacity: number; hue: number }[] = [];
+      const mouse: { x: number | null; y: number | null; radius: number } =
+        { x: null, y: null, radius: mouseRadius };
 
       function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas!.width  = window.innerWidth;
+        canvas!.height = window.innerHeight;
       }
       resize();
 
       function createParticles() {
-        particles = [];
+        pts = [];
         for (let i = 0; i < count; i++) {
-          particles.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 2 + 1,
+          pts.push({
+            x:      Math.random() * canvas!.width,
+            y:      Math.random() * canvas!.height,
+            size:   Math.random() * 2 + 1,
             speedX: (Math.random() - 0.5) * 0.4,
             speedY: (Math.random() - 0.5) * 0.4,
             opacity: Math.random() * 0.5 + 0.2,
-            hue: Math.random() * 30 + 165
+            hue:    Math.random() * 30 + 165,
           });
         }
       }
       createParticles();
 
-      function drawParticle(p) {
-        const color = 'hsla(' + p.hue + ', 70%, 60%, ' + (p.opacity * 0.6) + ')';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = color;
+      function drawParticle(p: typeof pts[0]) {
+        const color = `hsla(${p.hue}, 70%, 60%, ${p.opacity * 0.6})`;
+        ctx!.beginPath();
+        ctx!.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx!.fillStyle = color;
+        ctx!.fill();
+        ctx!.shadowBlur  = 12;
+        ctx!.shadowColor = color;
       }
 
       function connectParticles() {
-        for (let i = 0; i < particles.length; i++) {
-          for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
+        for (let i = 0; i < pts.length; i++) {
+          for (let j = i + 1; j < pts.length; j++) {
+            const dx   = pts[i].x - pts[j].x;
+            const dy   = pts[i].y - pts[j].y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist < connectDistance) {
               const opacity = (1 - dist / connectDistance) * 0.12;
-              ctx.beginPath();
-              ctx.strokeStyle = 'rgba(94, 207, 186, ' + opacity + ')';
-              ctx.lineWidth = 1;
-              ctx.moveTo(particles[i].x, particles[i].y);
-              ctx.lineTo(particles[j].x, particles[j].y);
-              ctx.stroke();
+              ctx!.beginPath();
+              ctx!.strokeStyle = `rgba(94, 207, 186, ${opacity})`;
+              ctx!.lineWidth   = 1;
+              ctx!.moveTo(pts[i].x, pts[i].y);
+              ctx!.lineTo(pts[j].x, pts[j].y);
+              ctx!.stroke();
             }
           }
         }
       }
 
       function updateParticles() {
-        for (const p of particles) {
+        for (const p of pts) {
           p.x += p.speedX;
           p.y += p.speedY;
           if (mouse.x !== null && mouse.y !== null) {
-            const dx = p.x - mouse.x;
-            const dy = p.y - mouse.y;
+            const dx   = p.x - mouse.x;
+            const dy   = p.y - mouse.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist < mouse.radius) {
               const force = (mouse.radius - dist) / mouse.radius;
@@ -99,41 +129,35 @@ const mouseRadius = particles.mouseRadius || 150;
               p.y += dy * force * 0.02;
             }
           }
-          if (p.x < 0) p.x = canvas.width;
-          if (p.x > canvas.width) p.x = 0;
-          if (p.y < 0) p.y = canvas.height;
-          if (p.y > canvas.height) p.y = 0;
+          if (p.x < 0)              p.x = canvas!.width;
+          if (p.x > canvas!.width)  p.x = 0;
+          if (p.y < 0)              p.y = canvas!.height;
+          if (p.y > canvas!.height) p.y = 0;
         }
       }
 
       function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
         updateParticles();
         connectParticles();
-        ctx.shadowBlur = 0;
-        for (const p of particles) {
-          drawParticle(p);
-        }
-        animationId = requestAnimationFrame(animate);
+        ctx!.shadowBlur = 0;
+        for (const p of pts) drawParticle(p);
+        _animationId = requestAnimationFrame(animate);
       }
 
-      function onResize() { resize(); createParticles(); }
-      function onMouseMove(e) { mouse.x = e.clientX; mouse.y = e.clientY; }
-      function onMouseLeave() { mouse.x = null; mouse.y = null; }
+      _onResize     = () => { resize(); createParticles(); };
+      _onMouseMove  = (e: MouseEvent) => { mouse.x = e.clientX; mouse.y = e.clientY; };
+      _onMouseLeave = () => { mouse.x = null; mouse.y = null; };
 
-      window.addEventListener('resize', onResize);
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseleave', onMouseLeave);
+      window.addEventListener('resize',     _onResize);
+      window.addEventListener('mousemove',  _onMouseMove);
+      window.addEventListener('mouseleave', _onMouseLeave);
       animate();
+    }
 
-      // Cleanup for Astro View Transitions — { once: true } prevents
-      // stale handlers from accumulating across multiple navigations
-      document.addEventListener('astro:before-swap', function() {
-        window.removeEventListener('resize', onResize);
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseleave', onMouseLeave);
-        if (animationId) cancelAnimationFrame(animationId);
-      }, { once: true });
-    })();
+    /* Re-initialize on every page load / View Transition navigation.
+       Module scripts run once; astro:page-load fires after each VT swap,
+       so the canvas is always re-animated without is:inline deduplication issues. */
+    document.addEventListener('astro:page-load', init);
   </script>
 )}

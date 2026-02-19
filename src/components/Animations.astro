@@ -126,6 +126,10 @@ function init() {
           gsap.to(cards, {
             opacity: 1, y: 0, scale: 1,
             duration: dur(0.55), ease: 'power3.out', stagger: 0.07,
+            // Clear inline transform after animation so CSS :hover works correctly
+            onComplete() {
+              gsap.set(cards, { clearProps: 'transform,y,scale' });
+            },
           });
         },
       });

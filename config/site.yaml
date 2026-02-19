@@ -63,17 +63,17 @@ header:
       route: "/"
       icon: "User"
       enabled: true
-    - label: "docu"
-      route: "/docu"
-      icon: "Library"
+    - label: "blog"
+      route: "/blog"
+      icon: "FileText"
       enabled: true
     - label: "infra"
       route: "/infra"
       icon: "Server"
       enabled: true
-    - label: "blog"
-      route: "/blog"
-      icon: "FileText"
+    - label: "docu"
+      route: "/docu"
+      icon: "Library"
       enabled: true
   socialLinks:
     - label: "GitHub"

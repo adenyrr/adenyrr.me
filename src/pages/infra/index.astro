@@ -655,27 +655,32 @@ const docLinks: Record<string, string> = {
 </style>
 
 <script>
-  // Tab switching
-  const tabs = document.querySelectorAll('.tab');
-  const panels = document.querySelectorAll('.tab-panel');
+  function initTabs() {
+    const tabs = document.querySelectorAll<HTMLElement>('.tab');
+    const panels = document.querySelectorAll<HTMLElement>('.tab-panel');
+    if (!tabs.length) return;
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const target = (tab as HTMLElement).dataset.tab;
-      tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-      panels.forEach(p => p.classList.add('hidden'));
-      tab.classList.add('active');
-      tab.setAttribute('aria-selected', 'true');
-      const panel = document.querySelector(`[data-panel="${target}"]`);
-      panel?.classList.remove('hidden');
-      // Re-trigger slide-in animations on tab switch
-      panel?.querySelectorAll('.slide-in').forEach(el => {
-        el.classList.remove('slide-in');
-        void (el as HTMLElement).offsetWidth;
-        el.classList.add('slide-in');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.tab;
+        tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(p => p.classList.add('hidden'));
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        const panel = document.querySelector<HTMLElement>(`[data-panel="${target}"]`);
+        panel?.classList.remove('hidden');
+        // Re-trigger slide-in animations on tab switch
+        panel?.querySelectorAll('.slide-in').forEach(el => {
+          el.classList.remove('slide-in');
+          void (el as HTMLElement).offsetWidth;
+          el.classList.add('slide-in');
+        });
       });
     });
-  });
+  }
+
+  // Run on initial load and on every View Transition navigation
+  document.addEventListener('astro:page-load', initTabs);
 
   // Scroll reveal + counter animation handled globally by Animations.astro (GSAP)
 </script>

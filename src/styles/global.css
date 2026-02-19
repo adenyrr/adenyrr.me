@@ -507,12 +507,8 @@ a:hover {
   width: 60px;
   background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
   border-radius: 2px;
-  animation: divider-grow 0.6s ease both;
-}
-
-@keyframes divider-grow {
-  from { width: 0; opacity: 0; }
-  to   { width: 60px; opacity: 1; }
+  /* width/opacity managed by GSAP scaleX in Animations.astro — no CSS keyframe here */
+  transform-origin: left center;
 }
 
 /* ============================================================================
@@ -581,24 +577,33 @@ a:hover {
    ============================================================================ */
 @keyframes vt-fade-in  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes vt-fade-out { from { opacity: 1; } to { opacity: 0; } }
-@keyframes vt-slide-in  { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes vt-slide-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-10px); opacity: 0; } }
 
 ::view-transition-old(root) {
-  animation: 180ms ease-out both vt-fade-out;
+  animation: 150ms ease-out both vt-fade-out;
 }
 ::view-transition-new(root) {
-  animation: 220ms ease-out both vt-fade-in;
+  animation: 150ms ease-in both vt-fade-in;
 }
 
-/* Header stays put during page transitions */
-::view-transition-old(site-header),
-::view-transition-new(site-header) {
-  animation: none;
-  mix-blend-mode: normal;
+/* CRITICAL FIX — suppress all CSS transitions during a View Transition.
+   Without this, CSS rules like `body { transition: background-color 0.3s }`
+   fire on every DOM swap and cause a visible color flash.
+   :active-view-transition is a native pseudo-class applied to <html> by the
+   browser for the entire duration of the VT (Chrome 111+, Firefox 126+). */
+:root:active-view-transition body,
+:root:active-view-transition body *,
+:root:active-view-transition body *::before,
+:root:active-view-transition body *::after {
+  transition-duration: 0ms !important;
 }
-#site-header {
-  view-transition-name: site-header;
+
+/* Header is transition:persist in BaseLayout — no VT snapshot needed.
+   Keep view-transition-name removed to avoid conflict. */
+
+/* The particle canvas is position:fixed and persists across navigations.
+   Excluding it from View Transitions avoids a double-snapshot flash. */
+#particle-canvas {
+  view-transition-name: none;
 }
 
 /* ============================================================================

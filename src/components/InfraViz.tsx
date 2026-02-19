@@ -197,21 +197,48 @@ function DesktopView({ selected, onSelect }) {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (!wrapRef.current) return;
-    const rect = wrapRef.current.getBoundingClientRect();
-    const cW = rect.width;
-    const cH = rect.height;
-    // Compute the full content bounding box
-    const contentW = SVG_W + 40;
-    const maxClusterH = Math.max(...SERVERS.map(clusterH));
-    const contentH = CLUSTER_Y + maxClusterH + 30;
-    // Fit so whole graph is visible
-    const kW = (cW - 24) / contentW;
-    const kH = (cH - 24) / contentH;
-    const k = Math.min(kW, kH, 1);
-    const x = Math.max(0, (cW - contentW * k) / 2);
-    const y = Math.max(6, (cH - contentH * k) / 2);
-    setTf({ x, y, k });
+    let rafId: number;
+    let ro: ResizeObserver | null = null;
+
+    const computeFit = (): boolean => {
+      if (!wrapRef.current) return false;
+      const rect = wrapRef.current.getBoundingClientRect();
+      const cW = rect.width;
+      const cH = rect.height;
+      if (!cW || !cH) return false;
+      const contentW = SVG_W + 40;
+      const maxClusterH = Math.max(...SERVERS.map(clusterH));
+      const contentH = CLUSTER_Y + maxClusterH + 30;
+      const kW = (cW - 24) / contentW;
+      const kH = (cH - 24) / contentH;
+      const k = Math.min(kW, kH, 1);
+      const x = Math.max(0, (cW - contentW * k) / 2);
+      const y = Math.max(6, (cH - contentH * k) / 2);
+      setTf({ x, y, k });
+      return true;
+    };
+
+    // Double-RAF: first RAF waits for React to flush the DOM,
+    // second RAF waits for the browser to finish layout/paint.
+    // This ensures getBoundingClientRect() returns real dimensions
+    // even during View Transition hydration.
+    rafId = requestAnimationFrame(() => {
+      rafId = requestAnimationFrame(() => {
+        if (computeFit()) return;
+        // Still no dimensions — observe until the container is sized
+        // (can happen in very constrained environments)
+        if (!wrapRef.current) return;
+        ro = new ResizeObserver(() => {
+          if (computeFit()) { ro?.disconnect(); ro = null; }
+        });
+        ro.observe(wrapRef.current);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      ro?.disconnect();
+    };
   }, []);
 
   const onWheel = useCallback((e) => {

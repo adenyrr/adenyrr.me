@@ -47,6 +47,12 @@ sections:
 credly:
   enabled: true
   username: "adenyrr"
+  # IDs des badges à mettre en avant (l'API Credly ne les expose pas nativement).
+  # Les IDs se trouvent dans l'URL des badges sur credly.com.
+  pinnedIds:
+    - "67779045-f549-415b-b281-3288e4883f73"  # LFC108 : Cybersecurity Essentials
+    - "711b64b0-eec0-4beb-aef2-2120bc1c738d"  # Linux Essentials
+    - "77fa8888-b83e-41b9-8d9f-8e43b035db07"  # IT Essentials
 
 # -----------------------------------------------------------------------------
 # PROJETS

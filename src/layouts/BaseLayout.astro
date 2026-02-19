@@ -24,7 +24,7 @@ const { title, description, image, article = false } = Astro.props;
     <ViewTransitions />
   </head>
   <body>
-    <ParticleBackground />
+    <ParticleBackground transition:persist="particle-bg" />
     <Header />
     <main id="main" class="page-content" style="position: relative; z-index: 1;">
       <slot />

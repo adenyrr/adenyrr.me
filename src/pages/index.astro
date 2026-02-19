@@ -14,23 +14,29 @@ const portfolio = getHomeConfig();
 let credlyBadges: any[] = [];
 if (portfolio.credly?.enabled && portfolio.credly?.username) {
   try {
-    credlyBadges = await fetchCredlyBadges(portfolio.credly.username);
+    credlyBadges = await fetchCredlyBadges(
+      portfolio.credly.username,
+      portfolio.credly.pinnedIds ?? [],
+    );
   } catch (e) {
     console.warn('[Credly] Failed:', e);
   }
 }
 
-// Fallback to config certifications if Credly fails
-const certifications = credlyBadges.length > 0
+// Pinned badges come first (sorted by the order in pinnedIds); limit to 9.
+const MAX_CERTS = 9;
+const certifications = (credlyBadges.length > 0
   ? credlyBadges.map((b: any) => ({
-      id: b.id,
-      title: b.title,
-      issuer: b.issuer,
-      date: b.date,
-      credly_url: b.credlyUrl,
+      id:          b.id,
+      title:       b.title,
+      issuer:      b.issuer,
+      date:        b.date,
+      credly_url:  b.credlyUrl,
       badge_image: b.imageUrl,
+      pinned:      b.pinned ?? false,
     }))
-  : (portfolio.certifications || []);
+  : (portfolio.certifications || []))
+  .slice(0, MAX_CERTS);
 
 const sections = portfolio.sections || {};
 const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
@@ -173,13 +179,13 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
       </section>
     )}
 
-    <!-- Certifications -->
+    <!-- Certifications & badges -->
     {sections.certifications && certifications.length > 0 && (
-      <section class="section reveal" aria-label="Certifications">
+      <section class="section reveal" aria-label="Certifications &amp; badges">
         <div class="section-header">
           <h2>
             <Award size={22} />
-            Certifications
+            Certifications &amp; badges
           </h2>
           <div class="section-divider"></div>
         </div>
@@ -189,13 +195,28 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
               href={cert.credly_url}
               target="_blank"
               rel="noopener noreferrer"
-              class="card cert-card"
+              class={`cert-card${cert.pinned ? ' cert-card--featured' : ''}`}
             >
-              <img src={cert.badge_image} alt={cert.title} width="80" height="80" loading="lazy" />
-              <div class="cert-info">
-                <h3>{cert.title}</h3>
+              {cert.pinned && (
+                <span class="cert-featured-chip">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  En vedette
+                </span>
+              )}
+              <div class="cert-image-wrap">
+                <img src={cert.badge_image} alt={cert.title} width="96" height="96" loading="lazy" />
+              </div>
+              <div class="cert-body">
+                <p class="cert-title">{cert.title}</p>
                 <p class="cert-issuer">{cert.issuer}</p>
                 <p class="cert-date">{cert.date}</p>
+              </div>
+              <div class="cert-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
               </div>
             </a>
           ))}
@@ -517,14 +538,137 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
   .job-location { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--muted-text); font-size: 0.85rem; }
   .timeline-desc { color: var(--muted-text); font-size: 0.9rem; margin-bottom: 0.5rem; line-height: 1.6; }
 
-  .certs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-  .cert-card { display: flex; align-items: center; gap: 1rem; text-decoration: none; color: var(--text); transition: transform 0.2s ease, box-shadow 0.2s ease; }
-  .cert-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-  .cert-card img { width: 70px; height: 70px; border-radius: 0.5rem; object-fit: contain; }
-  .cert-info h3 { font-size: 0.95rem; margin-bottom: 0.15rem; }
-  .cert-issuer { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.1rem; }
-  .cert-date { font-family: var(--font-code); font-size: 0.75rem; color: var(--muted-text); }
+  /* ── Badge grid ── */
+  .certs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
 
+  .cert-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    padding: 1.5rem 1.25rem 1.25rem;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid var(--card-border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+    gap: 0.9rem;
+    transition:
+      transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1),
+      border-color 0.25s ease,
+      box-shadow 0.3s ease;
+    overflow: hidden;
+  }
+
+  /* Accent top-bar on featured cards */
+  .cert-card--featured {
+    border-top: 2px solid var(--accent);
+  }
+
+  .cert-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--card-border-hover);
+    box-shadow: var(--shadow-md), var(--shadow-glow);
+  }
+
+  /* "En vedette" chip */
+  .cert-featured-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-code);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(212, 132, 90, 0.1);
+    border: 1px solid rgba(212, 132, 90, 0.25);
+    border-radius: 9999px;
+    padding: 0.2rem 0.6rem;
+    align-self: flex-start;  /* left-align the chip while rest is centered */
+    position: absolute;
+    top: 0.75rem;
+    left: 0.85rem;
+  }
+
+  .cert-image-wrap {
+    width: 88px;
+    height: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.25rem;  /* small space below optional chip row */
+  }
+
+  .cert-card--featured .cert-image-wrap {
+    margin-top: 1.4rem;   /* extra space to clear the absolute chip */
+  }
+
+  .cert-image-wrap img {
+    width: 88px;
+    height: 88px;
+    object-fit: contain;
+    border-radius: 0.5rem;
+    transition: transform 0.3s ease;
+  }
+  .cert-card:hover .cert-image-wrap img {
+    transform: scale(1.06);
+  }
+
+  .cert-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+  }
+
+  .cert-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .cert-issuer {
+    font-family: var(--font-code);
+    font-size: 0.78rem;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  .cert-date {
+    font-family: var(--font-code);
+    font-size: 0.72rem;
+    color: var(--muted-text);
+    margin: 0;
+  }
+
+  /* External link arrow */
+  .cert-arrow {
+    color: var(--muted-text);
+    opacity: 0;
+    transition: opacity 0.2s ease, color 0.2s ease;
+    position: absolute;
+    bottom: 0.75rem;
+    right: 0.85rem;
+  }
+  .cert-card:hover .cert-arrow {
+    opacity: 1;
+    color: var(--accent);
+  }
+
+  @media (max-width: 900px) {
+    .certs-grid { grid-template-columns: repeat(2, 1fr); }
+  }
   @media (max-width: 768px) {
     .hero { padding: 4rem 0 2.5rem; }
     .hero-name { font-size: 2.2rem; }
