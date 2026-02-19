@@ -30,7 +30,7 @@ export default defineConfig({
       description: 'Documentation technique — réseau, services, virtualisation, domotique et outils.',
       defaultLocale: 'root',
       locales: { root: { label: 'Français', lang: 'fr' } },
-      favicon: '/favicon.svg',
+      favicon: '/favicon.png',
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/adenyrr/docu' },
         { icon: 'gitlab', label: 'GitLab', href: 'https://gitlab.com/adenyrr' },

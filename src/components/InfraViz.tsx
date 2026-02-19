@@ -189,8 +189,11 @@ function useIsMobile() {
 function DesktopView({ selected, onSelect }) {
   const wrapRef = useRef(null);
   const [tf, setTf] = useState({ x: 0, y: 10, k: 1 });
+  // Use a ref for the dragging flag so event callbacks always see the latest
+  // value without needing to be recreated — avoids stale-closure crashes.
   const [dragging, setDragging] = useState(false);
-  const drag0 = useRef(null);
+  const draggingRef = useRef(false);
+  const drag0 = useRef<{ ox: number; oy: number } | null>(null);
   const [hov, setHov] = useState(null);
   const [edgeFilter, setEdgeFilter] = useState(null);
   const [vlanFilter, setVlanFilter] = useState(null);
@@ -218,15 +221,9 @@ function DesktopView({ selected, onSelect }) {
       return true;
     };
 
-    // Double-RAF: first RAF waits for React to flush the DOM,
-    // second RAF waits for the browser to finish layout/paint.
-    // This ensures getBoundingClientRect() returns real dimensions
-    // even during View Transition hydration.
     rafId = requestAnimationFrame(() => {
       rafId = requestAnimationFrame(() => {
         if (computeFit()) return;
-        // Still no dimensions — observe until the container is sized
-        // (can happen in very constrained environments)
         if (!wrapRef.current) return;
         ro = new ResizeObserver(() => {
           if (computeFit()) { ro?.disconnect(); ro = null; }
@@ -241,30 +238,55 @@ function DesktopView({ selected, onSelect }) {
     };
   }, []);
 
-  const onWheel = useCallback((e) => {
-    e.preventDefault();
-    const rect = wrapRef.current.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const d = e.deltaY > 0 ? 0.9 : 1.11;
-    setTf(p => {
-      const k = Math.max(0.3, Math.min(3, p.k * d));
-      return { x: mx - (k / p.k) * (mx - p.x), y: my - (k / p.k) * (my - p.y), k };
-    });
+  // Attach the wheel listener imperatively with { passive: false } so that
+  // e.preventDefault() actually prevents the page from scrolling.
+  // React's synthetic onWheel is passive in modern React — preventDefault() is
+  // silently ignored inside it.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const d = e.deltaY > 0 ? 0.9 : 1.11;
+      setTf(p => {
+        const k = Math.max(0.3, Math.min(3, p.k * d));
+        return { x: mx - (k / p.k) * (mx - p.x), y: my - (k / p.k) * (my - p.y), k };
+      });
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
   }, []);
 
-  const onMD = useCallback((e) => {
+  const onMD = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
-    drag0.current = { ox: e.clientX - tf.x, oy: e.clientY - tf.y };
+    // Capture current tf via functional read to avoid depending on `tf` in deps.
+    setTf(p => {
+      drag0.current = { ox: e.clientX - p.x, oy: e.clientY - p.y };
+      return p; // no change to tf itself
+    });
+    draggingRef.current = true;
     setDragging(true);
-  }, [tf]);
+  }, []);
 
-  const onMM = useCallback((e) => {
-    if (!dragging || !drag0.current) return;
-    setTf(p => ({ ...p, x: e.clientX - drag0.current.ox, y: e.clientY - drag0.current.oy }));
-  }, [dragging]);
+  const onMM = useCallback((e: React.MouseEvent) => {
+    // Read dragging from ref — always current, never stale.
+    if (!draggingRef.current || !drag0.current) return;
+    // Capture drag0 values synchronously before the async setTf updater runs.
+    // Without this, stopDrag() could null drag0.current before the updater
+    // executes, causing "Cannot read property 'ox' of null" crash.
+    const ox = drag0.current.ox;
+    const oy = drag0.current.oy;
+    setTf(p => ({ ...p, x: e.clientX - ox, y: e.clientY - oy }));
+  }, []);
 
-  const stopDrag = () => { setDragging(false); drag0.current = null; };
+  const stopDrag = useCallback(() => {
+    draggingRef.current = false;
+    setDragging(false);
+    drag0.current = null;
+  }, []);
 
   const sl = search.toLowerCase();
   const matchC = c => !sl || c.label.toLowerCase().includes(sl) || c.services.some(s => s.toLowerCase().includes(sl));
@@ -342,8 +364,7 @@ function DesktopView({ selected, onSelect }) {
       {/* SVG Canvas */}
       <div ref={wrapRef} style={{ flex: 1, overflow: "hidden", position: "relative",
         cursor: dragging ? "grabbing" : "grab" }}
-        onMouseDown={onMD} onMouseMove={onMM} onMouseUp={stopDrag} onMouseLeave={stopDrag}
-        onWheel={onWheel}>
+        onMouseDown={onMD} onMouseMove={onMM} onMouseUp={stopDrag} onMouseLeave={stopDrag}>
         <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}
           onClick={() => onSelect(null)}>
           <defs>
@@ -883,7 +904,10 @@ export default function InfraViz() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
+    const fontLinkId = "infra-viz-fonts";
+    if (document.getElementById(fontLinkId)) return;
     const link = document.createElement("link");
+    link.id = fontLinkId;
     link.rel = "stylesheet";
     link.href = "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap";
     document.head.appendChild(link);
