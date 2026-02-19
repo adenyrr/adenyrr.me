@@ -4,7 +4,7 @@ import { getHomeConfig, getSiteConfig, isFeatureEnabled } from '../utils/config'
 import { fetchCredlyBadges } from '../utils/credly';
 import {
   Library, Server, FileText, Code, Globe, ExternalLink, Github,
-  GraduationCap, Award, Briefcase, Calendar, MapPin
+  Calendar, MapPin
 } from 'lucide-astro';
 
 const config = getSiteConfig();
@@ -99,10 +99,7 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
     {sections.projects && (
       <section class="section reveal" aria-label="Projets">
         <div class="section-header">
-          <h2>
-            <Code size={22} />
-            Projets
-          </h2>
+          <h2 class="term-head"><span class="term-tilde">~/</span>projets</h2>
           <div class="section-divider"></div>
         </div>
         <div class="projects-grid">
@@ -148,10 +145,7 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
     {sections.diplomas && (
       <section class="section reveal" aria-label="Diplômes">
         <div class="section-header">
-          <h2>
-            <GraduationCap size={22} />
-            Diplômes
-          </h2>
+          <h2 class="term-head"><span class="term-tilde">~/</span>diplomes</h2>
           <div class="section-divider"></div>
         </div>
         <div class="timeline">
@@ -183,10 +177,7 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
     {sections.certifications && certifications.length > 0 && (
       <section class="section reveal" aria-label="Certifications &amp; badges">
         <div class="section-header">
-          <h2>
-            <Award size={22} />
-            Certifications &amp; badges
-          </h2>
+          <h2 class="term-head"><span class="term-tilde">~/</span>certifications</h2>
           <div class="section-divider"></div>
         </div>
         <div class="certs-grid">
@@ -228,10 +219,7 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
     {sections.jobs && (
       <section class="section reveal" aria-label="Expériences">
         <div class="section-header">
-          <h2>
-            <Briefcase size={22} />
-            Expériences
-          </h2>
+          <h2 class="term-head"><span class="term-tilde">~/</span>experiences</h2>
           <div class="section-divider"></div>
         </div>
         <div class="timeline">
@@ -507,7 +495,7 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
 
   .section { margin-bottom: 3.5rem; }
   .section-header { margin-bottom: 1.5rem; }
-  .section-header h2 { display: flex; align-items: center; gap: 0.5rem; font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .section-header h2 { font-size: 1.25rem; margin-bottom: 0.5rem; }
   .section-divider { height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--accent), transparent 80%); opacity: 0.3; }
 
   .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; max-width: 740px; margin: 0 auto; }

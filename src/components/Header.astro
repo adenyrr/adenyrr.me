@@ -212,6 +212,17 @@ const iconMap: Record<string, any> = {
     .nav-links { display: none; }
     .social-links { display: none; }
   }
+
+  /* Hide mobile nav trigger on desktop — more reliable than Tailwind md:hidden
+     inside a React island (Tailwind v4 scan may miss it). */
+  :global(.mobile-nav-trigger) {
+    display: none;
+  }
+  @media (max-width: 768px) {
+    :global(.mobile-nav-trigger) {
+      display: flex;
+    }
+  }
 </style>
 
 <script>

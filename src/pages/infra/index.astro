@@ -114,7 +114,7 @@ const docLinks: Record<string, string> = {
     <!-- Infrastructure Tab -->
     {tabs.infrastructure?.enabled && (
       <div class="tab-panel" data-panel="infrastructure" role="tabpanel">
-        <h2 class="gradient-text">Infrastructure</h2>
+        <h2 class="term-head-path"><span class="term-tilde">~/</span><span class="gradient-text">infrastructure</span></h2>
         <div class="nodes-grid">
           {(infra.proxmoxNodes || []).map((node: any, ni: number) => (
             <div class="card node-card slide-in" style={`border-left: 3px solid ${colorMap[node.color] || '#8b5cf6'}; --stage-delay: ${ni * 0.07}s`}>
@@ -170,7 +170,7 @@ const docLinks: Record<string, string> = {
     <!-- LAN Tab -->
     {tabs.lan?.enabled && (
       <div class="tab-panel hidden" data-panel="lan" role="tabpanel">
-        <h2 class="gradient-text">LAN — Réseau local</h2>
+        <h2 class="term-head-path"><span class="term-tilde">~/</span><span class="gradient-text">lan</span></h2>
         {Object.entries(categoryLabels).map(([cat, label], ci) => {
           const categoryVlans = (infra.vlans || []).filter((v: any) => v.category === cat);
           if (categoryVlans.length === 0) return null;
@@ -214,7 +214,7 @@ const docLinks: Record<string, string> = {
 
       return (
         <div class="tab-panel hidden" data-panel="wan" role="tabpanel">
-          <h2 class="gradient-text">WAN — Exposition des services</h2>
+          <h2 class="term-head-path"><span class="term-tilde">~/</span><span class="gradient-text">wan</span></h2>
           {wan.description && <p class="wan-description">{wan.description}</p>}
 
           <!-- Schema diagram -->
@@ -294,7 +294,7 @@ const docLinks: Record<string, string> = {
     <!-- Services Tab -->
     {tabs.services?.enabled && (
       <div class="tab-panel hidden" data-panel="services" role="tabpanel">
-        <h2 class="gradient-text">Services</h2>
+        <h2 class="term-head-path"><span class="term-tilde">~/</span><span class="gradient-text">services</span></h2>
         <div class="services-grid">
           {(infra.serviceGroups || []).map((group: any, gi: number) => (
             <div class="service-group slide-in" style={`--group-color: ${colorMap[group.color] || '#8b5cf6'}; --stage-delay: ${gi * 0.05}s`}>
@@ -655,32 +655,40 @@ const docLinks: Record<string, string> = {
 </style>
 
 <script>
-  function initTabs() {
-    const tabs = document.querySelectorAll<HTMLElement>('.tab');
-    const panels = document.querySelectorAll<HTMLElement>('.tab-panel');
-    if (!tabs.length) return;
+  /* Use event delegation — one stable listener on document, never needs
+     re-binding after View Transition DOM swaps.  */
+  function handleTabClick(e: MouseEvent) {
+    const tab = (e.target as Element).closest<HTMLElement>('[data-tab]');
+    // Only act when a .tab button was clicked (guard against other [data-tab] elements)
+    if (!tab || !tab.classList.contains('tab')) return;
 
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const target = tab.dataset.tab;
-        tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-        panels.forEach(p => p.classList.add('hidden'));
-        tab.classList.add('active');
-        tab.setAttribute('aria-selected', 'true');
-        const panel = document.querySelector<HTMLElement>(`[data-panel="${target}"]`);
-        panel?.classList.remove('hidden');
-        // Re-trigger slide-in animations on tab switch
-        panel?.querySelectorAll('.slide-in').forEach(el => {
-          el.classList.remove('slide-in');
-          void (el as HTMLElement).offsetWidth;
-          el.classList.add('slide-in');
-        });
-      });
+    const target = tab.dataset.tab;
+
+    // Deactivate all tabs & hide all panels (query live DOM at click time)
+    document.querySelectorAll<HTMLElement>('.tab').forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
     });
+    document.querySelectorAll<HTMLElement>('.tab-panel').forEach(p => p.classList.add('hidden'));
+
+    // Activate clicked tab
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
+
+    // Show target panel and re-trigger slide-in animations
+    const panel = document.querySelector<HTMLElement>(`[data-panel="${target}"]`);
+    if (panel) {
+      panel.classList.remove('hidden');
+      panel.querySelectorAll('.slide-in').forEach(el => {
+        el.classList.remove('slide-in');
+        void (el as HTMLElement).offsetWidth;
+        el.classList.add('slide-in');
+      });
+    }
   }
 
-  // Run on initial load and on every View Transition navigation
-  document.addEventListener('astro:page-load', initTabs);
+  // Single registration — module runs once, delegation handles all navigations
+  document.addEventListener('click', handleTabClick);
 
   // Scroll reveal + counter animation handled globally by Animations.astro (GSAP)
 </script>

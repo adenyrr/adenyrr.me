@@ -32,12 +32,17 @@ const mouseRadius = particles.mouseRadius || 150;
   <script>
     /* ── Module-level state — persists across View Transitions ── */
     let _animationId: number | null = null;
+    /* Track which canvas element is currently animated.
+       If a new canvas appears in the DOM (transition:persist failure / hard nav
+       back from Starlight), it will differ from _canvas and trigger a re-init. */
+    let _canvas: HTMLCanvasElement | null = null;
     let _onResize:     (() => void)           | null = null;
     let _onMouseMove:  ((e: MouseEvent) => void) | null = null;
     let _onMouseLeave: (() => void)           | null = null;
 
     function cleanup() {
       if (_animationId !== null) { cancelAnimationFrame(_animationId); _animationId = null; }
+      _canvas = null;
       if (_onResize)     { window.removeEventListener('resize',      _onResize);     _onResize     = null; }
       if (_onMouseMove)  { window.removeEventListener('mousemove',   _onMouseMove);  _onMouseMove  = null; }
       if (_onMouseLeave) { window.removeEventListener('mouseleave',  _onMouseLeave); _onMouseLeave = null; }
@@ -47,11 +52,12 @@ const mouseRadius = particles.mouseRadius || 150;
       const canvas = document.getElementById('particle-canvas') as HTMLCanvasElement | null;
       if (!canvas) { cleanup(); return; }
 
-      /* If the animation loop is already running (canvas survived via transition:persist),
-         skip full re-init — particles keep their positions and velocity unchanged. */
-      if (_animationId !== null) return;
+      /* Skip re-init ONLY when the animation is already running on the exact same
+         canvas element still in the DOM (happy-path: transition:persist worked). */
+      if (_animationId !== null && _canvas === canvas) return;
 
       cleanup();
+      _canvas = canvas;
 
       const count          = parseInt(canvas.dataset.count          ?? '50',  10);
       const connectDistance = parseInt(canvas.dataset.connectDistance ?? '120', 10);

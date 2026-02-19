@@ -1,7 +1,5 @@
 import * as React from 'react';
-import { Sheet, SheetTrigger, SheetContent, SheetClose } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Drawer } from 'vaul';
 
 interface NavItem {
   label: string;
@@ -20,13 +18,10 @@ interface MobileNavProps {
   currentPath: string;
 }
 
-/* Minimal inline SVG icons to avoid shipping the full lucide-react bundle */
+/* Minimal inline SVG icons — no lucide-react runtime bundle */
 const icons: Record<string, React.ReactNode> = {
   Menu: (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
-  ),
-  X: (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
   ),
   Github: (
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path d="M9 18c-4.51 2-5-2-7-2" /></svg>
@@ -49,72 +44,65 @@ const icons: Record<string, React.ReactNode> = {
 };
 
 export default function MobileNav({ navItems, socialLinks, currentPath }: MobileNavProps) {
-  const [open, setOpen] = React.useState(false);
-
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu">
+    <Drawer.Root>
+      <Drawer.Trigger asChild>
+        <button
+          className="mobile-nav-trigger flex items-center justify-center w-9 h-9 rounded-md"
+          style={{ color: 'var(--muted-text)' }}
+          aria-label="Menu"
+        >
           {icons.Menu}
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-72 pt-12">
-        {/* Close button */}
-        <SheetClose asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4"
-            aria-label="Fermer"
-          >
-            {icons.X}
-          </Button>
-        </SheetClose>
+        </button>
+      </Drawer.Trigger>
 
-        {/* Navigation */}
-        <nav className="flex flex-col gap-1">
-          {navItems.map((item) => {
-            const isActive =
-              currentPath === item.route ||
-              (item.route !== '/' && currentPath.startsWith(item.route));
-            return (
+      <Drawer.Portal>
+        <Drawer.Overlay className="mobile-drawer-overlay" />
+        <Drawer.Content className="mobile-drawer-content">
+          {/* Drag handle */}
+          <div className="mobile-drawer-handle" aria-hidden="true" />
+
+          {/* Title (visually hidden but required for a11y) */}
+          <Drawer.Title className="mobile-drawer-title">Navigation</Drawer.Title>
+
+          {/* Nav links */}
+          <nav className="mobile-drawer-nav">
+            {navItems.map((item) => {
+              const isActive =
+                currentPath === item.route ||
+                (item.route !== '/' && currentPath.startsWith(item.route));
+              return (
+                <a
+                  key={item.label}
+                  href={item.route}
+                  className={`mobile-drawer-link${isActive ? ' mobile-drawer-link--active' : ''}`}
+                >
+                  <span className="mobile-drawer-link-slash">/</span>{item.label}
+                </a>
+              );
+            })}
+          </nav>
+
+          {/* Divider */}
+          <div className="mobile-drawer-divider" />
+
+          {/* Social links */}
+          <div className="mobile-drawer-socials">
+            {socialLinks.map((link) => (
               <a
-                key={item.label}
-                href={item.route}
-                onClick={() => setOpen(false)}
-                className={`
-                  font-[var(--font-code)] text-sm px-3 py-3 rounded-lg
-                  transition-colors duration-200 no-underline
-                  ${isActive
-                    ? 'text-[var(--accent)] bg-[var(--glow)]'
-                    : 'text-[var(--muted-text)] hover:text-[var(--accent)] hover:bg-[var(--glow)]'
-                  }
-                `}
+                key={link.label}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.label}
+                className="mobile-drawer-social-link"
               >
-                /{item.label}
+                {icons[link.icon] || null}
               </a>
-            );
-          })}
-        </nav>
-
-        <Separator className="my-4 w-full opacity-30" />
-
-        {/* Social links */}
-        <div className="flex gap-2 px-3">
-          {socialLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={link.label}
-              className="text-[var(--muted-text)] hover:text-[var(--accent)] transition-colors duration-200 p-3 rounded-md"
-            >
-              {icons[link.icon] || null}
-            </a>
-          ))}
-        </div>
-      </SheetContent>
-    </Sheet>
+            ))}
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 }

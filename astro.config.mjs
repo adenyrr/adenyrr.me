@@ -5,12 +5,20 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import starlight from '@astrojs/starlight';
+import expressiveCode from 'astro-expressive-code';
+import robotsTxt from 'astro-robots-txt';
+import compress from '@playform/compress';
+import starlightLinksValidator from 'starlight-links-validator';
+import starlightLlmsTxt from 'starlight-llms-txt';
 import { remarkReadingTime } from './src/utils/reading-time.ts';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://adenyrr.me',
   integrations: [
+    expressiveCode({
+      themes: ['one-dark-pro'],
+    }),
     starlight({
       title: 'Documentation',
       description: 'Documentation technique — réseau, services, virtualisation, domotique et outils.',
@@ -65,7 +73,14 @@ export default defineConfig({
           ],
         },
       ],
+      expressiveCode: {
+        themes: ['one-dark-pro'],
+      },
       customCss: ['./src/styles/starlight-custom.css'],
+      plugins: [
+        starlightLinksValidator(),
+        starlightLlmsTxt(),
+      ],
       head: [
         {
           tag: 'meta',
@@ -82,7 +97,12 @@ export default defineConfig({
     }),
     mdx(),
     sitemap(),
+    robotsTxt({
+      policy: [{ userAgent: '*', allow: '/' }],
+      sitemap: 'https://adenyrr.me/sitemap-index.xml',
+    }),
     react(),
+    compress(),
   ],
   markdown: {
     remarkPlugins: [remarkReadingTime],
