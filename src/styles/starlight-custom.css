@@ -223,7 +223,7 @@ code:not(pre code) {
   border-right: 1px solid var(--sl-color-hairline-light);
 }
 
-/* Group labels (~/calamares, ~/network …) */
+/* Group labels (~/network, ~/srv …) */
 .group-label {
   font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace) !important;
   font-size: 0.78rem !important;
@@ -242,6 +242,27 @@ code:not(pre code) {
   -webkit-text-fill-color: var(--link-color, #1a8a7a) !important;
 }
 
+/* ~/calamares — top-level direct link (no <details> wrapper), match group-label teal */
+ul.top-level > li > a span {
+  font-family: var(--sl-font-mono, 'JetBrains Mono', ui-monospace, monospace) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  color: var(--link-color, #5ecfba) !important;
+  -webkit-text-fill-color: var(--link-color, #5ecfba) !important;
+}
+
+/* When it's the active page, override with accent so it's distinguishable */
+ul.top-level > li > a[aria-current='page'] span {
+  color: var(--sl-color-accent) !important;
+  -webkit-text-fill-color: var(--sl-color-accent) !important;
+}
+
+[data-theme='light'] ul.top-level > li > a span {
+  color: var(--link-color, #1a8a7a) !important;
+  -webkit-text-fill-color: var(--link-color, #1a8a7a) !important;
+}
+
 /* Sidebar items */
 nav.sidebar a {
   border-radius: 0.35rem;
@@ -255,6 +276,8 @@ nav.sidebar a:hover {
 }
 
 nav.sidebar a[aria-current='page'] {
+  color: var(--sl-color-accent) !important;
+  -webkit-text-fill-color: var(--sl-color-accent) !important;
   font-weight: 600;
   border-left: 2px solid var(--sl-color-accent);
   padding-left: calc(0.5rem - 2px);
@@ -454,6 +477,17 @@ body {
      The starlight-menu-button is replaced by our custom doc-nav-fab above. --- */
 .mobile-preferences {
   display: none !important;
+}
+
+/* --- Mobile sidebar — force visibility via body attribute set by our FAB.
+     Starlight's CSS uses [aria-expanded='true'] ~ .sidebar-pane inside
+     @layer starlight.core; we add an unlayered rule (higher priority) to
+     ensure it works regardless of layer ordering. --- */
+@media (max-width: 50rem) {
+  body[data-mobile-menu-expanded] #starlight__sidebar {
+    --sl-sidebar-visibility: visible !important;
+    visibility: visible !important;
+  }
 }
 
 /* --- Table styling --- */

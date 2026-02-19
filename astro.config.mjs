@@ -18,6 +18,12 @@ export default defineConfig({
   integrations: [
     expressiveCode({
       themes: ['one-dark-pro'],
+      defaultProps: {
+        // Disable macOS window chrome (the '...' dots cap)
+        frame: 'none',
+        // Always show line numbers
+        showLineNumbers: true,
+      },
     }),
     starlight({
       title: 'Documentation',
@@ -75,6 +81,10 @@ export default defineConfig({
       ],
       expressiveCode: {
         themes: ['one-dark-pro'],
+        defaultProps: {
+          frame: 'none',
+          showLineNumbers: true,
+        },
       },
       customCss: ['./src/styles/starlight-custom.css'],
       plugins: [

@@ -651,8 +651,8 @@ a:hover {
 }
 .blog-enter {
   animation: blog-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-  /* Small delay lets VT pseudo-elements clear before we start */
-  animation-delay: 80ms;
+  /* No delay — on hard refresh it would create an 80ms invisible flash;
+     VT is already synchronised by astro:after-swap before the class exists */
 }
 @media (prefers-reduced-motion: reduce) {
   .blog-enter { animation: none; }
