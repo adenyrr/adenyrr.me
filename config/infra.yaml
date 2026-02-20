@@ -30,10 +30,10 @@ display:
 # ONGLETS (activables/désactivables)
 # -----------------------------------------------------------------------------
 tabs:
-  infrastructure:
+  services:
     enabled: true
-    label: "/infra"
-    icon: "Server"
+    label: "/srv"
+    icon: "Boxes"
   lan:
     enabled: true
     label: "/lan"
@@ -42,10 +42,6 @@ tabs:
     enabled: true
     label: "/wan"
     icon: "Globe"
-  services:
-    enabled: true
-    label: "/srv"
-    icon: "Boxes"
   graph:
     enabled: true
     label: "/graph"

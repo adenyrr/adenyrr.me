@@ -72,9 +72,10 @@ header:
       icon: "Server"
       enabled: true
     - label: "docu"
-      route: "/docu"
+      url: "https://docu.adenyrr.me"
       icon: "Library"
       enabled: true
+      external: true
   socialLinks:
     - label: "GitHub"
       icon: "Github"

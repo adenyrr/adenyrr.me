@@ -17,9 +17,9 @@ profile:
 # -----------------------------------------------------------------------------
 heroLinks:
   - label: "Documentation"
-    url: "/docu"
+    url: "https://docu.adenyrr.me"
     icon: "Library"
-    internal: true
+    internal: false
     enabled: true
   - label: "Infra"
     url: "/infra"
@@ -63,7 +63,7 @@ projects:
     description: "Documentation de l'infrastructure, tutoriels et bonnes pratiques (self-hosted)."
     tech: ["Virtu", "Containers", "Réseau", "Home Assistant"]
     icon: "Library"
-    link: "https://adenyrr.me/docu"
+    link: "https://docu.adenyrr.me"
     repo: "https://gitlab.com/adenyrr/adenyrr.me"
     year: 2024
     image: "/images/docu.jpg"

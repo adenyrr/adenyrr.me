@@ -4,6 +4,7 @@ import { Drawer } from 'vaul';
 interface NavItem {
   label: string;
   route: string;
+  external?: boolean;
 }
 
 interface SocialLink {
@@ -76,8 +77,14 @@ export default function MobileNav({ navItems, socialLinks, currentPath }: Mobile
                   key={item.label}
                   href={item.route}
                   className={`mobile-drawer-link${isActive ? ' mobile-drawer-link--active' : ''}`}
+                  target={item.external ? '_blank' : undefined}
+                  rel={item.external ? 'noopener noreferrer' : undefined}
                 >
-                  <span className="mobile-drawer-link-slash">/</span>{item.label}
+                  <span className="mobile-drawer-link-slash">/</span>{item.label}{item.external && (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', marginLeft: '3px', opacity: 0.6, verticalAlign: 'middle', flexShrink: 0 }}>
+                    <path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  </svg>
+                )}
                 </a>
               );
             })}

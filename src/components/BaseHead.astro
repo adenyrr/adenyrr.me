@@ -94,7 +94,6 @@ const canonicalURL = new URL(Astro.url.pathname, config.site.url);
         document.documentElement.dataset.theme = 'light';
         document.documentElement.style.backgroundColor = '#f8f8fa';
       }
-      localStorage.setItem('starlight-theme', theme);
     }
     applyTheme();
     // Re-apply immediately after View Transition DOM swap (before paint)

@@ -1,11 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getInfraConfig, getSiteConfig, isFeatureEnabled } from '../../utils/config';
+import { getInfraConfig, isFeatureEnabled } from '../../utils/config';
 import InfraViz from '../../components/InfraViz.tsx';
 import {
-  Server, Network, Boxes, Cpu, HardDrive, Monitor, Globe,
-  GitBranch, Shield, Wifi, Printer, ExternalLink, BookOpen,
-  Lock, ChevronRight, ArrowRight
+  Server, Network, Boxes, Cpu, HardDrive, Globe,
+  Shield, ExternalLink, Lock
 } from 'lucide-astro';
 
 if (!isFeatureEnabled('infra')) {
@@ -33,19 +32,29 @@ const categoryColors: Record<string, string> = {
 };
 
 const wan = infra.wanExposure || {};
-const chainStepColors: Record<string, string> = {
-  red: '#e07d6a', orange: '#e0a86a', purple: '#b08fcf', green: '#7fd9c0', cyan: '#5ecfba',
-};
+
+// Group serviceGroups by physical node for hierarchical /srv view
+const allPhysicalNodes: any[] = [...(infra.proxmoxNodes || []), ...(infra.networkDevices || [])];
+const srvByNode: Record<string, any[]> = (infra.serviceGroups || []).reduce(
+  (acc: Record<string, any[]>, group: any) => {
+    if (!acc[group.node]) acc[group.node] = [];
+    acc[group.node].push(group);
+    return acc;
+  }, {}
+);
+const srvNodeEntries = allPhysicalNodes
+  .filter((n: any) => srvByNode[n.name])
+  .map((n: any) => ({ name: n.name, specs: n, vmGroups: srvByNode[n.name] }));
 
 const docLinks: Record<string, string> = {
-  'Jellyfin': '/docu/services/jellyfin',
-  'Ollama': '/docu/services/ollama',
-  'Open WebUI': '/docu/services/ollama',
-  'step-ca': '/docu/reseau/stepca',
-  'Nginx Proxy Manager': '/docu/reseau/swag',
-  'CrowdSec': '/docu/reseau/swag',
-  'Fail2ban': '/docu/reseau/swag',
-  'Home Assistant': '/docu/hassio/install',
+  'Jellyfin': 'https://docu.adenyrr.me/services/jellyfin',
+  'Ollama': 'https://docu.adenyrr.me/services/ollama',
+  'Open WebUI': 'https://docu.adenyrr.me/services/ollama',
+  'step-ca': 'https://docu.adenyrr.me/reseau/stepca',
+  'Nginx Proxy Manager': 'https://docu.adenyrr.me/reseau/swag',
+  'CrowdSec': 'https://docu.adenyrr.me/reseau/swag',
+  'Fail2ban': 'https://docu.adenyrr.me/reseau/swag',
+  'Home Assistant': 'https://docu.adenyrr.me/hassio/install',
 };
 ---
 
@@ -110,62 +119,6 @@ const docLinks: Record<string, string> = {
         </button>
       ))}
     </div>
-
-    <!-- Infrastructure Tab -->
-    {tabs.infrastructure?.enabled && (
-      <div class="tab-panel" data-panel="infrastructure" role="tabpanel">
-        <h2 class="term-head-path"><span class="term-tilde">~/</span><span class="gradient-text">infrastructure</span></h2>
-        <div class="nodes-grid">
-          {(infra.proxmoxNodes || []).map((node: any, ni: number) => (
-            <div class="card node-card slide-in" style={`border-left: 3px solid ${colorMap[node.color] || '#8b5cf6'}; --stage-delay: ${ni * 0.07}s`}>
-              <div class="node-header">
-                <div class="node-title-row">
-                  <div class="node-color-dot" style={`background: ${colorMap[node.color] || '#8b5cf6'}`}></div>
-                  <h3>{node.name}</h3>
-                </div>
-                <Server size={18} class="node-type-icon" />
-              </div>
-              <div class="node-specs">
-                <span class="spec"><Cpu size={14} /> {node.cpu}</span>
-                <span class="spec"><HardDrive size={14} /> {node.ram}</span>
-              </div>
-              <div class="node-services">
-                {(node.services || []).map((svc: any) => (
-                  <div class="node-service">
-                    <span class="service-name">{svc.name}</span>
-                    <span class="tag">{svc.type}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div class="nodes-grid" style="margin-top: 2rem;">
-          {(infra.networkDevices || []).map((device: any, di: number) => (
-            <div class="card node-card slide-in" style={`border-left: 3px solid ${colorMap[device.color] || '#8b5cf6'}; --stage-delay: ${di * 0.07}s`}>
-              <div class="node-header">
-                <div class="node-title-row">
-                  <div class="node-color-dot" style={`background: ${colorMap[device.color] || '#8b5cf6'}`}></div>
-                  <h3>{device.name}</h3>
-                </div>
-              </div>
-              <div class="node-specs">
-                <span class="spec"><Cpu size={14} /> {device.cpu}</span>
-                <span class="spec">{device.ram}</span>
-              </div>
-              <div class="node-services">
-                {(device.services || []).map((svc: any) => (
-                  <div class="node-service">
-                    <span class="service-name">{svc.name}</span>
-                    <span class="tag">{svc.type}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
 
     <!-- LAN Tab -->
     {tabs.lan?.enabled && (
@@ -291,44 +244,60 @@ const docLinks: Record<string, string> = {
       );
     })()}
 
-    <!-- Services Tab -->
+    <!-- Services / Rack Tab (merged infrastructure + services) -->
     {tabs.services?.enabled && (
-      <div class="tab-panel hidden" data-panel="services" role="tabpanel">
-        <h2 class="term-head-path"><span class="term-tilde">~/</span><span class="gradient-text">services</span></h2>
-        <div class="services-grid">
-          {(infra.serviceGroups || []).map((group: any, gi: number) => (
-            <div class="service-group slide-in" style={`--group-color: ${colorMap[group.color] || '#8b5cf6'}; --stage-delay: ${gi * 0.05}s`}>
-              <div class="sg-header">
-                <div class="sg-title-row">
-                  <div class="sg-accent-bar"></div>
-                  <div class="sg-title">
-                    <span class="sg-vm">{group.vm}</span>
-                    <span class="sg-node">@ {group.node}</span>
+      <div class="tab-panel" data-panel="services" role="tabpanel">
+        <div class="rack-nodes">
+          {srvNodeEntries.map((node: any, ni: number) => {
+            const nodeColor = colorMap[node.specs?.color] || '#8b5cf6';
+            const totalSvcs = node.vmGroups.reduce((a: number, g: any) => a + g.services.length, 0);
+            const isPve = (infra.proxmoxNodes || []).some((n: any) => n.name === node.name);
+            return (
+              <div class="rack-node slide-in" style={`--node-color: ${nodeColor}; --stage-delay: ${ni * 0.1}s`}>
+                <div class="rack-node-header">
+                  <span class="rack-led" aria-hidden="true"></span>
+                  <div class="rack-identity">
+                    <span class="rack-node-name">{node.name}</span>
+                    <span class:list={['rack-node-type', isPve ? 'rack-node-type--pve' : 'rack-node-type--device']}>
+                      {isPve ? 'PVE' : 'device'}
+                    </span>
                   </div>
+                  <div class="rack-hw">
+                    {node.specs?.cpu && <span class="rack-hw-chip"><Cpu size={10} />{node.specs.cpu}</span>}
+                    {node.specs?.ram && <span class="rack-hw-chip">{node.specs.ram}</span>}
+                  </div>
+                  <span class="rack-svc-count">{totalSvcs} svc</span>
                 </div>
-                <span class="tag sg-tag">{group.type}</span>
+                <div class="rack-vms">
+                  {node.vmGroups.map((group: any) => {
+                    const typeKey = group.type === 'VM' ? 'vm' : group.type === 'LXC' ? 'lxc' : 'natif';
+                    return (
+                      <div class="rack-vm-row">
+                        <span class:list={['rack-vm-type', `rack-vm-type--${typeKey}`]}>{group.type}</span>
+                        <span class="rack-vm-name">{group.vm}</span>
+                        <div class="rack-chips">
+                          {(group.services || []).map((svc: any) => {
+                            const docUrl = docLinks[svc.name];
+                            return docUrl ? (
+                              <a href={docUrl} class:list={['rack-chip', 'rack-chip--doc']} target="_blank" rel="noopener noreferrer" title={svc.description}>
+                                <span class:list={['rack-chip-dot', `status-${svc.status}`]}></span>
+                                {svc.name}<ExternalLink size={8} class="rack-ext-icon" />
+                              </a>
+                            ) : (
+                              <span class="rack-chip" title={svc.description}>
+                                <span class:list={['rack-chip-dot', `status-${svc.status}`]}></span>
+                                {svc.name}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div class="sg-service-list">
-                {(group.services || []).map((svc: any) => (
-                  <div class="sg-service-row">
-                    <div class="sg-svc-left">
-                      <span class:list={['sg-status-dot', `status-${svc.status}`]}></span>
-                      <span class="sg-svc-name">{svc.name}</span>
-                    </div>
-                    <span class="sg-svc-desc">{svc.description}</span>
-                    <div class="sg-svc-end">
-                      {docLinks[svc.name] ? (
-                        <a href={docLinks[svc.name]} class="service-doc-link" title="Documentation">
-                          <BookOpen size={11} />
-                          <span>doc</span>
-                        </a>
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     )}
@@ -421,32 +390,7 @@ const docLinks: Record<string, string> = {
   .tab:hover { color: var(--text); }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-  /* ── Nodes (/infra) ── */
-  .nodes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 1rem; }
-  .node-card {
-    padding: 1.25rem;
-    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
-  }
-  .node-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-  .node-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
-  .node-title-row { display: flex; align-items: center; gap: 0.6rem; }
-  .node-color-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .node-header h3 { font-size: 1.1rem; margin: 0; }
-  .node-type-icon { color: var(--muted-text); margin-top: 2px; }
-  .node-specs { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
   .spec { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-code); font-size: 0.78rem; color: var(--muted-text); }
-
-  .node-services { display: flex; flex-direction: column; }
-  .node-service {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.83rem; padding: 0.3rem 0.25rem;
-    border-bottom: 1px solid var(--card-border);
-    border-radius: 0.25rem;
-    transition: padding-left 0.2s ease, background 0.15s ease;
-  }
-  .node-service:hover { padding-left: 0.5rem; background: var(--card-bg); }
-  .node-service:last-child { border-bottom: none; }
-  .service-name { color: var(--text); }
 
   /* ── VLANs (/lan) ── */
   .vlan-category { margin-bottom: 2.5rem; }
@@ -561,96 +505,137 @@ const docLinks: Record<string, string> = {
   }
   .schema-svc-name { color: var(--text); font-weight: 500; white-space: nowrap; }
 
-  /* ── Services (/srv) ── */
-  .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+  /* ── Rack manifest (/srv) ── */
+  .rack-nodes { display: flex; flex-direction: column; gap: 0.85rem; }
 
-  .service-group {
+  .rack-node {
     background: var(--card-bg); backdrop-filter: blur(20px) saturate(1.4);
-    border: 1px solid var(--card-border); border-radius: 0.9rem;
-    overflow: hidden;
-    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+    border: 1px solid var(--card-border);
+    border-left: 3px solid var(--node-color);
+    border-radius: 0.9rem; overflow: hidden;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
   }
-  .service-group:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 28px rgba(0,0,0,0.35), 0 0 0 1px color-mix(in srgb, var(--group-color) 20%, transparent);
-    border-color: color-mix(in srgb, var(--group-color) 25%, transparent);
+  .rack-node:hover {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.22), 0 0 0 1px color-mix(in srgb, var(--node-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--node-color) 38%, transparent);
   }
 
-  .sg-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0.85rem 1rem 0.75rem;
+  .rack-node-header {
+    display: flex; align-items: center; gap: 0.85rem;
+    padding: 0.75rem 1.1rem;
+    background: color-mix(in srgb, var(--node-color) 5%, transparent);
     border-bottom: 1px solid var(--card-border);
-    background: color-mix(in srgb, var(--group-color) 4%, transparent);
   }
-  .sg-title-row { display: flex; align-items: center; gap: 0.6rem; }
-  .sg-accent-bar {
-    width: 3px; height: 28px; border-radius: 2px;
-    background: var(--group-color); flex-shrink: 0;
+  .rack-led {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: var(--node-color);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--node-color) 55%, transparent);
+    animation: led-pulse 3s ease-in-out infinite;
   }
-  .sg-title { display: flex; flex-direction: column; gap: 0.05rem; }
-  .sg-vm { font-size: 0.92rem; font-weight: 700; color: var(--text); line-height: 1.2; }
-  .sg-node { font-family: var(--font-code); font-size: 0.62rem; color: var(--muted-text); }
-  .sg-tag { font-size: 0.6rem !important; }
+  @keyframes led-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; box-shadow: 0 0 2px color-mix(in srgb, var(--node-color) 25%, transparent); }
+  }
+  .rack-identity { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+  .rack-node-name { font-size: 0.95rem; font-weight: 700; color: var(--text); line-height: 1; }
+  .rack-node-type {
+    font-family: var(--font-code); font-size: 0.56rem; font-weight: 700;
+    padding: 0.08rem 0.35rem; border-radius: 0.2rem; white-space: nowrap;
+  }
+  .rack-node-type--pve  { background: rgba(212,132,90,0.1); color: #d4845a; border: 1px solid rgba(212,132,90,0.22); }
+  .rack-node-type--device { background: rgba(94,207,186,0.1); color: #5ecfba; border: 1px solid rgba(94,207,186,0.22); }
 
-  .sg-service-list { padding: 0.4rem 0; }
-  .sg-service-row {
-    display: grid; grid-template-columns: auto 1fr auto;
-    align-items: center; gap: 0.5rem;
-    padding: 0.35rem 1rem;
+  .rack-hw { display: flex; gap: 0.4rem; flex-wrap: wrap; flex: 1; }
+  .rack-hw-chip {
+    display: inline-flex; align-items: center; gap: 0.28rem;
+    font-family: var(--font-code); font-size: 0.67rem; color: var(--muted-text);
+    background: rgba(255,255,255,0.03); padding: 0.12rem 0.45rem;
+    border: 1px solid var(--card-border); border-radius: 0.22rem;
+  }
+  .rack-svc-count {
+    font-family: var(--font-code); font-size: 0.6rem; white-space: nowrap; flex-shrink: 0;
+    background: color-mix(in srgb, var(--node-color) 10%, transparent);
+    color: var(--node-color);
+    border: 1px solid color-mix(in srgb, var(--node-color) 20%, transparent);
+    padding: 0.12rem 0.45rem; border-radius: 0.22rem;
+  }
+
+  .rack-vms { padding: 0.15rem 0; }
+  .rack-vm-row {
+    display: grid;
+    grid-template-columns: 46px 130px 1fr;
+    align-items: center;
+    gap: 0 0.85rem;
+    padding: 0.38rem 1.1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--card-border) 40%, transparent);
     transition: background 0.15s ease;
   }
-  .sg-service-row:hover { background: color-mix(in srgb, var(--group-color) 5%, transparent); }
+  .rack-vm-row:last-child { border-bottom: none; }
+  .rack-vm-row:hover { background: color-mix(in srgb, var(--node-color) 3%, transparent); }
 
-  .sg-svc-left { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
-  .sg-status-dot {
-    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  .rack-vm-type {
+    font-family: var(--font-code); font-size: 0.58rem; font-weight: 700;
+    padding: 0.08rem 0.28rem; border-radius: 0.2rem;
+    text-align: center; white-space: nowrap;
+  }
+  .rack-vm-type--vm    { background: rgba(212,132,90,0.12); color: #d4845a; border: 1px solid rgba(212,132,90,0.22); }
+  .rack-vm-type--lxc   { background: rgba(94,207,186,0.12); color: #5ecfba; border: 1px solid rgba(94,207,186,0.22); }
+  .rack-vm-type--natif { background: rgba(127,217,192,0.12); color: #7fd9c0; border: 1px solid rgba(127,217,192,0.22); }
+
+  .rack-vm-name {
+    font-family: var(--font-code); font-size: 0.76rem; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .rack-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; padding: 0.18rem 0; }
+  .rack-chip {
+    display: inline-flex; align-items: center; gap: 0.28rem;
+    font-size: 0.71rem; font-weight: 500; color: var(--text);
+    background: rgba(255,255,255,0.03); padding: 0.15rem 0.5rem;
+    border: 1px solid var(--card-border); border-radius: 0.3rem;
+    white-space: nowrap; line-height: 1.3;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .rack-chip-dot {
+    width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
     background: var(--muted-text);
   }
-  .sg-status-dot.status-online  { background: #5ecfba; box-shadow: 0 0 4px rgba(94,207,186,0.5); }
-  .sg-status-dot.status-offline { background: #e07d6a; }
-  .sg-svc-name {
-    font-size: 0.83rem; color: var(--text); font-weight: 500;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
+  .rack-chip-dot.status-online  { background: #5ecfba; box-shadow: 0 0 4px rgba(94,207,186,0.45); }
+  .rack-chip-dot.status-offline { background: #e07d6a; }
 
-  .sg-svc-desc {
-    font-family: var(--font-code); font-size: 0.68rem; color: var(--muted-text);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  .rack-chip--doc {
+    text-decoration: none;
+    background: rgba(94,207,186,0.05);
+    border-color: rgba(94,207,186,0.22);
+    color: var(--text);
   }
-  .sg-svc-end {
-    display: flex; align-items: center; justify-content: flex-end; min-width: 42px;
+  .rack-chip--doc:hover {
+    background: rgba(212,132,90,0.1); color: var(--accent);
+    border-color: rgba(212,132,90,0.28);
+    box-shadow: 0 2px 8px rgba(212,132,90,0.12);
   }
-
-  /* Doc link badge */
-  .service-doc-link {
-    display: inline-flex; align-items: center; gap: 0.25rem;
-    font-family: var(--font-code); font-size: 0.6rem; font-weight: 600;
-    text-decoration: none; white-space: nowrap; flex-shrink: 0;
-    padding: 0.12rem 0.38rem; border-radius: 0.25rem;
-    background: rgba(94,207,186,0.08); color: var(--link-color);
-    border: 1px solid rgba(94,207,186,0.2);
-    transition: all 0.2s ease;
-  }
-  .service-doc-link:hover {
-    background: rgba(212,132,90,0.12); color: var(--accent);
-    border-color: rgba(212,132,90,0.3); transform: translateY(-1px);
-  }
+  .rack-ext-icon { opacity: 0.45; flex-shrink: 0; }
+  .rack-chip--doc:hover .rack-ext-icon { opacity: 1; }
 
   .hidden { display: none !important; }
 
   @media (max-width: 768px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .stat-card:last-child { grid-column: span 2; }
-    .nodes-grid, .vlans-grid, .services-grid { grid-template-columns: 1fr; }
+    .vlans-grid { grid-template-columns: 1fr; }
     .schema-vms-row { flex-direction: column; align-items: center; }
     .schema-vm-col { max-width: 100%; min-width: unset; width: 80%; }
     .schema-fanout { display: none; }
     .schema-shared-row { flex-direction: column; }
-    .sg-svc-desc { max-width: 80px; }
+    .rack-vm-row { grid-template-columns: 46px 110px 1fr; gap: 0 0.5rem; padding: 0.38rem 0.75rem; }
+    .rack-node-header { padding: 0.65rem 0.75rem; }
+    .rack-hw { display: none; }
   }
   @media (max-width: 480px) {
     .stats-grid { grid-template-columns: 1fr; }
     .stat-card:last-child { grid-column: span 1; }
+    .rack-vm-row { grid-template-columns: 46px 1fr; }
+    .rack-vm-name { display: none; }
   }
 </style>
 

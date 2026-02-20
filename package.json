@@ -13,7 +13,6 @@
     "@astrojs/react": "^4.4.2",
     "@astrojs/rss": "^4.0.15",
     "@astrojs/sitemap": "^3.7.0",
-    "@astrojs/starlight": "^0.37.6",
     "@playform/compress": "^0.2.1",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-separator": "^1.1.8",
@@ -34,15 +33,11 @@
     "react-dom": "^19.2.4",
     "reading-time": "^1.5.0",
     "sharp": "^0.34.5",
-    "starlight-links-validator": "^0.19.2",
-    "starlight-llms-txt": "^0.7.0",
     "tailwind-merge": "^3.4.1",
     "tailwindcss": "^4.1.18",
     "vaul": "^1.1.2",
     "yaml": "^2.8.2",
     "zod": "^3.25.76"
   },
-  "devDependencies": {
-    "pagefind": "^1.4.0"
-  }
+  "devDependencies": {}
 }
