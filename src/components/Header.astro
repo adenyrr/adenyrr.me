@@ -98,6 +98,14 @@ const iconMap: Record<string, any> = {
     transition: var(--transition-colors), box-shadow 0.3s ease;
   }
 
+  @media (max-width: 768px) {
+    header {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: var(--surface);
+    }
+  }
+
   header.scrolled {
     box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 1px 0 var(--card-border);
   }

@@ -299,6 +299,14 @@ a:hover {
               box-shadow 0.35s ease;
 }
 
+@media (max-width: 768px) {
+  .card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--surface);
+  }
+}
+
 .card:hover {
   border-color: var(--card-border-hover);
   box-shadow: var(--shadow-md), var(--shadow-glow);
@@ -719,8 +727,6 @@ a:hover {
   inset: 0;
   z-index: 998;
   background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   animation: drawer-overlay-in 200ms ease forwards;
 }
 
@@ -739,9 +745,7 @@ a:hover {
   max-height: 82svh;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
-  backdrop-filter: blur(28px) saturate(1.5);
-  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  background: var(--surface);
   border: 1px solid var(--card-border);
   border-bottom: none;
   border-top-left-radius: 1.25rem;

@@ -41,23 +41,26 @@ function init() {
   const dur = (d: number) => (reduced ? Math.min(d * 0.25, 0.1) : d);
 
   /* ── Lenis smooth scroll ── */
-  lenis = new Lenis({
-    duration: reduced ? 0.01 : 1.15,
-    easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    wheelMultiplier: 0.9,
-    touchMultiplier: 1.4,
-  });
+  const isMobile = window.innerWidth < 768;
+  if (!isMobile) {
+    lenis = new Lenis({
+      duration: reduced ? 0.01 : 1.15,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      wheelMultiplier: 0.9,
+      touchMultiplier: 1.4,
+    });
 
-  /* Connect Lenis RAF to GSAP ticker.
-     - Store reference so we can remove it on cleanup (prevents accumulation).
-     - No scrollerProxy needed: Lenis v1+ dispatches native scroll events,
-       GSAP ScrollTrigger reads window.scrollY directly and works correctly. */
-  lenisRaf = (time: number) => { lenis!.raf(time * 1000); };
-  gsap.ticker.add(lenisRaf);
-  gsap.ticker.lagSmoothing(0);
+    /* Connect Lenis RAF to GSAP ticker.
+       - Store reference so we can remove it on cleanup (prevents accumulation).
+       - No scrollerProxy needed: Lenis v1+ dispatches native scroll events,
+         GSAP ScrollTrigger reads window.scrollY directly and works correctly. */
+    lenisRaf = (time: number) => { lenis!.raf(time * 1000); };
+    gsap.ticker.add(lenisRaf);
+    gsap.ticker.lagSmoothing(0);
 
-  /* Forward Lenis scroll events to ScrollTrigger for position updates */
-  lenis.on('scroll', ScrollTrigger.update);
+    /* Forward Lenis scroll events to ScrollTrigger for position updates */
+    lenis.on('scroll', ScrollTrigger.update);
+  }
 
   /* Always skip hiding elements already visible in viewport — both on first
      load AND on VT navigation. Without this, GSAP would set opacity:0 on
@@ -216,18 +219,20 @@ function init() {
     });
 
     /* ── Subtle parallax on banner blobs ── */
-    document.querySelectorAll<Element>('.banner-blob').forEach((blob, i) => {
-      gsap.to(blob, {
-        y: i % 2 === 0 ? '-30%' : '20%',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.banner-scene',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 1.5,
-        },
+    if (!isMobile) {
+      document.querySelectorAll<Element>('.banner-blob').forEach((blob, i) => {
+        gsap.to(blob, {
+          y: i % 2 === 0 ? '-30%' : '20%',
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.banner-scene',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 1.5,
+          },
+        });
       });
-    });
+    }
 
     ScrollTrigger.refresh();
   }); // end gsap.context

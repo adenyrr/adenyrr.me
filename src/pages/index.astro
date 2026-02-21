@@ -283,6 +283,14 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
     filter: blur(60px); opacity: 0;
     pointer-events: none;
   }
+  @media (max-width: 768px) {
+    .banner-blob {
+      filter: blur(30px);
+    }
+    .banner-grid {
+      animation: none;
+    }
+  }
   .banner-blob-1 {
     width: 320px; height: 220px;
     background: radial-gradient(circle, var(--blob-teal) 0%, transparent 70%);
@@ -313,6 +321,13 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
     display: flex; flex-direction: column; justify-content: center;
     padding: 44px 56px 58px;
   }
+  @media (max-width: 768px) {
+    .banner-card {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: var(--surface);
+    }
+  }
   .banner-card::before {
     content: ''; position: absolute; top: 0; right: 0;
     width: 280px; height: 130px;
@@ -322,14 +337,15 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
   .banner-card::after {
     content: ''; position: absolute; left: 0; right: 0; height: 2px;
     background: linear-gradient(90deg, transparent, var(--scan-color), transparent);
-    top: -2px;
+    top: 0;
+    transform: translateY(-2px);
     animation: scanDown 6s ease-in-out 1.8s infinite;
   }
   @keyframes scanDown {
-    0%   { top: -2px; opacity: 0; }
+    0%   { transform: translateY(-2px); opacity: 0; }
     5%   { opacity: 1; }
     95%  { opacity: 1; }
-    100% { top: 100%; opacity: 0; }
+    100% { transform: translateY(600px); opacity: 0; }
   }
 
   /* ── Terminal dots — pop + bounce ── */
@@ -553,6 +569,14 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
       border-color 0.25s ease,
       box-shadow 0.3s ease;
     overflow: hidden;
+  }
+
+  @media (max-width: 768px) {
+    .cert-card {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: var(--surface);
+    }
   }
 
   /* Accent top-bar on featured cards */

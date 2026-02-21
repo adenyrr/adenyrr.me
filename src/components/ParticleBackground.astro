@@ -76,9 +76,12 @@ const mouseRadius = particles.mouseRadius || 150;
       }
       resize();
 
+      const isMobile = window.innerWidth < 768;
+      const actualCount = isMobile ? Math.floor(count / 2) : count;
+
       function createParticles() {
         pts = [];
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < actualCount; i++) {
           pts.push({
             x:      Math.random() * canvas!.width,
             y:      Math.random() * canvas!.height,
@@ -98,17 +101,21 @@ const mouseRadius = particles.mouseRadius || 150;
         ctx!.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx!.fillStyle = color;
         ctx!.fill();
-        ctx!.shadowBlur  = 12;
-        ctx!.shadowColor = color;
+        if (!isMobile) {
+          ctx!.shadowBlur  = 12;
+          ctx!.shadowColor = color;
+        }
       }
 
       function connectParticles() {
+        const connectDistanceSq = connectDistance * connectDistance;
         for (let i = 0; i < pts.length; i++) {
           for (let j = i + 1; j < pts.length; j++) {
             const dx   = pts[i].x - pts[j].x;
             const dy   = pts[i].y - pts[j].y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < connectDistance) {
+            const distSq = dx * dx + dy * dy;
+            if (distSq < connectDistanceSq) {
+              const dist = Math.sqrt(distSq);
               const opacity = (1 - dist / connectDistance) * 0.12;
               ctx!.beginPath();
               ctx!.strokeStyle = `rgba(94, 207, 186, ${opacity})`;
@@ -122,14 +129,16 @@ const mouseRadius = particles.mouseRadius || 150;
       }
 
       function updateParticles() {
+        const mouseRadiusSq = mouse.radius * mouse.radius;
         for (const p of pts) {
           p.x += p.speedX;
           p.y += p.speedY;
           if (mouse.x !== null && mouse.y !== null) {
             const dx   = p.x - mouse.x;
             const dy   = p.y - mouse.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < mouse.radius) {
+            const distSq = dx * dx + dy * dy;
+            if (distSq < mouseRadiusSq) {
+              const dist = Math.sqrt(distSq);
               const force = (mouse.radius - dist) / mouse.radius;
               p.x += dx * force * 0.02;
               p.y += dy * force * 0.02;
