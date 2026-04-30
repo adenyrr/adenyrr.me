@@ -1,18 +1,5 @@
----
-name = "adenyrr-me"
-main = "dist/index.html"
-build = { command = "npm run build", cwd = "./" }
+name = "home"
+pages_build_output_dir = "dist"
 
 [env.production]
-name = "adenyrr-me-prod"
-
-[[routes]]
-pattern = "*"
-zone_name = "adenyrr.me"
-
-[build]
-command = "npm ci && npm run build"
-cwd = "./"
-
-[build.upload]
-format = "service-worker"
+name = "home"
