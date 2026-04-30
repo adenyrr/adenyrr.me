@@ -6,6 +6,9 @@ dist/
 
 # dependencies
 node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # logs
 *.log
@@ -19,11 +22,26 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# local environment
+.env.local
+.env.*.local
+
 # editor / IDE
 .vscode/
+!.vscode/extensions.json
 .idea/
+*.swp
+*.swo
+*~
+.vim/
 
 # OS files
 .DS_Store
 Thumbs.db
 
+# testing
+coverage/
+.nyc_output/
+
+# runtime
+*.pem

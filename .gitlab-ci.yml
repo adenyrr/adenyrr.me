@@ -3,8 +3,12 @@ image: node:22-alpine
 variables:
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
 
-pages:
-  stage: deploy
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
   cache:
     key:
       files:
@@ -16,10 +20,29 @@ pages:
     - npm ci --prefer-offline
   script:
     - npm run build
-    - rm -rf public
-    - mv dist public
   artifacts:
     paths:
-      - public
+      - dist/
+    expire_in: 1 day
+  only:
+    - main
+
+deploy_cloudflare_pages:
+  stage: deploy
+  image: node:22-alpine
+  dependencies:
+    - build
+  before_script:
+    - npm install -g @cloudflare/wrangler@latest
+  script:
+    # Deploy to Cloudflare Pages using Wrangler
+    # Requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in GitLab CI/CD variables
+    - wrangler pages deploy dist/ --project-name=adenyrr-me
+  environment:
+    name: production
+    url: https://adenyrr.me
+  only:
+    - main
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual  # Manual deployment to be safe

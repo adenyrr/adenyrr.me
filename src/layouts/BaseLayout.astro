@@ -1,5 +1,5 @@
 ---
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from 'astro:transitions';
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -21,7 +21,7 @@ const { title, description, image, article = false } = Astro.props;
 <html lang="fr">
   <head>
     <BaseHead title={title} description={description} image={image} article={article} />
-    <ViewTransitions />
+    <ClientRouter />
   </head>
   <body>
     <ParticleBackground transition:persist="particle-bg" />

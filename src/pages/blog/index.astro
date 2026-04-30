@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { isFeatureEnabled } from '../../utils/config';
 import { getCollection } from 'astro:content';
-import { Calendar, Clock } from 'lucide-astro';
+import { Calendar, Clock } from '@lucide/astro';
 
 // Redirect if blog is disabled
 if (!isFeatureEnabled('blog')) {
