@@ -24,8 +24,8 @@ build:
     paths:
       - dist/
     expire_in: 1 day
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 deploy_cloudflare_pages:
   stage: deploy
@@ -41,8 +41,6 @@ deploy_cloudflare_pages:
   environment:
     name: production
     url: https://adenyrr.me
-  only:
-    - main
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: manual  # Manual deployment to be safe
