@@ -17,7 +17,7 @@ build:
       - .npm/
     policy: pull-push
   before_script:
-    - npm ci --prefer-offline
+    - npm ci --prefer-offline --legacy-peer-deps
   script:
     - npm run build
   artifacts:
