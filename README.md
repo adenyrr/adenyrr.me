@@ -248,7 +248,7 @@ seo:
 
 footer:
   rss: true                               # Afficher lien RSS
-  copyright: "© 2026 Adenyrian"           # Copyright
+  copyright: "..."                        # Copyright
 
 features:
   darkMode: true                          # Thème sombre
