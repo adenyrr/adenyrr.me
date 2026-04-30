@@ -37,7 +37,7 @@ deploy_cloudflare_pages:
   script:
     # Deploy to Cloudflare Pages using Wrangler
     # Requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in GitLab CI/CD variables
-    - wrangler pages deploy dist/ --project-name=adenyrr-me
+    - wrangler pages deploy dist/ --project-name=home
   environment:
     name: production
     url: https://adenyrr.me
