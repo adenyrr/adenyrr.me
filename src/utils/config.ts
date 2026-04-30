@@ -14,7 +14,45 @@ const siteConfigSchema = z.object({
     description: z.string().min(1, 'Site description is required'),
     url: z.string().url('Invalid site URL'),
     author: z.string().min(1, 'Author name is required'),
+    email: z.string().email().optional(),
   }),
+  features: z.record(z.boolean()).optional(),
+  header: z
+    .object({
+      show: z.boolean().optional().default(true),
+      brandName: z.string().optional(),
+      navigation: z
+        .array(
+          z.object({
+            label: z.string(),
+            route: z.string().optional(),
+            url: z.string().optional(),
+            icon: z.string().optional(),
+            enabled: z.boolean().optional().default(true),
+            external: z.boolean().optional(),
+          })
+        )
+        .optional(),
+      socialLinks: z
+        .array(
+          z.object({
+            label: z.string(),
+            url: z.string(),
+            icon: z.string().optional(),
+            enabled: z.boolean().optional().default(true),
+          })
+        )
+        .optional(),
+    })
+    .optional(),
+  theme: z
+    .object({
+      mode: z.enum(['auto', 'dark', 'light']).optional().default('auto'),
+      colors: z.record(z.any()).optional(),
+      particles: z.record(z.any()).optional(),
+      fonts: z.record(z.string()).optional(),
+    })
+    .optional(),
   seo: z
     .object({
       openGraph: z.boolean().optional().default(true),
@@ -26,9 +64,18 @@ const siteConfigSchema = z.object({
     .object({
       rss: z.boolean().optional().default(true),
       copyright: z.string().optional(),
+      author: z.string().optional(),
+      authorUrl: z.string().optional(),
+      poweredBy: z
+        .array(
+          z.object({
+            label: z.string(),
+            url: z.string(),
+          })
+        )
+        .optional(),
     })
     .optional(),
-  features: z.record(z.boolean()).optional(),
 });
 
 const homeConfigSchema = z.object({
