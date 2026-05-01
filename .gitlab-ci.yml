@@ -30,8 +30,6 @@ build:
 deploy_cloudflare_pages:
   stage: deploy
   image: node:22-alpine
-  dependencies:
-    - build
   before_script:
     - npm install -g wrangler
   script:
@@ -40,7 +38,7 @@ deploy_cloudflare_pages:
     name: production
     url: https://adenyrr.me
   needs:
-    - job: build_site
+    - job: build
       artifacts: true
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
