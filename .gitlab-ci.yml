@@ -23,7 +23,7 @@ build:
   artifacts:
     paths:
       - dist/
-    expire_in: 1 day
+    expire_in: 1 week
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
@@ -35,12 +35,12 @@ deploy_cloudflare_pages:
   before_script:
     - npm install -g wrangler
   script:
-    # Deploy to Cloudflare Pages using Wrangler
-    # Requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in GitLab CI/CD variables
     - wrangler pages deploy dist/ --project-name=home
   environment:
     name: production
     url: https://adenyrr.me
+  needs:
+    - job: build_site
+      artifacts: true
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual  # Manual deployment to be safe
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
