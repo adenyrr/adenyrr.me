@@ -24,13 +24,17 @@ const authorUrl = footer.authorUrl || '/';
       <span class="pl-dot" aria-hidden="true"></span>
     </span>
 
-    <!-- Segment 3: powered by (RSS + tech) -->
+    <!-- Segment 3: RSS feed (mis en avant) -->
+    {footer.rss && (
+      <a class="pl-seg pl-seg-rss" href="/rss.xml" aria-label="S'abonner au flux RSS" title="Flux RSS">
+        <Rss size={14} class="pl-rss-icon" />
+        <span class="pl-text">rss feed</span>
+        <span class="pl-rss-pulse" aria-hidden="true"></span>
+      </a>
+    )}
+
+    <!-- Segment 4: powered by tech -->
     <span class="pl-seg pl-seg-3">
-      {footer.rss && (
-        <a href="/rss.xml" aria-label="RSS" title="RSS" class="pl-link">
-          <Rss size={12} />
-        </a>
-      )}
       <span class="pl-text">
         {(footer.poweredBy || []).map((item: any, i: number) => (
           <>
@@ -64,7 +68,7 @@ const authorUrl = footer.authorUrl || '/';
     margin-top: 4rem;
     padding: 0;
     font-family: var(--font-code);
-    font-size: 0.72rem;
+    font-size: 0.85rem;
     letter-spacing: 0.02em;
     color: var(--text);
   }
@@ -74,7 +78,7 @@ const authorUrl = footer.authorUrl || '/';
     align-items: stretch;
     flex-wrap: wrap;
     width: 100%;
-    min-height: 28px;
+    min-height: 42px;
     background: var(--surface-raised);
     border-top: 1px solid color-mix(in srgb, var(--accent) 18%, var(--card-border));
     overflow: hidden;
@@ -83,10 +87,10 @@ const authorUrl = footer.authorUrl || '/';
   .pl-seg {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0 0.6rem 0 0.85rem;
-    line-height: 28px;
-    height: 28px;
+    gap: 0.55rem;
+    padding: 0 0.9rem 0 1.1rem;
+    line-height: 42px;
+    height: 42px;
     text-decoration: none;
     color: inherit;
     white-space: nowrap;
@@ -98,10 +102,10 @@ const authorUrl = footer.authorUrl || '/';
   .pl-seg::after {
     content: '';
     display: inline-block;
-    width: 12px;
-    height: 28px;
-    margin-right: -12px;
-    margin-left: 0.55rem;
+    width: 18px;
+    height: 42px;
+    margin-right: -18px;
+    margin-left: 0.75rem;
     background: inherit;
     clip-path: polygon(0 0, 100% 50%, 0 100%);
     z-index: 1;
@@ -112,13 +116,38 @@ const authorUrl = footer.authorUrl || '/';
     background: var(--accent);
     color: var(--bg);
     font-weight: 700;
-    padding-left: 1rem;
+    padding-left: 1.25rem;
   }
   .pl-seg-1:hover { filter: brightness(1.08); }
 
   .pl-seg-2 {
     background: color-mix(in srgb, var(--accent) 28%, var(--surface));
     color: var(--text);
+  }
+
+  /* RSS — segment d'appel orange vif et icône proéminente */
+  .pl-seg-rss {
+    background: #f26522; /* RSS canonical orange */
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+  }
+  .pl-seg-rss:hover { filter: brightness(1.12); }
+  .pl-rss-icon {
+    flex-shrink: 0;
+  }
+  .pl-rss-pulse {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255,255,255,0.8);
+    animation: pl-rss-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pl-rss-pulse {
+    0%, 100% { opacity: 0.45; transform: scale(0.85); }
+    50%      { opacity: 1; transform: scale(1.1); }
   }
 
   .pl-seg-3 {
@@ -133,10 +162,10 @@ const authorUrl = footer.authorUrl || '/';
   .pl-seg-4::before {
     content: '';
     display: inline-block;
-    width: 12px;
-    height: 28px;
-    margin-left: -0.85rem;
-    margin-right: 0.55rem;
+    width: 18px;
+    height: 42px;
+    margin-left: -1.1rem;
+    margin-right: 0.75rem;
     background: inherit;
     clip-path: polygon(100% 0, 0 50%, 100% 100%);
   }
@@ -146,15 +175,15 @@ const authorUrl = footer.authorUrl || '/';
     background: var(--accent);
     color: var(--bg);
     font-weight: 700;
-    padding-right: 1rem;
+    padding-right: 1.25rem;
   }
   .pl-seg-5::before {
     content: '';
     display: inline-block;
-    width: 12px;
-    height: 28px;
-    margin-left: -0.85rem;
-    margin-right: 0.55rem;
+    width: 18px;
+    height: 42px;
+    margin-left: -1.1rem;
+    margin-right: 0.75rem;
     background: inherit;
     clip-path: polygon(100% 0, 0 50%, 100% 100%);
   }
@@ -163,16 +192,13 @@ const authorUrl = footer.authorUrl || '/';
   .pl-spacer {
     flex: 1;
     background: var(--surface-raised);
-    min-height: 28px;
-    border-top: 1px dashed color-mix(in srgb, var(--accent) 18%, transparent);
-    border-bottom: 1px dashed color-mix(in srgb, var(--accent) 18%, transparent);
-    border-image-slice: 0;
+    min-height: 42px;
     background-image: repeating-linear-gradient(
       90deg,
       transparent 0,
-      transparent 6px,
-      color-mix(in srgb, var(--accent) 8%, transparent) 6px,
-      color-mix(in srgb, var(--accent) 8%, transparent) 7px
+      transparent 7px,
+      color-mix(in srgb, var(--accent) 10%, transparent) 7px,
+      color-mix(in srgb, var(--accent) 10%, transparent) 8px
     );
   }
 
@@ -223,11 +249,11 @@ const authorUrl = footer.authorUrl || '/';
 
   /* Mobile : segments stack but keep powerline feel via dashed connectors */
   @media (max-width: 720px) {
+    .powerline { font-size: 0.8rem; }
     .pl-bar { flex-direction: column; min-height: auto; }
-    .pl-seg { width: 100%; padding-left: 0.85rem !important; padding-right: 0.85rem !important; height: 26px; line-height: 26px; }
+    .pl-seg { width: 100%; padding-left: 1.1rem !important; padding-right: 1.1rem !important; height: 38px; line-height: 38px; justify-content: flex-start; }
     .pl-seg::before,
     .pl-seg::after { display: none !important; }
     .pl-spacer { display: none; }
-    .pl-seg-1 { font-size: 0.7rem; }
   }
 </style>

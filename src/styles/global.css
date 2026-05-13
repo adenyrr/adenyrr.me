@@ -47,34 +47,34 @@
    Palette: Neutral gray + orange accent — green links
    ============================================================================ */
 :root {
-  /* ---- Light theme (warm parchment) ---- */
-  --bg: #f3ece6;
-  --surface: #faf5f0;
-  --surface-raised: #ede6de;
-  --card-bg: rgba(250, 245, 240, 0.65);
-  --card-border: rgba(150, 90, 50, 0.09);
-  --card-border-hover: rgba(192, 106, 58, 0.22);
+  /* ---- Light theme (warm parchment, low-glare) ---- */
+  --bg: #ece4dc;
+  --surface: #f1eae2;
+  --surface-raised: #e5dcd0;
+  --card-bg: rgba(241, 234, 226, 0.7);
+  --card-border: rgba(120, 80, 50, 0.10);
+  --card-border-hover: rgba(168, 90, 50, 0.22);
 
-  --text: #18181b;
-  --text-secondary: #3f3f46;
-  --muted-text: #71717a;
+  --text: #2a2520;
+  --text-secondary: #514943;
+  --muted-text: #7d756e;
 
-  /* Accent = orange, links = green */
-  --accent: #c06a3a;
-  --accent-mid: #d4845a;
-  --accent-secondary: #a85a30;
-  --accent-warm: #e09a6f;
-  --link-color: #1a8a7a;
+  /* Accent = orange (un poil terreux), links = teal */
+  --accent: #a85a30;
+  --accent-mid: #c47148;
+  --accent-secondary: #8a4622;
+  --accent-warm: #d0875a;
+  --link-color: #2a8678;
 
   --glow: rgba(192, 106, 58, 0.09);
   --glow-hover: rgba(192, 106, 58, 0.18);
   --glow-cyan: rgba(26, 138, 122, 0.06);
 
-  /* Semantic log-level palette (light) */
-  --sem-ok:    #1a8a7a;   /* shipped / success */
-  --sem-info:  #2c7da0;   /* info / neutral */
-  --sem-warn:  #c08a3a;   /* wip / pending */
-  --sem-debug: #71717a;   /* archived / muted */
+  /* Semantic log-level palette (light, désaturée) */
+  --sem-ok:    #4a8a78;   /* shipped / success */
+  --sem-info:  #5a8aa8;   /* info / neutral */
+  --sem-warn:  #b08540;   /* wip / pending */
+  --sem-debug: #8a8278;   /* archived / muted */
 
   --gradient-start: #c06a3a;
   --gradient-mid:   #d4845a;
