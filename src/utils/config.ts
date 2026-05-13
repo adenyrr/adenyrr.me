@@ -168,17 +168,19 @@ const homeConfigSchema = z.object({
     .optional(),
 });
 
-const infraConfigSchema = z.object({
-  sections: z
-    .array(
-      z.object({
-        title: z.string(),
-        description: z.string(),
-        items: z.array(z.any()),
-      })
-    )
-    .optional(),
-});
+const infraConfigSchema = z
+  .object({
+    sections: z
+      .array(
+        z.object({
+          title: z.string(),
+          description: z.string(),
+          items: z.array(z.any()),
+        })
+      )
+      .optional(),
+  })
+  .passthrough();
 
 type SiteConfig = z.infer<typeof siteConfigSchema>;
 type HomeConfig = z.infer<typeof homeConfigSchema>;
