@@ -58,8 +58,8 @@ credly:
 # PROJETS
 # -----------------------------------------------------------------------------
 projects:
-  - id: "docu"
-    title: "Documentation"
+  - id: "infra & docu"
+    title: "Infra OSS & Documentation"
     description: "Documentation de l'infrastructure, tutoriels et bonnes pratiques (self-hosted)."
     tech: ["Virtu", "Containers", "Réseau", "Home Assistant"]
     icon: "Library"
@@ -68,15 +68,25 @@ projects:
     year: 2024
     image: "/images/docu.jpg"
 
-  - id: "infra"
-    title: "Infra opensource"
-    description: "Réalisation d'une infrastructure entièrement basée sur des logiciels opensource."
-    tech: ["Proxmox", "CEPH", "K3s"]
+  - id: "murmurOS"
+    title: "Système d'exploitation souverain, déclaratif et fédéré"
+    description: "murmurOS est un Proof of Concept de distribution système pensée pour les environnements à fort enjeu de souveraineté numérique."
+    tech: ["NixOS", "GitOps", "OIDC/LDAP"]
     icon: "Server"
-    link: "https://adenyrr.me/infra"
-    repo: "https://gitlab.com/adenyrr/compose"
-    year: 2023
-    image: "/images/infra.jpg"
+    link: "https://murmuros.tech"
+    repo: "https://github.com/murmurOS"
+    year: 2026
+    image: "/images/murmurOS.jpg"
+
+  - id: "alyx"
+    title: "Orchestrateur multi-modèle, multimodal et multi-agent fondé sur Mistral"
+    description: "Alyx est un orchestrateur d'agents intelligents conçu pour faciliter la création de systèmes complexes et adaptatifs, en intégrant des modèles de langage avancés et des capacités multimodales."
+    tech: ["Mistral", "Agents", "MCP"]
+    icon: "Server"
+    link: "https://github.com/adenyrr/alyx"
+    repo: "https://github.com/adenyrr/alyx"
+    year: 2026
+    image: "/images/alyx.jpg"
 
 # -----------------------------------------------------------------------------
 # DIPLÔMES
