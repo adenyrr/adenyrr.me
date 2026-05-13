@@ -70,6 +70,12 @@
   --glow-hover: rgba(192, 106, 58, 0.18);
   --glow-cyan: rgba(26, 138, 122, 0.06);
 
+  /* Semantic log-level palette (light) */
+  --sem-ok:    #1a8a7a;   /* shipped / success */
+  --sem-info:  #2c7da0;   /* info / neutral */
+  --sem-warn:  #c08a3a;   /* wip / pending */
+  --sem-debug: #71717a;   /* archived / muted */
+
   --gradient-start: #c06a3a;
   --gradient-mid:   #d4845a;
   --gradient-end:   #e09a6f;
@@ -136,6 +142,12 @@
   --glow: rgba(212, 132, 90, 0.10);
   --glow-hover: rgba(212, 132, 90, 0.18);
   --glow-cyan: rgba(94, 207, 186, 0.06);
+
+  /* Semantic log-level palette (dark) */
+  --sem-ok:    #5ecfba;
+  --sem-info:  #7dc4e4;
+  --sem-warn:  #e0b070;
+  --sem-debug: #737378;
 
   --gradient-start: #d4845a;
   --gradient-mid:   #e09a6f;
@@ -429,15 +441,35 @@ a:hover {
 /* ============================================================================
    TAGS
    ============================================================================ */
+/* Tag style man-page: `[ name ]` en mono, sans pastille arrondie */
 .tag {
-  display: inline-block;
-  padding: 0.2rem 0.65rem;
-  background: rgba(212, 132, 90, 0.08);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.15rem 0.15rem 0.15rem;
+  background: transparent;
   color: var(--accent);
-  border-radius: 9999px;
-  font-size: 0.75rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-code);
+  font-size: 0.72rem;
   font-weight: 500;
-  border: 1px solid rgba(212, 132, 90, 0.15);
+  letter-spacing: 0.02em;
+  border: none;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+.tag::before {
+  content: '[';
+  color: color-mix(in srgb, var(--accent) 55%, transparent);
+  font-weight: 400;
+}
+.tag::after {
+  content: ']';
+  color: color-mix(in srgb, var(--accent) 55%, transparent);
+  font-weight: 400;
+}
+.tag:hover {
+  color: var(--accent-mid);
+  background: var(--glow);
 }
 
 /* ============================================================================

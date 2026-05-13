@@ -66,7 +66,7 @@ projects:
     link: "https://docu.adenyrr.me"
     repo: "https://gitlab.com/adenyrr/adenyrr.me"
     year: 2024
-    image: "/images/docu.jpg"
+    image: "/images/docu.png"
 
   - id: "murmurOS"
     title: "Système d'exploitation souverain, déclaratif et fédéré"
@@ -76,7 +76,7 @@ projects:
     link: "https://murmuros.tech"
     repo: "https://github.com/murmurOS"
     year: 2026
-    image: "/images/murmurOS.jpg"
+    image: "/images/murmurOS.png"
 
   - id: "alyx"
     title: "Orchestrateur multi-modèle, multimodal et multi-agent fondé sur Mistral"
@@ -86,7 +86,7 @@ projects:
     link: "https://github.com/adenyrr/alyx"
     repo: "https://github.com/adenyrr/alyx"
     year: 2026
-    image: "/images/alyx.jpg"
+    image: "/images/alyx.png"
 
 # -----------------------------------------------------------------------------
 # DIPLÔMES
