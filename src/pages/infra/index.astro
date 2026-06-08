@@ -135,7 +135,7 @@ const docLinks: Record<string, string> = {
               </div>
               <div class="vlans-grid">
                 {categoryVlans.map((vlan: any, vi: number) => (
-                  <div class="card vlan-card slide-in" style={`border-left: 3px solid ${colorMap[vlan.color] || '#8b5cf6'}; --stage-delay: ${ci * 0.05 + vi * 0.04}s`}>
+                  <div class="card vlan-card slide-in" style={`border-left: 3px solid ${colorMap[vlan.color] || 'var(--accent)'}; --stage-delay: ${ci * 0.05 + vi * 0.04}s`}>
                     <div class="vlan-header">
                       <h4>{vlan.name}</h4>
                       <span class="tag">{vlan.subnet}</span>
@@ -249,7 +249,7 @@ const docLinks: Record<string, string> = {
       <div class="tab-panel" data-panel="services" role="tabpanel">
         <div class="rack-nodes">
           {srvNodeEntries.map((node: any, ni: number) => {
-            const nodeColor = colorMap[node.specs?.color] || '#8b5cf6';
+            const nodeColor = colorMap[node.specs?.color] || 'var(--accent)';
             const totalSvcs = node.vmGroups.reduce((a: number, g: any) => a + g.services.length, 0);
             const isPve = (infra.proxmoxNodes || []).some((n: any) => n.name === node.name);
             return (
@@ -422,7 +422,7 @@ const docLinks: Record<string, string> = {
   .vlan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
   .vlan-header h4 { font-size: 0.9rem; margin: 0; font-family: var(--font-code); }
   .vlan-devices { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-  .vlan-device { font-family: var(--font-code); font-size: 0.72rem; color: var(--muted-text); background: rgba(255,255,255,0.04); padding: 0.1rem 0.4rem; border-radius: 0.2rem; border: 1px solid var(--card-border); }
+  .vlan-device { font-family: var(--font-code); font-size: 0.72rem; color: var(--text-secondary); background: color-mix(in srgb, var(--text) 5%, transparent); padding: 0.1rem 0.4rem; border-radius: 0.2rem; border: 1px solid var(--card-border); }
 
   /* ── WAN Schema ── */
   .wan-description { color: var(--muted-text); margin-bottom: 2rem; line-height: 1.7; }
@@ -556,7 +556,7 @@ const docLinks: Record<string, string> = {
   .rack-hw-chip {
     display: inline-flex; align-items: center; gap: 0.28rem;
     font-family: var(--font-code); font-size: 0.67rem; color: var(--muted-text);
-    background: rgba(255,255,255,0.03); padding: 0.12rem 0.45rem;
+    background: color-mix(in srgb, var(--text) 4%, transparent); padding: 0.12rem 0.45rem;
     border: 1px solid var(--card-border); border-radius: 0.22rem;
   }
   .rack-svc-count {
@@ -598,7 +598,7 @@ const docLinks: Record<string, string> = {
   .rack-chip {
     display: inline-flex; align-items: center; gap: 0.28rem;
     font-size: 0.71rem; font-weight: 500; color: var(--text);
-    background: rgba(255,255,255,0.03); padding: 0.15rem 0.5rem;
+    background: color-mix(in srgb, var(--text) 4%, transparent); padding: 0.15rem 0.5rem;
     border: 1px solid var(--card-border); border-radius: 0.3rem;
     white-space: nowrap; line-height: 1.3;
     transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
@@ -612,14 +612,14 @@ const docLinks: Record<string, string> = {
 
   .rack-chip--doc {
     text-decoration: none;
-    background: rgba(94,207,186,0.05);
-    border-color: rgba(94,207,186,0.22);
+    background: color-mix(in srgb, var(--link-color) 8%, transparent);
+    border-color: color-mix(in srgb, var(--link-color) 30%, transparent);
     color: var(--text);
   }
   .rack-chip--doc:hover {
-    background: rgba(212,132,90,0.1); color: var(--accent);
-    border-color: rgba(212,132,90,0.28);
-    box-shadow: 0 2px 8px rgba(212,132,90,0.12);
+    background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 14%, transparent);
   }
   .rack-ext-icon { opacity: 0.45; flex-shrink: 0; }
   .rack-chip--doc:hover .rack-ext-icon { opacity: 1; }

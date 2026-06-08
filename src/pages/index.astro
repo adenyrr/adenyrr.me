@@ -40,6 +40,10 @@ const certifications = (credlyBadges.length > 0
 
 const sections = portfolio.sections || {};
 const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
+
+// Liens d'action du hero (déclarés en config mais jamais rendus jusqu'ici)
+const heroLinks = (portfolio.heroLinks || []).filter((l: any) => l.enabled !== false);
+const profile = portfolio.profile || {};
 ---
 
 <BaseLayout title="Home" description={portfolio.profile?.tagline}>
@@ -94,6 +98,42 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
         </div>
       </div>
     </section>
+
+    <!-- Intro / about — surface la bio + les liens d'action (config) -->
+    {(profile.bio || heroLinks.length > 0) && (
+      <section class="intro reveal" aria-label="Présentation">
+        <div class="intro-cmd">
+          <span class="intro-prompt">›</span>
+          <span class="intro-cmd-text">cat about.md</span>
+        </div>
+        {profile.title && (
+          <p class="intro-role">{profile.title}</p>
+        )}
+        {profile.bio && (
+          <p class="intro-bio">{profile.bio}</p>
+        )}
+        {heroLinks.length > 0 && (
+          <div class="intro-actions">
+            {heroLinks.map((link: any, i: number) => {
+              const Icon = iconMap[link.icon];
+              const isExternal = link.internal === false;
+              return (
+                <a
+                  href={link.url}
+                  class={`btn ${i === 0 ? 'btn-primary' : 'btn-outline'}`}
+                  target={isExternal ? '_blank' : undefined}
+                  rel={isExternal ? 'noopener noreferrer' : undefined}
+                >
+                  {Icon && <Icon size={16} />}
+                  {link.label}
+                  {isExternal && <ExternalLink size={13} class="intro-action-ext" />}
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    )}
 
     <!-- Projects -->
     {sections.projects && (
@@ -306,6 +346,57 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
 
 <style>
   .portfolio { max-width: 900px; padding-bottom: 4rem; }
+
+  /* ══════════════════════════════
+     INTRO / ABOUT
+  ══════════════════════════════ */
+  .intro {
+    max-width: 760px;
+    margin: 0 auto 4rem;
+    padding-left: 1.25rem;
+    border-left: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .intro-cmd {
+    font-family: var(--font-code);
+    font-size: 0.8rem;
+    color: var(--muted-text);
+    margin-bottom: 0.85rem;
+    letter-spacing: 0.02em;
+  }
+  .intro-prompt { color: var(--link-color); margin-right: 0.4rem; }
+  .intro-cmd-text { color: var(--text-secondary); }
+
+  .intro-role {
+    font-family: var(--font-code);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    margin: 0 0 0.6rem;
+  }
+
+  .intro-bio {
+    font-size: var(--fs-lead);
+    line-height: 1.65;
+    color: var(--text-secondary);
+    margin: 0 0 1.6rem;
+    max-width: 60ch;
+  }
+
+  .intro-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+  .intro-action-ext { opacity: 0.65; }
+
+  @media (max-width: 768px) {
+    .intro {
+      margin-bottom: 3rem;
+      padding-left: 1rem;
+    }
+  }
 
   /* ══════════════════════════════
      BANNER SCENE
@@ -624,6 +715,27 @@ const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
     padding: 0;
     overflow: hidden;
     position: relative;
+  }
+
+  /* Liseré d'accent qui se déploie au survol */
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 3;
+    background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @media (hover: hover) {
+    .project-card:hover::before { transform: scaleX(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .project-card::before { transition: none; }
   }
 
   /* ── Cover ─────────────────────────────────────────── */
