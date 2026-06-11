@@ -106,12 +106,22 @@ const iconMap: Record<string, any> = {
     }
   }
 
-  header.scrolled {
-    box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 1px 0 var(--card-border);
+  /* Élévation au scroll — scroll-driven animation native (zéro JS) :
+     l'ombre apparaît progressivement sur les 120 premiers pixels. */
+  @supports (animation-timeline: scroll()) {
+    header {
+      animation: header-elevate linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 120px;
+    }
   }
 
-  .dark header.scrolled {
-    box-shadow: 0 4px 30px rgba(0,0,0,0.4), 0 1px 0 var(--card-border);
+  @keyframes header-elevate {
+    from { box-shadow: 0 4px 24px transparent; }
+    to {
+      box-shadow: 0 4px 24px light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.4)),
+                  0 1px 0 var(--card-border);
+    }
   }
 
   .header-inner {
@@ -246,24 +256,3 @@ const iconMap: Record<string, any> = {
   }
 </style>
 
-<script>
-  (function () {
-    const bootState = ((window as any).__siteHeaderBoot ??= {} as { scroll?: boolean });
-
-    const refreshHeaderShadow = () => {
-      const header = document.getElementById('site-header');
-      if (window.scrollY > 8) {
-        header?.classList.add('scrolled');
-      } else {
-        header?.classList.remove('scrolled');
-      }
-    };
-
-    if (!bootState.scroll) {
-      bootState.scroll = true;
-      window.addEventListener('scroll', refreshHeaderShadow, { passive: true });
-      document.addEventListener('astro:page-load', refreshHeaderShadow);
-    }
-    refreshHeaderShadow();
-  })();
-</script>

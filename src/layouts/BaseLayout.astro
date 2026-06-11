@@ -26,7 +26,6 @@ const { title, description, image, article = false } = Astro.props;
   <body>
     <div id="scroll-progress" aria-hidden="true">
       <div class="scroll-progress-bar"></div>
-      <div class="scroll-progress-glow"></div>
     </div>
     <ParticleBackground transition:persist="particle-bg" />
     <Header />
@@ -37,7 +36,11 @@ const { title, description, image, article = false } = Astro.props;
     <Animations />
 
     <style>
+      /* Barre de progression de lecture — scroll-driven animation native,
+         zéro JavaScript. Masquée si le navigateur ne supporte pas
+         animation-timeline (dégradation propre). */
       #scroll-progress {
+        display: none;
         position: fixed;
         top: 0; left: 0; right: 0;
         height: 2px;
@@ -45,56 +48,29 @@ const { title, description, image, article = false } = Astro.props;
         pointer-events: none;
         background: color-mix(in srgb, var(--accent) 4%, transparent);
       }
+
       .scroll-progress-bar {
         height: 100%;
-        width: 0%;
         background: linear-gradient(90deg,
           color-mix(in srgb, var(--accent) 95%, transparent),
           var(--link-color));
-        transform-origin: 0 50%;
-        transition: width 80ms linear;
         box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+        transform-origin: 0 50%;
+        transform: scaleX(0);
       }
-      .scroll-progress-glow {
-        position: absolute;
-        top: 0; bottom: 0;
-        width: 30px;
-        left: 0%;
-        background: radial-gradient(closest-side,
-          color-mix(in srgb, var(--accent) 80%, transparent),
-          transparent 70%);
-        opacity: 0;
-        transition: left 80ms linear, opacity 0.3s ease;
-        filter: blur(1px);
-        mix-blend-mode: screen;
+
+      @supports (animation-timeline: scroll()) {
+        #scroll-progress { display: block; }
+        .scroll-progress-bar {
+          animation: scroll-progress-grow linear both;
+          animation-timeline: scroll(root);
+        }
+      }
+
+      @keyframes scroll-progress-grow {
+        from { transform: scaleX(0); }
+        to   { transform: scaleX(1); }
       }
     </style>
-
-    <script>
-      (function () {
-        const bar = document.querySelector('.scroll-progress-bar') as HTMLElement | null;
-        const glow = document.querySelector('.scroll-progress-glow') as HTMLElement | null;
-        if (!bar) return;
-
-        let ticking = false;
-        const update = () => {
-          const doc = document.documentElement;
-          const max = Math.max(1, doc.scrollHeight - doc.clientHeight);
-          const pct = Math.min(100, Math.max(0, (window.scrollY / max) * 100));
-          bar.style.width = pct + '%';
-          if (glow) {
-            glow.style.left = `calc(${pct}% - 15px)`;
-            glow.style.opacity = pct > 0.5 && pct < 99.5 ? '0.85' : '0';
-          }
-          ticking = false;
-        };
-        const onScroll = () => {
-          if (!ticking) { requestAnimationFrame(update); ticking = true; }
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        document.addEventListener('astro:page-load', update);
-        update();
-      })();
-    </script>
   </body>
 </html>

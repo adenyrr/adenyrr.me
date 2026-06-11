@@ -771,13 +771,17 @@ const profile = portfolio.profile || {};
     opacity: 0.55;
   }
 
-  /* Dégradé bas → renforce la lisibilité des chips */
+  /* Scrim léger pour la lisibilité des chips — sombre dans les DEUX thèmes :
+     basé sur var(--bg), il posait un voile blanc sur les images en light. */
   .project-cover-overlay {
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(180deg, transparent 50%, color-mix(in srgb, var(--bg) 75%, transparent) 100%),
-      linear-gradient(180deg, color-mix(in srgb, var(--bg) 35%, transparent) 0%, transparent 30%);
+      linear-gradient(180deg, transparent 55%,
+        light-dark(oklch(25% 0.03 55 / 20%), color-mix(in srgb, var(--bg) 70%, transparent)) 100%),
+      linear-gradient(180deg,
+        light-dark(oklch(25% 0.03 55 / 14%), color-mix(in srgb, var(--bg) 35%, transparent)) 0%,
+        transparent 30%);
     pointer-events: none;
   }
 

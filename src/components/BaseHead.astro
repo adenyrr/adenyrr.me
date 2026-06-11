@@ -37,13 +37,8 @@ const canonicalURL = new URL(Astro.url.pathname, config.site.url);
 <link rel="icon" type="image/png" href="/favicon.png" sizes="460x460" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
 
-<!-- Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-  href="https://fonts.googleapis.com/css2?family=Inclusive+Sans:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap"
-  rel="stylesheet"
-/>
+<!-- Fonts : auto-hébergées via Fontsource, importées dans global.css.
+     Aucune requête vers Google Fonts. -->
 
 <!-- Open Graph / Facebook -->
 {config.seo?.openGraph && (
@@ -78,22 +73,18 @@ const canonicalURL = new URL(Astro.url.pathname, config.site.url);
   <link rel="alternate" type="application/rss+xml" title={config.site.title} href="/rss.xml" />
 )}
 
-<!-- Theme initialization (inline to prevent FOUC) -->
+<!-- Theme initialization (inline to prevent FOUC).
+     data-theme force le color-scheme : tous les tokens light-dark()
+     de global.css basculent avant le premier paint — aucune couleur
+     codée en dur ici. -->
 <script is:inline>
   (function() {
     function applyTheme() {
       var stored = localStorage.getItem('theme');
       var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       var theme = stored || (prefersDark ? 'dark' : 'light');
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-        document.documentElement.dataset.theme = 'dark';
-        document.documentElement.style.backgroundColor = '#141416';
-      } else {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.dataset.theme = 'light';
-        document.documentElement.style.backgroundColor = '#ece4dc';
-      }
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.classList.toggle('dark', theme === 'dark');
     }
     applyTheme();
     // Re-apply immediately after View Transition DOM swap (before paint)

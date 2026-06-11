@@ -57,20 +57,14 @@
     function setTheme(theme) {
       var sun = document.getElementById('sun-icon');
       var moon = document.getElementById('moon-icon');
+      var isDark = theme === 'dark';
 
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-        document.documentElement.dataset.theme = 'dark';
-        document.documentElement.style.backgroundColor = '#141416';
-        sun && sun.classList.add('hidden');
-        moon && moon.classList.remove('hidden');
-      } else {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.dataset.theme = 'light';
-        document.documentElement.style.backgroundColor = '#ece4dc';
-        sun && sun.classList.remove('hidden');
-        moon && moon.classList.add('hidden');
-      }
+      // data-theme pilote color-scheme : les tokens light-dark() de
+      // global.css basculent instantanément, sans couleur codée en dur.
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.classList.toggle('dark', isDark);
+      sun && sun.classList.toggle('hidden', isDark);
+      moon && moon.classList.toggle('hidden', !isDark);
       localStorage.setItem('theme', theme);
     }
 

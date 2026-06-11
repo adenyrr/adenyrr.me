@@ -1,251 +1,51 @@
 <script>
-import Lenis from 'lenis';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+/**
+ * Animations résiduelles en JS — GSAP et Lenis ont été retirés :
+ *  - le scroll fluide est natif (html { scroll-behavior: smooth })
+ *  - les reveals sont des scroll-driven animations CSS (global.css)
+ *  - la barre de progression utilise animation-timeline: scroll() (BaseLayout)
+ * Il ne reste que le count-up des compteurs stats (.stat-value[data-target]),
+ * impossible en CSS sans attr() typé (trop récent).
+ */
 
-gsap.registerPlugin(ScrollTrigger);
-
-/* ── Module-level state — persists across View Transitions ── */
-let lenis: Lenis | null = null;
-let lenisRaf: ((time: number) => void) | null = null;
-let ctx: gsap.Context | null = null;
-
-/* ── Reduced-motion preference ── */
 const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* ════════════════════════════════════════════════════════════
-   CLEANUP — must run before every re-init
-   ════════════════════════════════════════════════════════════ */
-function cleanup() {
-  /* Kill GSAP context (all tweens + ScrollTriggers created inside it) */
-  if (ctx) { ctx.revert(); ctx = null; }
-  /* Remove lenisRaf from ticker BEFORE destroying Lenis —
-     critical: without this, stale callbacks accumulate across navigations
-     and eventually call .raf() on a destroyed Lenis instance           */
-  if (lenisRaf) { gsap.ticker.remove(lenisRaf); lenisRaf = null; }
-  if (lenis) { lenis.destroy(); lenis = null; }
-  /* Kill any stray ScrollTriggers not captured by ctx (safety net) */
-  ScrollTrigger.getAll().forEach((st) => st.kill());
-  ScrollTrigger.clearScrollMemory();
-}
+let observer: IntersectionObserver | null = null;
 
-/* ════════════════════════════════════════════════════════════
-   INIT — called on first load and after every View Transition
-   ════════════════════════════════════════════════════════════ */
-function init() {
-  cleanup();
+function countUp(el: HTMLElement, target: number) {
+  const small = el.querySelector('small');
+  const duration = prefersReducedMotion() ? 0 : 1300;
+  const start = performance.now();
 
-  /* Shortened durations when user prefers reduced motion */
-  const reduced = prefersReducedMotion();
-  const dur = (d: number) => (reduced ? Math.min(d * 0.25, 0.1) : d);
-
-  /* ── Lenis smooth scroll ── */
-  const isMobile = window.innerWidth < 768;
-  if (!isMobile) {
-    lenis = new Lenis({
-      duration: reduced ? 0.01 : 1.15,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      wheelMultiplier: 0.9,
-      touchMultiplier: 1.4,
-    });
-
-    /* Connect Lenis RAF to GSAP ticker.
-       - Store reference so we can remove it on cleanup (prevents accumulation).
-       - No scrollerProxy needed: Lenis v1+ dispatches native scroll events,
-         GSAP ScrollTrigger reads window.scrollY directly and works correctly. */
-    lenisRaf = (time: number) => { lenis!.raf(time * 1000); };
-    gsap.ticker.add(lenisRaf);
-    gsap.ticker.lagSmoothing(0);
-
-    /* Forward Lenis scroll events to ScrollTrigger for position updates */
-    lenis.on('scroll', ScrollTrigger.update);
+  function frame(now: number) {
+    const t = duration === 0 ? 1 : Math.min(1, (now - start) / duration);
+    // ease-out quad
+    const eased = 1 - (1 - t) * (1 - t);
+    el.textContent = Math.round(eased * target).toString();
+    if (small) el.appendChild(small);
+    if (t < 1) requestAnimationFrame(frame);
   }
-
-  /* Always skip hiding elements already visible in viewport — both on first
-     load AND on VT navigation. Without this, GSAP would set opacity:0 on
-     elements that are already painted, causing a visible flash.           */
-  const skipIfVisible = (el: Element) =>
-    el.getBoundingClientRect().top < window.innerHeight + 100;
-
-  /* ── gsap.context scopes all animations for clean teardown ── */
-  ctx = gsap.context(() => {
-    /* ── Header hide/show on scroll (throttled via ScrollTrigger) ── */
-    const header = document.getElementById('site-header');
-    if (header) {
-      let lastDir = 0;
-      ScrollTrigger.create({
-        start: 'top -80px',
-        onUpdate(self) {
-          const dir = self.direction; // 1 = down, -1 = up
-          if (dir !== lastDir) {
-            lastDir = dir;
-            gsap.to(header, {
-              y: dir === 1 && self.scroll() > 120 ? '-100%' : '0%',
-              duration: dur(0.35),
-              ease: dir === 1 ? 'power2.inOut' : 'power2.out',
-              overwrite: true,
-            });
-          }
-        },
-      });
-    }
-
-    /* ── Scroll reveal — .reveal elements ── */
-    const reveals = gsap.utils.toArray<Element>('.reveal');
-    reveals.forEach((el) => {
-      if (skipIfVisible(el)) {
-        /* Element is already in the viewport — clear any stale GSAP inline
-           styles from a previous navigation so CSS defaults (opacity:1) apply */
-        gsap.set(el, { clearProps: 'opacity,transform,y' });
-        return;
-      }
-      gsap.set(el, { opacity: 0, y: reduced ? 0 : 28 });
-      ScrollTrigger.create({
-        trigger: el,
-        start: 'top 88%',
-        once: true,
-        onEnter() {
-          gsap.to(el, { opacity: 1, y: 0, duration: dur(0.65), ease: 'power3.out' });
-        },
-      });
-    });
-
-    /* ── Cards stagger on scroll ── */
-    const cardSelectors = '.projects-grid, .certs-grid, .nodes-grid, .vlans-grid, .services-grid, .stats-grid';
-    document.querySelectorAll<Element>(cardSelectors).forEach((group) => {
-      if (skipIfVisible(group)) {
-        gsap.set(group.querySelectorAll(':scope > *'), { clearProps: 'opacity,transform,y,scale' });
-        return;
-      }
-      const cards = group.querySelectorAll<Element>(':scope > *');
-      if (!cards.length) return;
-      gsap.set(cards, { opacity: 0, y: reduced ? 0 : 32, scale: 0.97 });
-      ScrollTrigger.create({
-        trigger: group,
-        start: 'top 85%',
-        once: true,
-        onEnter() {
-          gsap.to(cards, {
-            opacity: 1, y: 0, scale: 1,
-            duration: dur(0.55), ease: 'power3.out', stagger: 0.07,
-            // Clear inline transform after animation so CSS :hover works correctly
-            onComplete() {
-              gsap.set(cards, { clearProps: 'transform,y,scale' });
-            },
-          });
-        },
-      });
-    });
-
-    /* ── Section headers slide in from left ── */
-    gsap.utils.toArray<Element>('.section-header').forEach((el) => {
-      if (skipIfVisible(el)) {
-        gsap.set(el, { clearProps: 'opacity,transform,x' });
-        return;
-      }
-      gsap.set(el, { opacity: 0, x: reduced ? 0 : -24 });
-      ScrollTrigger.create({
-        trigger: el,
-        start: 'top 90%',
-        once: true,
-        onEnter() {
-          gsap.to(el, { opacity: 1, x: 0, duration: dur(0.5), ease: 'power3.out' });
-        },
-      });
-    });
-
-    /* ── Section divider width animation ── */
-    document.querySelectorAll<HTMLElement>('.section-divider').forEach((el) => {
-      if (el.tagName === 'DIV' && !el.querySelector('span')) {
-        if (skipIfVisible(el)) return;
-        gsap.set(el, { scaleX: 0, transformOrigin: 'left center' });
-        ScrollTrigger.create({
-          trigger: el,
-          start: 'top 92%',
-          once: true,
-          onEnter() {
-            gsap.to(el, { scaleX: 1, duration: dur(0.6), ease: 'power3.inOut' });
-          },
-        });
-      }
-    });
-
-    /* ── Timeline items ── */
-    const timelineItems = gsap.utils.toArray<Element>('.timeline-item');
-    if (timelineItems.length) {
-      timelineItems.forEach((el, i) => {
-        if (skipIfVisible(el)) {
-          gsap.set(el, { clearProps: 'opacity,transform,x' });
-          return;
-        }
-        gsap.set(el, { opacity: 0, x: reduced ? 0 : -20 });
-        ScrollTrigger.create({
-          trigger: el,
-          start: 'top 88%',
-          once: true,
-          onEnter() {
-            gsap.to(el, {
-              opacity: 1, x: 0, duration: dur(0.5), ease: 'power3.out',
-              delay: i * 0.04,
-            });
-          },
-        });
-      });
-    }
-
-    /* ── Stat cards count-up ── */
-    document.querySelectorAll<HTMLElement>('.stat-value[data-target]').forEach((el) => {
-      const target = parseInt(el.dataset.target || '0', 10);
-      if (!target) return;
-      const small = el.querySelector('small');
-      ScrollTrigger.create({
-        trigger: el,
-        start: 'top 90%',
-        once: true,
-        onEnter() {
-          const obj = { val: 0 };
-          gsap.to(obj, {
-            val: target,
-            duration: dur(1.4),
-            ease: 'power2.out',
-            onUpdate() {
-              el.textContent = Math.round(obj.val).toString();
-              if (small) el.appendChild(small);
-            },
-          });
-        },
-      });
-    });
-
-    /* ── Subtle parallax on banner blobs ── */
-    if (!isMobile) {
-      document.querySelectorAll<Element>('.banner-blob').forEach((blob, i) => {
-        gsap.to(blob, {
-          y: i % 2 === 0 ? '-30%' : '20%',
-          ease: 'none',
-          scrollTrigger: {
-            trigger: '.banner-scene',
-            start: 'top top',
-            end: 'bottom top',
-            scrub: 1.5,
-          },
-        });
-      });
-    }
-
-    ScrollTrigger.refresh();
-  }); // end gsap.context
+  requestAnimationFrame(frame);
 }
 
-/* ════════════════════════════════════════════════════════════
-   LIFECYCLE — Astro View Transitions hooks
-   ════════════════════════════════════════════════════════════ */
-// astro:page-load fires after VT is complete and scripts have run.
-// We add a rAF delay so layout is fully settled before GSAP queries
-// getBoundingClientRect() — critical during View Transitions where
-// pseudo-elements may still be compositing when the event fires.
-document.addEventListener('astro:page-load', () => {
-  requestAnimationFrame(() => requestAnimationFrame(init));
-});
+function init() {
+  observer?.disconnect();
+  const counters = document.querySelectorAll<HTMLElement>('.stat-value[data-target]');
+  if (!counters.length) return;
+
+  observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const el = entry.target as HTMLElement;
+      observer?.unobserve(el);
+      const target = parseInt(el.dataset.target || '0', 10);
+      if (target) countUp(el, target);
+    }
+  }, { rootMargin: '0px 0px -10% 0px' });
+
+  counters.forEach((el) => observer?.observe(el));
+}
+
+document.addEventListener('astro:page-load', init);
 </script>

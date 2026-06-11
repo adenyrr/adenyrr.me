@@ -314,7 +314,7 @@ const docLinks: Record<string, string> = {
 <style>
   .infra-page { max-width: 1100px; padding-top: 2rem; padding-bottom: 4rem; }
 
-  /* slide-in is CSS-driven (tab switch); reveal is GSAP-driven via Animations.astro */
+  /* slide-in is CSS-driven (tab switch); reveal = scroll-driven animation CSS (global.css) */
   .slide-in { animation: slideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: var(--stage-delay, 0s); }
   @keyframes slideIn {
     from { opacity: 0; transform: translateY(16px); }
@@ -682,5 +682,5 @@ const docLinks: Record<string, string> = {
   // Single registration — module runs once, delegation handles all navigations
   document.addEventListener('click', handleTabClick);
 
-  // Scroll reveal + counter animation handled globally by Animations.astro (GSAP)
+  // Scroll reveal : CSS scroll-driven (global.css). Count-up : Animations.astro (vanilla).
 </script>

@@ -1,3 +1,11 @@
+/* ============================================================================
+   FONTS — auto-hébergées via Fontsource (zéro requête Google, privacy-first).
+   Versions variables : un seul fichier par famille couvre tous les poids.
+   ============================================================================ */
+@import "@fontsource-variable/inclusive-sans";
+@import "@fontsource-variable/inclusive-sans/wght-italic.css";
+@import "@fontsource-variable/jetbrains-mono";
+
 @import "tailwindcss";
 
 /* ============================================================================
@@ -19,7 +27,7 @@
   --color-muted-foreground: var(--muted-text);
   --color-accent: var(--glow);
   --color-accent-foreground: var(--accent);
-  --color-destructive: #e07d6a;
+  --color-destructive: oklch(68% 0.13 30);
   --color-destructive-foreground: #ffffff;
   --color-border: var(--card-border);
   --color-input: var(--card-border);
@@ -32,67 +40,78 @@
 }
 
 /* ============================================================================
-   FONTS
-   Les familles (Inclusive Sans + JetBrains Mono) sont chargées dans
-   BaseHead.astro via <link rel="stylesheet"> avec preconnect. Pas de
-   @font-face ici : l'ancien pointait vers une URL CSS de Google Fonts
-   (et non un fichier de police), il échouait donc silencieusement.
+   PROPRIÉTÉS ENREGISTRÉES — @property rend les custom properties animables
+   (bordure conique des boutons, angle d'aurora du fond ambiant).
    ============================================================================ */
+@property --btn-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
 
 /* ============================================================================
    CSS CUSTOM PROPERTIES (Theme tokens)
-   Palette: Neutral gray + orange accent — green links
+   Palette OKLCH : parchemin chaud (light) / gris neutre (dark),
+   accent orange terreux, liens teal.
+   Un seul bloc de tokens : light-dark() résout selon color-scheme —
+   plus de duplication light/dark à maintenir.
    ============================================================================ */
 :root {
-  /* ---- Light theme (warm parchment, low-glare) ---- */
-  --bg: #ece4dc;
-  --surface: #f1eae2;
-  --surface-raised: #e5dcd0;
-  --card-bg: rgba(241, 234, 226, 0.7);
-  --card-border: rgba(120, 80, 50, 0.10);
-  --card-border-hover: rgba(168, 90, 50, 0.22);
+  /* Suit la préférence système par défaut ; surchargé par data-theme */
+  color-scheme: light dark;
 
-  --text: #2a2520;
-  --text-secondary: #4d453f;
-  /* muted assombri : passe le seuil WCAG AA (~4.7:1 sur --bg) */
-  --muted-text: #6b625a;
+  /* ---- Surfaces ---- */
+  --bg:             light-dark(oklch(92% 0.014 75),  oklch(18.5% 0.006 285));
+  --surface:        light-dark(oklch(94% 0.012 78),  oklch(21.5% 0.006 285));
+  --surface-raised: light-dark(oklch(89.5% 0.017 75), oklch(24.5% 0.007 285));
+  --card-bg:        light-dark(oklch(94% 0.012 78 / 70%), oklch(100% 0 0 / 3%));
+  --card-border:    light-dark(oklch(45% 0.06 50 / 12%),  oklch(100% 0 0 / 7%));
+  --card-border-hover: color-mix(in oklab, var(--accent) 28%, transparent);
 
-  /* Accent = orange (un poil terreux), links = teal */
-  --accent: #a85a30;
-  --accent-mid: #c47148;
-  --accent-secondary: #8a4622;
-  --accent-warm: #d0875a;
-  /* teal assombri pour atteindre ~4.7:1 sur le parchemin clair */
-  --link-color: #1a6f64;
+  /* ---- Texte ---- */
+  --text:           light-dark(oklch(24% 0.012 60), oklch(92% 0.005 285));
+  --text-secondary: light-dark(oklch(38% 0.012 60), oklch(76% 0.006 285));
+  /* contraste AA (~4.7:1) sur --bg dans les deux thèmes */
+  --muted-text:     light-dark(oklch(49% 0.014 60), oklch(64% 0.008 285));
 
-  --glow: rgba(192, 106, 58, 0.09);
-  --glow-hover: rgba(192, 106, 58, 0.18);
-  --glow-cyan: rgba(26, 138, 122, 0.06);
+  /* ---- Accent orange + liens teal ---- */
+  --accent:           light-dark(oklch(54% 0.115 48), oklch(70% 0.105 48));
+  --accent-mid:       light-dark(oklch(62% 0.115 50), oklch(76% 0.095 52));
+  --accent-secondary: light-dark(oklch(47% 0.115 45), oklch(62% 0.115 45));
+  --accent-warm:      light-dark(oklch(68% 0.10 55),  oklch(76% 0.095 52));
+  --link-color:       light-dark(oklch(48% 0.08 180), oklch(78% 0.095 175));
 
-  /* Semantic log-level palette (light, désaturée) */
-  --sem-ok:    #4a8a78;   /* shipped / success */
-  --sem-info:  #5a8aa8;   /* info / neutral */
-  --sem-warn:  #b08540;   /* wip / pending */
-  --sem-debug: #8a8278;   /* archived / muted */
+  /* ---- Halos dérivés (suivent l'accent automatiquement) ---- */
+  --glow:       color-mix(in oklab, var(--accent) 10%, transparent);
+  --glow-hover: color-mix(in oklab, var(--accent) 18%, transparent);
+  --glow-cyan:  color-mix(in oklab, var(--link-color) 7%, transparent);
 
-  --gradient-start: #c06a3a;
-  --gradient-mid:   #d4845a;
-  --gradient-end:   #e09a6f;
+  /* ---- Palette sémantique log-level ---- */
+  --sem-ok:    light-dark(oklch(56% 0.08 175), oklch(78% 0.10 175));
+  --sem-info:  light-dark(oklch(56% 0.07 235), oklch(78% 0.08 230));
+  --sem-warn:  light-dark(oklch(60% 0.09 80),  oklch(78% 0.09 80));
+  --sem-debug: light-dark(oklch(56% 0.012 80), oklch(54% 0.006 285));
 
-  /* Code blocks */
-  --code-bg: #e8ddd4;
-  --code-text: #18181b;
+  --gradient-start: light-dark(oklch(58% 0.12 48),  oklch(70% 0.105 48));
+  --gradient-mid:   light-dark(oklch(66% 0.105 52), oklch(76% 0.095 52));
+  --gradient-end:   light-dark(oklch(72% 0.09 58),  oklch(62% 0.115 45));
 
-  --selection-bg: rgba(192, 106, 58, 0.16);
+  /* ---- Code ---- */
+  --code-bg:   light-dark(oklch(89% 0.016 70), oklch(16.5% 0.005 285));
+  --code-text: light-dark(oklch(20% 0.01 60),  oklch(92% 0.005 285));
 
-  /* Shadows — teinte chaude pour s'accorder au parchemin */
-  --shadow-sm: 0 1px 2px rgba(90,55,25,0.05), 0 2px 6px rgba(90,55,25,0.06);
-  --shadow-md: 0 4px 14px rgba(90,55,25,0.08), 0 10px 30px rgba(90,55,25,0.07);
+  --selection-bg: color-mix(in oklab, var(--accent) 24%, transparent);
+
+  /* ---- Ombres (teinte chaude en light, profondes en dark) ---- */
+  --shadow-sm: 0 1px 2px light-dark(oklch(35% 0.05 55 / 6%), oklch(0% 0 0 / 30%)),
+               0 2px 6px light-dark(oklch(35% 0.05 55 / 7%), oklch(0% 0 0 / 20%));
+  --shadow-md: 0 4px 14px light-dark(oklch(35% 0.05 55 / 9%),  oklch(0% 0 0 / 40%)),
+               0 10px 30px light-dark(oklch(35% 0.05 55 / 8%), oklch(0% 0 0 / 25%));
   --shadow-glow: 0 0 24px var(--glow-hover);
 
-  /* Font families */
-  --font-body: 'Inclusive Sans', system-ui, -apple-system, sans-serif;
-  --font-code: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  /* ---- Familles ---- */
+  --font-body: 'Inclusive Sans Variable', 'Inclusive Sans', system-ui, -apple-system, sans-serif;
+  --font-code: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 
   /* Échelle typographique fluide (clamp = lisible sans media-query) */
   --fs-h1: clamp(2rem, 1.4rem + 3vw, 3rem);
@@ -114,86 +133,33 @@
   --transition-all: all 0.3s ease;
   --transition-transform: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Banner-specific tokens (light) */
-  --banner-teal: #1a8a7a;
-  --banner-teal-dim: #2a7a6a;
-  --banner-salmon: #c06a3a;
-  --banner-text: #18181b;
-  --banner-text-dim: #71717a;
-  --banner-muted: #9a9aa0;
-  --glass-bg: rgba(160, 90, 40, 0.02);
-  --glass-border: rgba(150, 90, 50, 0.09);
-  --glass-edge: rgba(192, 106, 58, 0.06);
-  --glass-shadow: rgba(120, 70, 30, 0.07);
-  --glass-inner: rgba(250, 245, 240, 0.55);
-  --glass-glow: rgba(192, 106, 58, 0.08);
-  --scan-color: rgba(192, 106, 58, 0.18);
-  --grid-line: rgba(150, 90, 50, 0.04);
-  --blob-teal: rgba(26, 138, 122, 0.04);
-  --blob-salmon: rgba(192, 106, 58, 0.05);
+  /* ---- Tokens de la bannière terminal ---- */
+  --banner-teal:     light-dark(oklch(55% 0.09 178), oklch(78% 0.095 175));
+  --banner-teal-dim: light-dark(oklch(50% 0.07 178), oklch(62% 0.07 178));
+  --banner-salmon:   light-dark(oklch(58% 0.12 48),  oklch(70% 0.105 48));
+  --banner-text:     var(--text);
+  --banner-text-dim: light-dark(oklch(50% 0.01 60), oklch(54% 0.006 285));
+  --banner-muted:    light-dark(oklch(66% 0.012 60), oklch(42% 0.006 285));
+  --glass-bg:     light-dark(oklch(55% 0.10 50 / 2%),  oklch(100% 0 0 / 3%));
+  --glass-border: light-dark(oklch(45% 0.07 50 / 9%),  oklch(100% 0 0 / 6%));
+  --glass-edge:   color-mix(in oklab, var(--accent) 6%, transparent);
+  --glass-shadow: light-dark(oklch(30% 0.05 55 / 7%),  oklch(0% 0 0 / 50%));
+  --glass-inner:  light-dark(oklch(98% 0.008 75 / 55%), oklch(100% 0 0 / 4%));
+  --glass-glow:   color-mix(in oklab, var(--accent) 8%, transparent);
+  --scan-color:   color-mix(in oklab, var(--accent) 19%, transparent);
+  --grid-line:    light-dark(oklch(40% 0.05 55 / 4%),  oklch(100% 0 0 / 2.5%));
+  --blob-teal:    color-mix(in oklab, var(--link-color) 5%, transparent);
+  --blob-salmon:  color-mix(in oklab, var(--accent) 7%, transparent);
+
+  /* ---- Fond ambiant (remplace le canvas de particules) ---- */
+  --ambient-dot: light-dark(oklch(40% 0.06 55 / 8%), oklch(90% 0.02 175 / 5%));
 }
 
-/* ---- Dark theme (neutral gray + orange accent) ---- */
-.dark,
-:root[data-theme="dark"] {
-  --bg: #141416;
-  --surface: #1c1c1f;
-  --surface-raised: #242428;
-  --card-bg: rgba(255, 255, 255, 0.03);
-  --card-border: rgba(255, 255, 255, 0.06);
-  --card-border-hover: rgba(212, 132, 90, 0.24);
-
-  --text: #e4e4e7;
-  --text-secondary: #b1b1ba;
-  /* muted éclairci : ~5:1 sur --bg sombre (était 3.9:1) */
-  --muted-text: #8a8a91;
-
-  --accent: #d4845a;
-  --accent-mid: #e09a6f;
-  --accent-secondary: #c06a3a;
-  --accent-warm: #e09a6f;
-  --link-color: #5ecfba;
-
-  --glow: rgba(212, 132, 90, 0.10);
-  --glow-hover: rgba(212, 132, 90, 0.18);
-  --glow-cyan: rgba(94, 207, 186, 0.06);
-
-  /* Semantic log-level palette (dark) */
-  --sem-ok:    #5ecfba;
-  --sem-info:  #7dc4e4;
-  --sem-warn:  #e0b070;
-  --sem-debug: #737378;
-
-  --gradient-start: #d4845a;
-  --gradient-mid:   #e09a6f;
-  --gradient-end:   #c06a3a;
-
-  --code-bg: #111113;
-  --code-text: #e4e4e7;
-  --selection-bg: rgba(212, 132, 90, 0.18);
-
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
-  --shadow-md: 0 4px 24px rgba(0,0,0,0.40), 0 2px 8px rgba(0,0,0,0.25);
-  --shadow-glow: 0 0 30px var(--glow-hover);
-
-  /* Banner-specific tokens (dark) */
-  --banner-teal: #5ecfba;
-  --banner-teal-dim: #3a9e8a;
-  --banner-salmon: #d4845a;
-  --banner-text: #e4e4e7;
-  --banner-text-dim: #737378;
-  --banner-muted: #505055;
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-edge: rgba(212, 132, 90, 0.06);
-  --glass-shadow: rgba(0,0,0,0.50);
-  --glass-inner: rgba(255,255,255, 0.04);
-  --glass-glow: rgba(212, 132, 90, 0.08);
-  --scan-color: rgba(212, 132, 90, 0.20);
-  --grid-line: rgba(255, 255, 255, 0.025);
-  --blob-teal: rgba(94, 207, 186, 0.06);
-  --blob-salmon: rgba(212, 132, 90, 0.10);
-}
+/* Le choix explicite de thème (toggle) force le color-scheme : tous les
+   tokens light-dark() basculent d'un coup, avant le premier paint. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"],
+.dark { color-scheme: dark; }
 
 /* ============================================================================
    BASE STYLES
@@ -203,8 +169,8 @@
 }
 
 html {
-  /* scroll-behavior handled by Lenis */
-  scroll-behavior: auto;
+  /* Lenis a été retiré : le scroll fluide est natif */
+  scroll-behavior: smooth;
   /* Décale les cibles d'ancre pour ne pas passer sous le header fixe */
   scroll-padding-top: 72px;
   -webkit-font-smoothing: antialiased;
@@ -213,6 +179,10 @@ html {
   background-color: var(--bg);
   /* Prevent any child element from creating horizontal overflow */
   overflow-x: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }
 
 body {
@@ -225,19 +195,11 @@ body {
   line-height: 1.7;
   transition: var(--transition-colors);
   overflow-x: hidden;
-  /* Subtle mesh gradient — neutral */
+  /* Subtle mesh gradient — suit l'accent dans les deux thèmes */
   background-image:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(192, 106, 58, 0.02) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(120, 120, 130, 0.015) 0%, transparent 55%);
+    radial-gradient(ellipse 80% 50% at 10% -10%, color-mix(in oklab, var(--accent) 2.5%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%, color-mix(in oklab, var(--link-color) 2%, transparent) 0%, transparent 55%);
   background-attachment: fixed;
-}
-
-.dark body,
-body.dark,
-[data-theme="dark"] body {
-  background-image:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(212, 132, 90, 0.015) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 85% 100%, rgba(120, 120, 130, 0.012) 0%, transparent 55%);
 }
 
 ::selection {
@@ -245,7 +207,7 @@ body.dark,
 }
 
 /* ============================================================================
-   PAGE ENTER ANIMATION — handled by GSAP in Animations.astro
+   PAGE CONTENT
    ============================================================================ */
 .page-content {
   padding-top: 60px;
@@ -284,7 +246,7 @@ pre {
   background: var(--code-bg);
   color: var(--code-text);
   padding: 1.25rem;
-  border-radius: 0.75rem;
+  border-radius: 0.6rem;
   overflow-x: auto;
   font-size: 0.9rem;
   line-height: 1.6;
@@ -321,19 +283,41 @@ a:hover {
 }
 
 /* ============================================================================
-   CARDS — Glassmorphism (Hyprland-inspired frosted panels)
+   CARDS — panneaux HUD : verre dépoli + crochets de visée aux coins
+   (réticule terminal qui apparaît au survol)
    ============================================================================ */
 .card {
   background: var(--card-bg);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.35);
+  -webkit-backdrop-filter: blur(16px) saturate(1.35);
   border: 1px solid var(--card-border);
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
+  position: relative;
   transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
               border-color 0.3s ease,
               box-shadow 0.35s ease;
+}
+
+/* Crochets de coin (top-left + bottom-right) dessinés en dégradés —
+   aucun pseudo-élément des pages n'utilise ::after sur .card */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent)),
+    linear-gradient(var(--accent), var(--accent));
+  background-position: 0 0, 0 0, 100% 100%, 100% 100%;
+  background-size: 16px 1.5px, 1.5px 16px, 16px 1.5px, 1.5px 16px;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 @media (max-width: 768px) {
@@ -350,9 +334,8 @@ a:hover {
 }
 
 @media (hover: hover) {
-  .card:hover {
-    transform: translateY(-3px);
-  }
+  .card:hover { transform: translateY(-3px); }
+  .card:hover::after { opacity: 0.7; }
 }
 
 /* ============================================================================
@@ -400,17 +383,19 @@ a:hover {
 }
 
 /* ============================================================================
-   BUTTONS — with shimmer on primary
+   BUTTONS — mono terminal ; le primaire porte une bordure conique animée
+   (@property --btn-angle) qui tourne en continu.
    ============================================================================ */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.3rem;
-  border-radius: 0.8rem;
-  font-family: var(--font-body);
-  font-size: 0.9rem;
+  border-radius: 0.6rem;
+  font-family: var(--font-code);
+  font-size: 0.85rem;
   font-weight: 500;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
               box-shadow 0.25s ease,
@@ -424,30 +409,32 @@ a:hover {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%);
-  background-size: 200% auto;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(135deg, var(--gradient-start), var(--gradient-mid)) padding-box,
+    conic-gradient(from var(--btn-angle),
+      var(--gradient-start),
+      var(--gradient-end) 35%,
+      oklch(100% 0 0 / 75%) 50%,
+      var(--gradient-end) 65%,
+      var(--gradient-start)) border-box;
   color: white;
   box-shadow: 0 2px 12px var(--glow);
+  animation: btn-border-spin 3.2s linear infinite;
 }
 
-.btn-primary::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.18) 50%, transparent 60%);
-  transform: translateX(-100%);
-  transition: transform 0.5s ease;
+@keyframes btn-border-spin {
+  to { --btn-angle: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary { animation: none; }
 }
 
 .btn-primary:hover {
-  background-position: right center;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px var(--glow-hover);
   color: white;
-}
-
-.btn-primary:hover::after {
-  transform: translateX(100%);
 }
 
 .btn-outline {
@@ -471,7 +458,7 @@ a:hover {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.15rem 0.15rem 0.15rem 0.15rem;
+  padding: 0.15rem;
   background: transparent;
   color: var(--accent);
   border-radius: 0.25rem;
@@ -515,12 +502,12 @@ a:hover {
 }
 
 .status-online .status-dot {
-  background: #5ecfba;
-  box-shadow: 0 0 8px rgba(94, 207, 186, 0.4);
+  background: var(--sem-ok);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--sem-ok) 40%, transparent);
   animation: pulse-dot 2s ease-in-out infinite;
 }
-.status-offline .status-dot { background: #e07d6a; }
-.status-maintenance .status-dot { background: #e0c06a; animation: pulse-dot 1.5s ease-in-out infinite; }
+.status-offline .status-dot { background: oklch(68% 0.13 30); }
+.status-maintenance .status-dot { background: var(--sem-warn); animation: pulse-dot 1.5s ease-in-out infinite; }
 
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -604,22 +591,71 @@ a:hover {
   width: 60px;
   background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
   border-radius: 2px;
-  /* width/opacity managed by GSAP scaleX in Animations.astro — no CSS keyframe here */
   transform-origin: left center;
 }
 
 /* ============================================================================
-   GLOBAL REVEAL ANIMATION — driven by GSAP ScrollTrigger in Animations.astro
-   Elements start VISIBLE by default (opacity:1). GSAP sets opacity:0 only on
-   elements that are BELOW the fold, then scroll-reveals them. Above-fold
-   elements are never touched. Do NOT set opacity:0 here — it would make
-   above-fold content permanently invisible on View Transition navigation.
+   SCROLL-DRIVEN REVEALS — 100 % CSS natif (animation-timeline: view()),
+   remplace GSAP ScrollTrigger. Les animations sont *scrubbed* par le scroll :
+   l'élément se révèle au rythme où il entre dans le viewport.
+   Dégradation propre : sans support, tout est simplement visible.
    ============================================================================ */
-.reveal {
-  /* intentionally empty — GSAP controls visibility for below-fold elements only */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal-rise both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 80%;
+    }
+
+    /* Les grilles révèlent leurs enfants individuellement */
+    :is(.projects-grid, .certs-grid, .nodes-grid, .vlans-grid, .services-grid, .stats-grid) > * {
+      animation: reveal-pop both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 85%;
+    }
+
+    .section-header {
+      animation: reveal-slide both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+
+    .section-divider {
+      animation: divider-grow both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+
+    .timeline-item {
+      animation: reveal-slide both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
 }
 
-/* Stagger helpers */
+@keyframes reveal-rise {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes reveal-pop {
+  from { opacity: 0; transform: translateY(22px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes reveal-slide {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes divider-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* Stagger helpers (transitions CSS pilotées par les pages) */
 .stagger-1 { transition-delay: 0.05s; }
 .stagger-2 { transition-delay: 0.12s; }
 .stagger-3 { transition-delay: 0.19s; }
@@ -695,12 +731,9 @@ a:hover {
   transition-duration: 0ms !important;
 }
 
-/* Header is transition:persist in BaseLayout — no VT snapshot needed.
-   Keep view-transition-name removed to avoid conflict. */
-
-/* The particle canvas is position:fixed and persists across navigations.
-   Excluding it from View Transitions avoids a double-snapshot flash. */
-#particle-canvas {
+/* Le fond ambiant est position:fixed et persiste entre navigations.
+   L'exclure des View Transitions évite un flash de double snapshot. */
+#ambient-bg {
   view-transition-name: none;
 }
 
@@ -719,13 +752,6 @@ a:hover {
 }
 @media (prefers-reduced-motion: reduce) {
   .blog-enter { animation: none; }
-}
-
-/* ============================================================================
-   HEADER — will-change hint for GSAP scroll hide/show
-   ============================================================================ */
-#site-header {
-  will-change: transform;
 }
 
 /* ============================================================================
