@@ -502,9 +502,9 @@ const profile = portfolio.profile || {};
     opacity: 0;
     animation: dotPop .5s cubic-bezier(.36,.07,.19,.97) both;
   }
-  .banner-dots span:nth-child(1) { background: var(--banner-salmon); animation-delay: .3s; }
-  .banner-dots span:nth-child(2) { background: #d67e8a; animation-delay: .46s; }
-  .banner-dots span:nth-child(3) { background: var(--banner-teal); animation-delay: .62s; }
+  .banner-dots span:nth-child(1) { background: var(--dot-r); animation-delay: .3s; }
+  .banner-dots span:nth-child(2) { background: var(--dot-y); animation-delay: .46s; }
+  .banner-dots span:nth-child(3) { background: var(--dot-g); animation-delay: .62s; }
   @keyframes dotPop {
     0%   { opacity: 0; transform: scale(0); }
     55%  { opacity: 1; transform: scale(1.4); }
@@ -641,7 +641,7 @@ const profile = portfolio.profile || {};
   }
   .btag:hover {
     color: var(--banner-teal); border-color: var(--banner-teal);
-    background: rgba(94, 207, 186, 0.07);
+    background: color-mix(in srgb, var(--banner-teal) 7%, transparent);
   }
   .btag.btag-accent { color: var(--banner-teal-dim); border-color: var(--banner-teal-dim); }
   .btag.btag-accent:hover { color: var(--banner-teal); border-color: var(--banner-teal); }
@@ -778,9 +778,9 @@ const profile = portfolio.profile || {};
     inset: 0;
     background:
       linear-gradient(180deg, transparent 55%,
-        light-dark(oklch(25% 0.03 55 / 20%), color-mix(in srgb, var(--bg) 70%, transparent)) 100%),
+        light-dark(#24211c33, color-mix(in srgb, var(--bg) 70%, transparent)) 100%),
       linear-gradient(180deg,
-        light-dark(oklch(25% 0.03 55 / 14%), color-mix(in srgb, var(--bg) 35%, transparent)) 0%,
+        light-dark(#24211c24, color-mix(in srgb, var(--bg) 35%, transparent)) 0%,
         transparent 30%);
     pointer-events: none;
   }
@@ -1092,8 +1092,8 @@ const profile = portfolio.profile || {};
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--accent);
-    background: rgba(212, 132, 90, 0.1);
-    border: 1px solid rgba(212, 132, 90, 0.25);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
     border-radius: 9999px;
     padding: 0.2rem 0.6rem;
     align-self: flex-start;  /* left-align the chip while rest is centered */

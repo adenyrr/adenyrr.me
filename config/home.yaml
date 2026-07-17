@@ -50,9 +50,9 @@ credly:
   # IDs des badges à mettre en avant (l'API Credly ne les expose pas nativement).
   # Les IDs se trouvent dans l'URL des badges sur credly.com.
   pinnedIds:
-    - "67779045-f549-415b-b281-3288e4883f73"  # LFC108 : Cybersecurity Essentials
-    - "711b64b0-eec0-4beb-aef2-2120bc1c738d"  # Linux Essentials
-    - "77fa8888-b83e-41b9-8d9f-8e43b035db07"  # IT Essentials
+    - "add7642d-d71d-4acc-93f6-a7c418dfa4c3"  # LFCA : Linux Foundation Certified IT Associate
+    - "c4616749-9f53-4780-a816-51b50b18606b"  # Ethical Hacker
+    - "807dfb6c-29ef-43a7-9352-19fdfffafdb5"  # Network Technician Career Path
 
 # -----------------------------------------------------------------------------
 # PROJETS
@@ -87,6 +87,16 @@ projects:
     repo: "https://github.com/adenyrr/alyx"
     year: 2026
     image: "/images/alyx.png"
+
+  - id: "trainCerts"
+    title: "Entrainement aux certifications QCM"
+    description: "Entraînement libre ou examen blanc chronométré, progression stockée localement"
+    tech: ["Virtu", "Containers", "Réseau", "Linux"]
+    icon: "Library"
+    link: "https://train.adenyrr.me"
+    repo: "https://gitlab.com/adenyrr/train"
+    year: 2026
+    image: "/images/train.png"
 
 # -----------------------------------------------------------------------------
 # DIPLÔMES

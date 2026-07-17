@@ -34,6 +34,7 @@ pnpm-debug.log*
 *.swo
 *~
 .vim/
+.claude/
 
 # OS files
 .DS_Store
@@ -46,5 +47,3 @@ coverage/
 # runtime
 *.pem
 
-
-.claude/

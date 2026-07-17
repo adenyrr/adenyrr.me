@@ -436,7 +436,7 @@ const docLinks: Record<string, string> = {
 
   .schema-connector-v {
     width: 2px; height: 28px;
-    background: linear-gradient(to bottom, var(--accent), rgba(212, 132, 90, 0.2));
+    background: linear-gradient(to bottom, var(--accent), color-mix(in srgb, var(--accent) 20%, transparent));
     margin: 0 auto;
   }
   .schema-connector-sm { height: 16px; }
@@ -473,9 +473,9 @@ const docLinks: Record<string, string> = {
   }
   .schema-fanout-line {
     position: absolute; top: 0; left: 10%; right: 10%; height: 100%;
-    border-left: 2px solid rgba(212, 132, 90, 0.2);
-    border-right: 2px solid rgba(212, 132, 90, 0.2);
-    border-bottom: 2px solid rgba(212, 132, 90, 0.2);
+    border-left: 2px solid color-mix(in srgb, var(--accent) 20%, transparent);
+    border-right: 2px solid color-mix(in srgb, var(--accent) 20%, transparent);
+    border-bottom: 2px solid color-mix(in srgb, var(--accent) 20%, transparent);
     border-radius: 0 0 1rem 1rem;
   }
 
@@ -508,7 +508,7 @@ const docLinks: Record<string, string> = {
   .schema-svc-dot {
     width: 5px; height: 5px; border-radius: 50%;
     background: #5ecfba; flex-shrink: 0;
-    box-shadow: 0 0 4px rgba(94, 207, 186, 0.3);
+    box-shadow: 0 0 4px color-mix(in srgb, var(--banner-teal) 30%, transparent);
   }
   .schema-svc-name { color: var(--text); font-weight: 500; white-space: nowrap; }
 
