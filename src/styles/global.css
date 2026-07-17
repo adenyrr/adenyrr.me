@@ -20,7 +20,7 @@
   --color-popover: var(--surface);
   --color-popover-foreground: var(--text);
   --color-primary: var(--accent);
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: var(--bg);
   --color-secondary: var(--surface-raised);
   --color-secondary-foreground: var(--text-secondary);
   --color-muted: var(--surface-raised);
@@ -93,9 +93,9 @@
   --sem-warn:  light-dark(#a44000, #ff8438);
   --sem-debug: light-dark(#9a9488, #4a534e);
 
-  --gradient-start: light-dark(#8a5410, #c17d18);
-  --gradient-mid:   light-dark(#c17d18, #f0a830);
-  --gradient-end:   light-dark(#f0a830, #ffc65c);
+  --gradient-start: light-dark(#6e410a, #c17d18);
+  --gradient-mid:   light-dark(#8a5410, #f0a830);
+  --gradient-end:   light-dark(#a8681a, #ffc65c);
 
   /* ---- Code ---- */
   --code-bg:   light-dark(#e8e1d3, #0d1210);
@@ -424,7 +424,7 @@ a:hover {
       oklch(100% 0 0 / 75%) 50%,
       var(--gradient-end) 65%,
       var(--gradient-start)) border-box;
-  color: white;
+  color: var(--bg);
   box-shadow: 0 2px 12px var(--glow);
   animation: btn-border-spin 3.2s linear infinite;
 }
@@ -440,7 +440,7 @@ a:hover {
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px var(--glow-hover);
-  color: white;
+  color: var(--bg);
 }
 
 .btn-outline {
