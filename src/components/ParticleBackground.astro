@@ -38,12 +38,15 @@ const enabled = config.theme?.particles?.enabled !== false;
     will-change: transform;
   }
 
+  /* Nappes en dérive : elles s'ajoutent aux trois halos §3.2 posés sur
+     <body> (qui sont, eux, statiques et obligatoires). D'où des tokens
+     dédiés à faible alpha — sinon la superposition sature la page. */
   .ambient-aurora-1 {
     width: 55vw;
     height: 45vh;
     top: -18vh;
     left: -12vw;
-    background: radial-gradient(ellipse at center, var(--blob-teal) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, var(--blob-drift-blue) 0%, transparent 70%);
     animation: aurora-drift-1 38s ease-in-out infinite alternate;
   }
 
@@ -52,7 +55,7 @@ const enabled = config.theme?.particles?.enabled !== false;
     height: 40vh;
     bottom: -15vh;
     right: -10vw;
-    background: radial-gradient(ellipse at center, var(--blob-salmon) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, var(--blob-drift-amber) 0%, transparent 70%);
     animation: aurora-drift-2 46s ease-in-out infinite alternate;
   }
 

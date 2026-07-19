@@ -2,8 +2,7 @@
    FONTS — auto-hébergées via Fontsource (zéro requête Google, privacy-first).
    Versions variables : un seul fichier par famille couvre tous les poids.
    ============================================================================ */
-@import "@fontsource-variable/inclusive-sans";
-@import "@fontsource-variable/inclusive-sans/wght-italic.css";
+@import "@fontsource-variable/inter";
 @import "@fontsource-variable/jetbrains-mono";
 
 @import "tailwindcss";
@@ -27,17 +26,19 @@
   --color-muted-foreground: var(--muted-text);
   --color-accent: var(--glow);
   --color-accent-foreground: var(--accent);
-  --color-destructive: light-dark(#b5322a, #e5675f);
-  --color-destructive-foreground: #ffffff;
+  --color-destructive: var(--accent-coral);
+  --color-destructive-foreground: var(--bg-0);
   --color-border: var(--card-border);
   --color-input: var(--card-border);
-  --color-ring: var(--accent);
+  --color-ring: var(--focus-ring);
 
-  /* Rayons serrés — le terminal de train.adenyrr.me tient en 4px / 6px */
-  --radius-sm: 3px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 8px;
+  /* Rayons — adoucis vers le frost-glass (§2.5) sans perdre la densité
+     terminale : palier intermédiaire entre les 4px d'origine et les 20px
+     de la référence. Les pilules restent en capsule complète (999px). */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
 }
 
 /* ============================================================================
@@ -52,8 +53,11 @@
 
 /* ============================================================================
    CSS CUSTOM PROPERTIES (Theme tokens)
-   Palette alignée sur train.adenyrr.me : parchemin chaud (light) /
-   noir-vert profond (dark), accent ambre, liens teal.
+   Frost Glass Design System — verre dépoli translucide sur ardoise froide,
+   teinte de marque ambre, base Okabe–Ito sûre pour le daltonisme.
+   Deux familles de couleur JAMAIS interchangées (§1.2) :
+     • « vif »  → triplets RGB constants, fonds/bordures/halos NON textuels ;
+     • « ink »  → couleurs de texte/icône, ajustées par thème pour le 4.5:1.
    Un seul bloc de tokens : light-dark() résout selon color-scheme —
    plus de duplication light/dark à maintenir.
    ============================================================================ */
@@ -61,58 +65,114 @@
   /* Suit la préférence système par défaut ; surchargé par data-theme */
   color-scheme: light dark;
 
-  /* ---- Surfaces ---- */
-  --bg:             light-dark(#f4efe5, #090c0b);
-  --surface:        light-dark(#faf7f0, #0d1210);
-  --surface-raised: light-dark(#e8e1d3, #161c19);
-  --card-bg:        light-dark(#fffdf7b3, #161c198c);
-  --card-border:    light-dark(#8a541033, #f0a83029);
-  --card-border-hover: light-dark(#8a54107a, #f0a83066);
+  /* ==========================================================================
+     COUCHE 1 — « VIF » : triplets RGB CONSTANTS sur les deux thèmes (§2.3).
+     Réservés aux fonds teintés, bordures, halos, soulignés — JAMAIS à du
+     texte. C'est ce qui évite qu'un thème clair paraisse terne : on
+     n'assombrit jamais une couleur qui ne porte pas de texte.
+     ========================================================================== */
+  --amber-rgb: 232,169,76;
+  --blue-rgb:  111,180,234;
+  --teal-rgb:  52,209,166;
+  --coral-rgb: 240,135,103;
 
-  /* ---- Texte ---- */
-  --text:           light-dark(#24211c, #dbe0d9);
-  --text-secondary: light-dark(#453f36, #a3aba4);
-  /* contraste AA (~5:1) sur --bg dans les deux thèmes */
-  --muted-text:     light-dark(#615c53, #79847e);
+  /* ==========================================================================
+     COUCHE 2 — « INK » : couleurs porteuses de texte/icône, assombries en
+     clair et éclaircies en sombre pour tenir ≥ 4.5:1 (§2.1 / §2.2).
+     Base Okabe–Ito : le « succès » est un vert BLEUTÉ, distinguable du
+     corail en deutéranopie/protanopie.
+     ========================================================================== */
+  --accent-amber: light-dark(#9a5b00, #e8a94c);
+  --accent-blue:  light-dark(#0f6fae, #6fb4ea);
+  --accent-teal:  light-dark(#067a5f, #34d1a6);
+  /* Réf. §2.2 : #b94726. Sur une pilule teintée corail (vif à .16) il
+     retombe à 4.47:1 — un cheveu sous le seuil. Assombri d'un cran pour
+     tenir 4.53 sur la pilule comme sur le verre nu. */
+  --accent-coral: light-dark(#b84625, #f08767);
+  --focus-ring:   light-dark(#0f6fae, #6fb4ea);
 
-  /* ---- Accent ambre + liens teal ---- */
-  --accent:           light-dark(#8a5410, #f0a830);
-  --accent-mid:       light-dark(#a8681a, #ffc65c);
-  --accent-secondary: light-dark(#6e410a, #d9922a);
-  --accent-warm:      light-dark(#c17d18, #ffc65c);
-  --link-color:       light-dark(#00666e, #3fd0d8);
+  /* ---- Fonds de page (§2.1 / §2.2) ---- */
+  --bg-0: light-dark(#eef1f5, #0b0f14);
+  --bg-1: light-dark(#e3e8f0, #121820);
 
-  /* ---- Halos dérivés (suivent l'accent automatiquement) ---- */
-  --glow:       color-mix(in oklab, var(--accent) 10%, transparent);
-  --glow-hover: color-mix(in oklab, var(--accent) 18%, transparent);
-  --glow-cyan:  color-mix(in oklab, var(--link-color) 7%, transparent);
+  /* ---- Verre (§2.1 / §2.2) ---- */
+  --glass-bg:        light-dark(rgba(255,255,255,.6),  rgba(255,255,255,.055));
+  --glass-bg-strong: light-dark(rgba(255,255,255,.82), rgba(255,255,255,.09));
+  --glass-border:    light-dark(rgba(20,28,38,.14),    rgba(255,255,255,.14));
+  --glass-blur:      22px;
+  --glint:           light-dark(rgba(255,255,255,.85), rgba(255,255,255,.07));
+  /* Listes multi-ombres : light-dark() sépare ses deux arguments par une
+     virgule, donc une liste d'ombres ne peut pas y tenir. Valeurs sombres
+     ici (= :root de la référence §2.1), surchargées en clair plus bas. */
+  --shadow: 0 20px 60px -20px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.35);
 
-  /* ---- Palette sémantique log-level ---- */
-  --sem-ok:    light-dark(#186729, #6fcf7a);
-  --sem-info:  light-dark(#1f5fa8, #4d8de0);
-  --sem-warn:  light-dark(#a44000, #ff8438);
-  --sem-debug: light-dark(#9a9488, #4a534e);
+  /* ---- Halos ambiants (§2.1 / §2.2) — assez opaques pour que le
+     backdrop-filter ait de la matière à flouter (§1.1) ---- */
+  --blob-amber: light-dark(rgba(var(--amber-rgb),.30), rgba(232,169,76,.20));
+  --blob-blue:  light-dark(rgba(var(--blue-rgb),.22),  rgba(111,180,234,.16));
+  --blob-teal:  light-dark(rgba(var(--teal-rgb),.22),  rgba(52,209,166,.12));
 
-  --gradient-start: light-dark(#6e410a, #c17d18);
-  --gradient-mid:   light-dark(#8a5410, #f0a830);
-  --gradient-end:   light-dark(#a8681a, #ffc65c);
+  /* ---- Texte (§2.1 / §2.2) ---- */
+  --text-primary:   light-dark(#10151c, #eef2f6);
+  --text-secondary: light-dark(#454f5e, #a9b4c0);
+  /* Réf. §2.2 : #65707e / #7c8794. Ces valeurs nominales tombent sous 4.5:1
+     une fois COMPOSITÉES sur --glass-bg-strong (4.44 en clair, 4.22 en
+     sombre) — la règle §2.2 impose de vérifier au rendu final, d'où ce
+     décalage minimal qui fait passer les deux thèmes (4.51 / 4.51). */
+  --text-muted:     light-dark(#646f7d, #818c99);
+
+  /* ==========================================================================
+     ALIAS DE COMPATIBILITÉ — l'API de tokens consommée par les composants
+     reste stable ; seules les valeurs sont réfractées vers le frost-glass.
+     ========================================================================== */
+  --bg:             var(--bg-0);
+  --surface:        var(--bg-1);
+  --surface-raised: light-dark(#d8dfe9, #1a222c);
+  --card-bg:        var(--glass-bg);
+  --card-border:    var(--glass-border);
+  --card-border-hover: light-dark(rgba(20,28,38,.28), rgba(255,255,255,.30));
+
+  --text:       var(--text-primary);
+  --muted-text: var(--text-muted);
+
+  /* L'ambre reste la teinte de marque ; les liens passent au bleu « info ». */
+  --accent:           var(--accent-amber);
+  --accent-mid:       light-dark(#b87510, #f5c47a);
+  --accent-secondary: light-dark(#7a4700, #c98a2e);
+  --accent-warm:      var(--accent-amber);
+  --link-color:       var(--accent-blue);
+
+  /* ---- Halos dérivés — bâtis sur la couche « vif » (non textuelle) ---- */
+  --glow:       rgba(var(--amber-rgb), .14);
+  --glow-hover: rgba(var(--amber-rgb), .26);
+  --glow-cyan:  rgba(var(--blue-rgb), .12);
+
+  /* ---- Palette sémantique log-level — mappée sur les inks Okabe–Ito ---- */
+  --sem-ok:    var(--accent-teal);
+  --sem-info:  var(--accent-blue);
+  --sem-warn:  var(--accent-amber);
+  --sem-debug: var(--text-muted);
+
+  --gradient-start: light-dark(#7a4700, #c98a2e);
+  --gradient-mid:   var(--accent-amber);
+  --gradient-end:   light-dark(#b87510, #f5c47a);
 
   /* ---- Code ---- */
-  --code-bg:   light-dark(#e8e1d3, #0d1210);
-  --code-text: light-dark(#24211c, #dbe0d9);
+  --code-bg:   var(--bg-1);
+  --code-text: var(--text-primary);
 
-  --selection-bg: color-mix(in oklab, var(--accent) 24%, transparent);
+  --selection-bg: rgba(var(--amber-rgb), .30);
 
-  /* ---- Ombres (teinte ambre en light, profondes en dark) ---- */
-  --shadow-sm: 0 1px 2px light-dark(#8a541012, #00000059),
-               0 2px 6px light-dark(#8a541014, #00000040);
-  --shadow-md: 0 4px 14px light-dark(#8a54101c, #00000073),
-               0 10px 30px light-dark(#8a541017, #00000047);
+  /* ---- Ombres ---- */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.25);
+  --shadow-md: var(--shadow);
   --shadow-glow: 0 0 24px var(--glow-hover);
 
-  /* ---- Familles ---- */
-  --font-body: 'Inclusive Sans Variable', 'Inclusive Sans', system-ui, -apple-system, sans-serif;
-  --font-code: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  /* ---- Familles (§2.4) ---- */
+  --font-ui:   'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body: var(--font-ui);
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --font-code: var(--font-mono);
 
   /* Échelle typographique fluide (clamp = lisible sans media-query) */
   --fs-h1: clamp(2rem, 1.4rem + 3vw, 3rem);
@@ -134,37 +194,58 @@
   --transition-all: all 0.3s ease;
   --transition-transform: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* ---- Tokens de la bannière terminal ---- */
-  --banner-teal:     light-dark(#00666e, #3fd0d8);
-  --banner-teal-dim: light-dark(#0a5a60, #2a9aa2);
-  --banner-salmon:   light-dark(#8a5410, #f0a830);
-  --banner-text:     var(--text);
-  --banner-text-dim: light-dark(#615c53, #79847e);
-  --banner-muted:    light-dark(#9a9488, #4a534e);
-  /* Pastilles de barre de titre — mêmes valeurs que le terminal de train */
+  /* ---- Tokens de la bannière terminal — remappés sur les inks ---- */
+  --banner-teal:     var(--accent-blue);
+  --banner-teal-dim: light-dark(#155f8f, #4e93c4);
+  --banner-salmon:   var(--accent-amber);
+  --banner-text:     var(--text-primary);
+  --banner-text-dim: var(--text-secondary);
+  --banner-muted:    var(--text-muted);
+
+  /* Pastilles de barre de titre — convention macOS conservée. Non
+     textuelles, mais §3.6 impose une icône au survol/focus : la couleur
+     seule ne porte jamais l'information (voir .win-dot). */
   --dot-r: #ff5f56;
   --dot-y: #ffbd2e;
   --dot-g: #27c93f;
-  --glass-bg:     light-dark(#fffdf79e, #161c198c);
-  --glass-border: light-dark(#8a541033, #f0a83029);
-  --glass-edge:   color-mix(in oklab, var(--accent) 6%, transparent);
-  --glass-shadow: light-dark(#8a541014, #00000080);
-  --glass-inner:  light-dark(#fffdf78c, #ffffff0a);
-  --glass-glow:   color-mix(in oklab, var(--accent) 8%, transparent);
-  --scan-color:   color-mix(in oklab, var(--accent) 19%, transparent);
-  --grid-line:    light-dark(#8a54100a, #f0a83014);
-  --blob-teal:    color-mix(in oklab, var(--link-color) 5%, transparent);
-  --blob-salmon:  color-mix(in oklab, var(--accent) 7%, transparent);
 
-  /* ---- Fond ambiant (remplace le canvas de particules) ---- */
-  --ambient-dot: light-dark(#8a541014, #f0a8300d);
+  /* ---- Verre : alias hérités pointant sur les jetons §2 ---- */
+  --glass-edge:   var(--glint);
+  --glass-shadow: var(--shadow);
+  --glass-inner:  var(--glint);
+  --glass-glow:   rgba(var(--amber-rgb), .12);
+
+  /* ---- Décor non textuel (couche « vif ») ---- */
+  --scan-color: rgba(var(--amber-rgb), .19);
+  --grid-line:  light-dark(rgba(20,28,38,.05), rgba(255,255,255,.05));
+
+  /* ---- Fond ambiant : nappes en dérive, volontairement plus faibles que
+     les halos §3.2 posés sur <body> — elles s'y ajoutent sans saturer. ---- */
+  --blob-drift-amber: rgba(var(--amber-rgb), .10);
+  --blob-drift-blue:  rgba(var(--blue-rgb), .10);
+  --ambient-dot: light-dark(rgba(20,28,38,.06), rgba(255,255,255,.045));
 }
 
 /* Le choix explicite de thème (toggle) force le color-scheme : tous les
    tokens light-dark() basculent d'un coup, avant le premier paint. */
-:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="light"] {
+  color-scheme: light;
+  /* Ombres du thème clair (§2.2) — teintées bleu-ardoise, jamais du noir
+     pur, sinon le verre paraît sale sur fond clair. */
+  --shadow: 0 24px 55px -18px rgba(20,30,45,.30), 0 3px 10px rgba(20,30,45,.12);
+  --shadow-sm: 0 1px 2px rgba(20,30,45,.10), 0 2px 6px rgba(20,30,45,.08);
+}
 :root[data-theme="dark"],
 .dark { color-scheme: dark; }
+
+/* Repli si aucun data-theme n'est posé (JS désactivé) : le média système
+   pilote seul les ombres, light-dark() gère déjà tout le reste. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --shadow: 0 24px 55px -18px rgba(20,30,45,.30), 0 3px 10px rgba(20,30,45,.12);
+    --shadow-sm: 0 1px 2px rgba(20,30,45,.10), 0 2px 6px rgba(20,30,45,.08);
+  }
+}
 
 /* ============================================================================
    BASE STYLES
@@ -174,8 +255,12 @@
 }
 
 html {
-  /* Lenis a été retiré : le scroll fluide est natif */
-  scroll-behavior: smooth;
+  /* PAS de `scroll-behavior: smooth` global : au retour arrière, le routeur
+     d'Astro restaure la position via scrollTo() SANS `behavior: instant`
+     (contrairement à la navigation avant). Le scroll de restauration était
+     donc animé, ce qui se ressent comme une latence. Aucune ancre interne
+     n'existe sur le site — seul le skip-link en profitait, et un saut
+     instantané y est de toute façon préférable. */
   /* Décale les cibles d'ancre pour ne pas passer sous le header fixe */
   scroll-padding-top: 72px;
   -webkit-font-smoothing: antialiased;
@@ -186,9 +271,6 @@ html {
   overflow-x: hidden;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-}
 
 body {
   font-family: var(--font-body);
@@ -200,11 +282,14 @@ body {
   line-height: 1.7;
   transition: var(--transition-colors);
   overflow-x: hidden;
-  /* Mesh gradient repris de train.adenyrr.me : halo ambre en haut à gauche,
-     halo bleu en bas à droite */
+  /* §3.2 — OBLIGATOIRE : le backdrop-filter ne se voit que s'il a de la
+     matière contrastée à flouter. Trois taches radiales larges et diffuses
+     (transparent 60%), jamais de formes nettes. Sans elles, les panneaux
+     ne sont que semi-transparents : ce n'est plus du frost-glass. */
   background-image:
-    radial-gradient(ellipse 70% 45% at 12% -8%, color-mix(in oklab, var(--accent) 6%, transparent) 0%, transparent 62%),
-    radial-gradient(ellipse 55% 40% at 88% 106%, color-mix(in oklab, var(--sem-info) 5%, transparent) 0%, transparent 58%);
+    radial-gradient(60vmax 60vmax at 15% 10%,  var(--blob-amber), transparent 60%),
+    radial-gradient(55vmax 55vmax at 90% 20%,  var(--blob-blue),  transparent 60%),
+    radial-gradient(60vmax 60vmax at 50% 100%, var(--blob-teal),  transparent 60%);
   background-attachment: fixed;
 }
 
@@ -292,14 +377,19 @@ a:hover {
    CARDS — panneaux HUD : verre dépoli + crochets de visée aux coins
    (réticule terminal qui apparaît au survol)
    ============================================================================ */
-.card {
-  background: var(--card-bg);
-  backdrop-filter: blur(16px) saturate(1.35);
-  -webkit-backdrop-filter: blur(16px) saturate(1.35);
-  border: 1px solid var(--card-border);
+.card,
+.glass-panel {
+  background: var(--glass-bg);
+  /* saturate() est essentiel : sans lui le flou « délave » les couleurs
+     derrière le verre et l'effet perd son côté vitré/coloré (§3.1). */
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
+  /* Le liseré interne simule un reflet en haut du panneau — discret en
+     sombre, net en clair : c'est ce détail qui évite l'effet « plat ». */
+  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glint);
   position: relative;
   transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1),
               border-color 0.3s ease,
@@ -336,7 +426,7 @@ a:hover {
 
 .card:hover {
   border-color: var(--card-border-hover);
-  box-shadow: var(--shadow-md), var(--shadow-glow);
+  box-shadow: var(--shadow-md), var(--shadow-glow), inset 0 1px 0 var(--glint);
 }
 
 @media (hover: hover) {
@@ -692,9 +782,10 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  /* outline-offset pour ne pas être mangé par les bords arrondis (§4) */
+  outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 /* ============================================================================
@@ -965,4 +1056,125 @@ a:hover {
 @keyframes drawer-slide-out {
   from { transform: translateY(0); }
   to   { transform: translateY(100%); }
+}
+
+/* ============================================================================
+   PILULES / SEGMENTS DE VERRE (§3.3)
+   Le « signature element » du site : les segments d'invite façon powerline
+   réinterprétés en capsules de verre dépoli plutôt qu'en blocs à angles vifs.
+   Toujours en capsule complète (999px), quel que soit le rayon global.
+   ============================================================================ */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  box-shadow: inset 0 1px 0 var(--glint);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+}
+
+/* Variantes teintées : fond/bordure en couleur « vive » constante (non
+   textuelle → 3:1 suffit), texte en couleur « ink » qui garantit le 4.5:1. */
+.pill--amber { color: var(--accent-amber); background: rgba(var(--amber-rgb), .16); border-color: rgba(var(--amber-rgb), .40); }
+.pill--blue  { color: var(--accent-blue);  background: rgba(var(--blue-rgb),  .16); border-color: rgba(var(--blue-rgb),  .40); }
+.pill--teal  { color: var(--accent-teal);  background: rgba(var(--teal-rgb),  .16); border-color: rgba(var(--teal-rgb),  .40); }
+.pill--coral { color: var(--accent-coral); background: rgba(var(--coral-rgb), .16); border-color: rgba(var(--coral-rgb), .40); }
+
+/* ============================================================================
+   ÉTATS / STATUTS (§3.4)
+   WCAG 1.4.1 — aucune information n'est portée par la couleur seule :
+   chaque état = couleur + icône + libellé texte. Lisible en niveaux de gris
+   comme en deutéranopie.
+   ============================================================================ */
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.state svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.state-ok    { color: var(--accent-teal); }
+.state-warn  { color: var(--accent-amber); }
+.state-error { color: var(--accent-coral); }
+.state-info  { color: var(--accent-blue); }
+
+/* ============================================================================
+   ACCESSIBILITÉ — media queries non négociables (§4)
+   ============================================================================ */
+
+/* Transparence réduite : tout le design repose sur le verre, il faut donc
+   le rendre franchement opaque plutôt que de simplement baisser le flou. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: var(--bg-1);
+    --glass-bg-strong: var(--bg-1);
+    --glass-blur: 0px;
+    --glint: transparent;
+  }
+  .card,
+  .glass-panel,
+  .pill {
+    background: var(--bg-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  body { background-image: none; }
+  #ambient-bg { display: none; }
+}
+
+/* Contraste renforcé : bordures en currentColor, textes secondaires et
+   discrets remontés au niveau du texte principal. */
+@media (prefers-contrast: more) {
+  :root {
+    --text-secondary: var(--text-primary);
+    --text-muted: var(--text-primary);
+    --glass-border: currentColor;
+    --glass-bg: var(--bg-1);
+    --glass-bg-strong: var(--bg-1);
+  }
+  .card,
+  .glass-panel,
+  .pill,
+  .tabs {
+    border-color: currentColor;
+  }
+}
+
+/* Mouvement réduit : les halos cessent de dériver, le curseur cesse de
+   clignoter — le contenu reste strictement identique. */
+@media (prefers-reduced-motion: reduce) {
+  .gradient-text { animation: none; }
+  .status-online .status-dot,
+  .status-maintenance .status-dot { animation: none; }
+}
+
+/* Cibles tactiles ≥ 40×40px sur mobile pour tout élément interactif (§4). */
+@media (pointer: coarse) {
+  .tab,
+  .btn,
+  .theme-toggle {
+    min-height: 40px;
+    min-width: 40px;
+  }
 }

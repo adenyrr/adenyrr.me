@@ -42,10 +42,6 @@ tabs:
     enabled: true
     label: "/wan"
     icon: "Globe"
-  graph:
-    enabled: true
-    label: "/graph"
-    icon: "GitBranch"
 
 # -----------------------------------------------------------------------------
 # NODES PROXMOX

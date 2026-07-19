@@ -34,6 +34,13 @@ export default defineConfig({
   markdown: {
     remarkPlugins: [remarkReadingTime],
   },
+  image: {
+    // Autorise l'optimisation au build des badges Credly. Leur CDN ignore
+    // tout redimensionnement (ni ?w=, ni /size/WxH/ : il renvoie toujours
+    // l'original, 35–280 Ko par badge). Sans ça, /home tirait ~1,5 Mo
+    // d'images tierces pour les afficher en 44 px.
+    domains: ['images.credly.com'],
+  },
   vite: {
     plugins: [tailwindcss()],
   },

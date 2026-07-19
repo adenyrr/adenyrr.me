@@ -1,22 +1,24 @@
 ---
 ---
 
-<button id="theme-toggle" aria-label="Basculer le thème" class="theme-toggle" title="Basculer le thème">
+<!-- aria-pressed reflète l'état sombre (§5.2) ; le libellé accessible est
+     mis à jour par le script pour annoncer l'action, pas seulement l'icône. -->
+<button
+  id="theme-toggle"
+  type="button"
+  aria-pressed="false"
+  aria-label="Basculer le thème"
+  class="theme-toggle"
+  title="Basculer le thème"
+>
+  <!-- Icônes en traits (§3.5) : stroke=currentColor, 1.7, bouts arrondis —
+       cohérent avec les capsules arrondies du reste du système. -->
   <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" class="icon" aria-hidden="true">
-    <g fill="var(--accent-warm)">
-      <circle cx="12" cy="12" r="5" />
-      <rect x="11.25" y="0.5" width="1.5" height="3" rx="0.75" />
-      <rect x="11.25" y="20.5" width="1.5" height="3" rx="0.75" />
-      <rect x="0.5" y="11.25" width="3" height="1.5" rx="0.75" />
-      <rect x="20.5" y="11.25" width="3" height="1.5" rx="0.75" />
-      <rect x="3.4" y="3.4" width="1.5" height="3" rx="0.75" transform="rotate(45 3.4 3.4)" />
-      <rect x="3.4" y="17.6" width="1.5" height="3" rx="0.75" transform="rotate(-45 3.4 17.6)" />
-      <rect x="19.1" y="3.4" width="1.5" height="3" rx="0.75" transform="rotate(-45 19.1 3.4)" />
-      <rect x="19.1" y="17.6" width="1.5" height="3" rx="0.75" transform="rotate(45 19.1 17.6)" />
-    </g>
+    <circle cx="12" cy="12" r="4.5" />
+    <path d="M12 1.8v2.4M12 19.8v2.4M1.8 12h2.4M19.8 12h2.4M4.8 4.8l1.7 1.7M17.5 17.5l1.7 1.7M19.2 4.8l-1.7 1.7M6.5 17.5l-1.7 1.7" />
   </svg>
   <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" class="icon hidden" aria-hidden="true">
-    <path fill="var(--accent-warm)" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
   </svg>
 </button>
 
@@ -45,6 +47,17 @@
     display: block;
     width: 18px;
     height: 18px;
+    /* Traits, pas de remplissage plein (§3.5) */
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .theme-toggle:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
   }
 
   .hidden {
@@ -54,9 +67,22 @@
 
 <script is:inline>
   (function() {
-    function setTheme(theme) {
+    // Le stockage peut lever (mode privé, cookies bloqués) : on retombe
+    // silencieusement sur la préférence système (§5.3).
+    function readStored() {
+      try { return localStorage.getItem('theme'); } catch (e) { return null; }
+    }
+    function writeStored(theme) {
+      try { localStorage.setItem('theme', theme); } catch (e) { /* sans effet */ }
+    }
+
+    // applyTheme n'ÉCRIT jamais : sans cette séparation, le thème déduit du
+    // système serait persisté dès le premier chargement et l'écoute des
+    // changements système ne se déclencherait plus jamais (§5.4).
+    function applyTheme(theme) {
       var sun = document.getElementById('sun-icon');
       var moon = document.getElementById('moon-icon');
+      var toggle = document.getElementById('theme-toggle');
       var isDark = theme === 'dark';
 
       // data-theme pilote color-scheme : les tokens light-dark() de
@@ -65,21 +91,31 @@
       document.documentElement.classList.toggle('dark', isDark);
       sun && sun.classList.toggle('hidden', isDark);
       moon && moon.classList.toggle('hidden', !isDark);
-      localStorage.setItem('theme', theme);
+
+      if (toggle) {
+        toggle.setAttribute('aria-pressed', String(isDark));
+        var label = isDark ? 'Basculer vers le thème clair' : 'Basculer vers le thème sombre';
+        toggle.setAttribute('aria-label', label);
+        toggle.setAttribute('title', label);
+      }
+    }
+
+    function currentTheme() {
+      var stored = readStored();
+      if (stored === 'light' || stored === 'dark') return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
     function initToggle() {
-      // Sync icons with current state
-      var stored = localStorage.getItem('theme');
-      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(stored || (prefersDark ? 'dark' : 'light'));
+      applyTheme(currentTheme());
 
       // Re-bind toggle (DOM may be new after View Transition)
       var toggle = document.getElementById('theme-toggle');
       if (toggle) {
         toggle.onclick = function() {
-          var isDark = document.documentElement.classList.contains('dark');
-          setTheme(isDark ? 'light' : 'dark');
+          var next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+          applyTheme(next);
+          writeStored(next); // choix explicite : lui seul est mémorisé
         };
       }
     }
@@ -87,11 +123,10 @@
     initToggle();
     document.addEventListener('astro:page-load', initToggle);
 
-    // System preference change listener (only once)
+    // Suit le système tant qu'aucun choix explicite n'a été fait — un choix
+    // explicite n'est jamais écrasé par un changement système (§5.4).
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-      if (!localStorage.getItem('theme')) {
-        setTheme(e.matches ? 'dark' : 'light');
-      }
+      if (!readStored()) applyTheme(e.matches ? 'dark' : 'light');
     });
   })();
 </script>

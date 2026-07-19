@@ -13,15 +13,19 @@ const authorUrl = footer.authorUrl || '/';
   <div class="pl-bar">
     <!-- Segment 1: user@host -->
     <a class="pl-seg pl-seg-1" href={authorUrl} target="_blank" rel="noopener noreferrer">
-      <span class="pl-glyph">»</span>
+      <span class="pl-glyph" aria-hidden="true">›</span>
       <span class="pl-text">{author}@adenyrr.me</span>
+      {/* chemin + $ : la capsule se lit comme une vraie invite de shell */}
+      <span class="pl-path" aria-hidden="true">:~$</span>
     </a>
 
     <!-- Segment 2: branch / status -->
     <span class="pl-seg pl-seg-2">
-      <GitBranch size={12} />
+      <GitBranch size={12} aria-hidden="true" />
       <span class="pl-text">main</span>
+      <!-- La pastille ne porte pas l'info seule : un libellé la double (§1.3) -->
       <span class="pl-dot" aria-hidden="true"></span>
+      <span class="sr-only">— branche à jour</span>
     </span>
 
     <!-- Segment 3: RSS feed (mis en avant) -->
@@ -33,14 +37,11 @@ const authorUrl = footer.authorUrl || '/';
       </a>
     )}
 
-    <!-- Segment 4: powered by tech -->
+    <!-- Segment 4: powered by tech — crochets façon man-page, comme .tag -->
     <span class="pl-seg pl-seg-3">
       <span class="pl-text">
-        {(footer.poweredBy || []).map((item: any, i: number) => (
-          <>
-            <a href={item.url} target="_blank" rel="noopener noreferrer" class="pl-link">{item.label}</a>
-            {i < (footer.poweredBy?.length || 0) - 1 && <span class="pl-sep">·</span>}
-          </>
+        {(footer.poweredBy || []).map((item: any) => (
+          <a href={item.url} target="_blank" rel="noopener noreferrer" class="pl-link">{item.label}</a>
         ))}
       </span>
     </span>
@@ -48,16 +49,20 @@ const authorUrl = footer.authorUrl || '/';
     <!-- Filler spacer -->
     <span class="pl-spacer" aria-hidden="true"></span>
 
-    <!-- Segment 4: license -->
+    <!-- Segment 5: license — préfixe « # » : un commentaire shell -->
     <span class="pl-seg pl-seg-4">
+      <span class="pl-hash" aria-hidden="true">#</span>
       <span class="pl-text">{footer.copyright || `© ${year}`}</span>
     </span>
 
-    <!-- Segment 5: made with -->
+    <!-- Segment 6: made with -->
     <span class="pl-seg pl-seg-5">
       <Heart size={11} class="pl-heart" />
       <span class="pl-text">© {year}</span>
     </span>
+
+    <!-- Curseur en fin d'invite — même caret que les titres ~/section -->
+    <span class="pl-caret" aria-hidden="true">▍</span>
   </div>
 </footer>
 
@@ -73,152 +78,156 @@ const authorUrl = footer.authorUrl || '/';
     color: var(--text);
   }
 
+  /* Barre en verre : les segments powerline deviennent des capsules de
+     verre dépoli (§1.7) — le motif « segment » reste, les angles vifs et
+     les chevrons en clip-path disparaissent. */
   .pl-bar {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     flex-wrap: wrap;
+    gap: 0.4rem;
     width: 100%;
-    min-height: 42px;
-    background: var(--surface-raised);
-    border-top: 1px solid color-mix(in srgb, var(--accent) 18%, var(--card-border));
-    overflow: hidden;
+    padding: 0.7rem 1.5rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+    border-top: 1px solid var(--glass-border);
+    box-shadow: inset 0 1px 0 var(--glint);
   }
 
+  /* Capsule de base — recette §3.3 */
   .pl-seg {
     display: inline-flex;
     align-items: center;
-    gap: 0.55rem;
-    padding: 0 0.9rem 0 1.1rem;
-    line-height: 42px;
-    height: 42px;
+    gap: 0.45rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    box-shadow: inset 0 1px 0 var(--glint);
     text-decoration: none;
-    color: inherit;
     white-space: nowrap;
-    transition: filter 0.2s ease;
-    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease,
+                color 0.2s ease, transform 0.2s ease;
   }
 
-  /* Powerline arrow (right-pointing) using clip-path */
-  .pl-seg::after {
-    content: '';
-    display: inline-block;
-    width: 18px;
-    height: 42px;
-    margin-right: -18px;
-    margin-left: 0.75rem;
-    background: inherit;
-    clip-path: polygon(0 0, 100% 50%, 0 100%);
-    z-index: 1;
-  }
-  /* Reverse arrow before for right-aligned segments */
+  a.pl-seg:hover { transform: translateY(-1px); }
 
+  a.pl-seg:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Variantes teintées : fond/bordure en couleur « vive » constante,
+     texte en couleur « ink » qui garantit le contraste (§1.2). */
   .pl-seg-1 {
-    background: var(--accent);
-    color: var(--bg);
-    font-weight: 700;
-    padding-left: 1.25rem;
+    color: var(--accent-amber);
+    background: rgba(var(--amber-rgb), .16);
+    border-color: rgba(var(--amber-rgb), .40);
+    font-weight: 600;
   }
-  .pl-seg-1:hover { filter: brightness(1.08); }
+  .pl-seg-1:hover {
+    background: rgba(var(--amber-rgb), .24);
+    border-color: rgba(var(--amber-rgb), .55);
+  }
 
   .pl-seg-2 {
-    background: color-mix(in srgb, var(--accent) 28%, var(--surface));
-    color: var(--text);
+    color: var(--accent-teal);
+    background: rgba(var(--teal-rgb), .14);
+    border-color: rgba(var(--teal-rgb), .35);
   }
 
-  /* RSS — segment d'appel orange vif et icône proéminente */
+  /* RSS — teinte corail proche de l'orange canonique du flux, mais en
+     couche ink/vif : le blanc sur #f26522 ne tenait que ~3.4:1. */
   .pl-seg-rss {
-    background: #f26522; /* RSS canonical orange */
-    color: #fff;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+    color: var(--accent-coral);
+    background: rgba(var(--coral-rgb), .16);
+    border-color: rgba(var(--coral-rgb), .42);
+    font-weight: 600;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
   }
-  .pl-seg-rss:hover { filter: brightness(1.12); }
-  .pl-rss-icon {
-    flex-shrink: 0;
+  .pl-seg-rss:hover {
+    background: rgba(var(--coral-rgb), .26);
+    border-color: rgba(var(--coral-rgb), .60);
   }
+  .pl-rss-icon { flex-shrink: 0; }
   .pl-rss-pulse {
-    width: 7px; height: 7px;
+    width: 6px; height: 6px;
     border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 0 8px rgba(255,255,255,0.8);
+    background: currentColor;
     animation: pl-rss-pulse 1.8s ease-in-out infinite;
   }
   @keyframes pl-rss-pulse {
-    0%, 100% { opacity: 0.45; transform: scale(0.85); }
+    0%, 100% { opacity: 0.4; transform: scale(0.85); }
     50%      { opacity: 1; transform: scale(1.1); }
   }
 
-  .pl-seg-3 {
-    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
-    color: var(--text-secondary);
-  }
-
+  .pl-seg-3,
   .pl-seg-4 {
-    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
     color: var(--text-secondary);
   }
-  .pl-seg-4::before {
-    content: '';
-    display: inline-block;
-    width: 18px;
-    height: 42px;
-    margin-left: -1.1rem;
-    margin-right: 0.75rem;
-    background: inherit;
-    clip-path: polygon(100% 0, 0 50%, 100% 100%);
-  }
-  .pl-seg-4::after { display: none; }
 
   .pl-seg-5 {
-    background: var(--accent);
-    color: var(--bg);
-    font-weight: 700;
-    padding-right: 1.25rem;
+    color: var(--text-secondary);
   }
-  .pl-seg-5::before {
-    content: '';
-    display: inline-block;
-    width: 18px;
-    height: 42px;
-    margin-left: -1.1rem;
-    margin-right: 0.75rem;
-    background: inherit;
-    clip-path: polygon(100% 0, 0 50%, 100% 100%);
-  }
-  .pl-seg-5::after { display: none; }
 
   .pl-spacer {
     flex: 1;
-    background: var(--surface-raised);
-    min-height: 42px;
-    background-image: repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 7px,
-      color-mix(in srgb, var(--accent) 10%, transparent) 7px,
-      color-mix(in srgb, var(--accent) 10%, transparent) 8px
-    );
+    min-width: 0;
   }
 
+  /* Chevron d'invite « › » — même glyphe que .prompt-arrow de la bannière */
   .pl-glyph {
-    color: var(--bg);
-    opacity: 0.9;
-    margin-right: 0.15rem;
+    opacity: 0.85;
+    margin-right: 0.05rem;
+    font-weight: 700;
   }
 
+  /* Chemin « :~$ » — collé au nom d'hôte : le gap de 0.45rem du flex est
+     annulé, sinon l'invite s'écrit « host :~$ » au lieu de « host:~$ ». */
+  .pl-path {
+    opacity: 0.65;
+    margin-left: -0.45rem;
+    letter-spacing: 0;
+  }
+
+  /* « # » de commentaire shell devant la licence */
+  .pl-hash {
+    color: var(--text-muted);
+    opacity: 0.8;
+    margin-right: -0.15rem;
+  }
+
+  /* Liens « powered by » en crochets façon man-page, comme .tag */
   .pl-link {
     color: inherit;
     text-decoration: none;
-    transition: opacity 0.2s ease;
+    transition: color 0.2s ease;
   }
-  .pl-link:hover { opacity: 0.7; }
+  .pl-link + .pl-link { margin-left: 0.5rem; }
+  .pl-link::before,
+  .pl-link::after {
+    color: var(--text-muted);
+    opacity: 0.55;
+    font-weight: 400;
+  }
+  .pl-link::before { content: '[ '; }
+  .pl-link::after  { content: ' ]'; }
+  .pl-link:hover { color: var(--accent-amber); }
 
-  .pl-sep {
-    margin: 0 0.35rem;
-    color: var(--muted-text);
-    opacity: 0.6;
+  /* Curseur clignotant de fin d'invite — cadence identique à .term-caret */
+  .pl-caret {
+    color: var(--accent-amber);
+    line-height: 1;
+    margin-left: 0.15rem;
+    animation: pl-blink 1.05s steps(1, end) infinite;
+  }
+  @keyframes pl-blink {
+    0%, 50%   { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
   }
 
   .pl-dot {
@@ -235,8 +244,9 @@ const authorUrl = footer.authorUrl || '/';
   }
 
   .pl-heart {
-    /* rose --secplus du thème ; inversé car le segment porte --accent en fond */
-    color: light-dark(#f27ba6, #a81a52);
+    /* Le segment n'a plus de fond plein : l'ink corail suffit et tient
+       le contraste sur le verre dans les deux thèmes. */
+    color: var(--accent-coral);
     fill: currentColor;
     animation: pl-heartbeat 1.6s ease-in-out infinite;
   }
@@ -248,13 +258,24 @@ const authorUrl = footer.authorUrl || '/';
     80%      { transform: scale(1); }
   }
 
-  /* Mobile : segments stack but keep powerline feel via dashed connectors */
+  /* Curseur clignotant → statique, halos → fixes (§4) */
+  @media (prefers-reduced-motion: reduce) {
+    .pl-dot,
+    .pl-rss-pulse,
+    .pl-heart,
+    .pl-caret { animation: none; }
+  }
+
+  /* Mobile : les capsules s'enroulent naturellement — plus besoin de
+     casser une géométrie de chevrons qui n'existe plus. */
   @media (max-width: 720px) {
     .powerline { font-size: 0.8rem; }
-    .pl-bar { flex-direction: column; min-height: auto; }
-    .pl-seg { width: 100%; padding-left: 1.1rem !important; padding-right: 1.1rem !important; height: 38px; line-height: 38px; justify-content: flex-start; }
-    .pl-seg::before,
-    .pl-seg::after { display: none !important; }
+    .pl-bar {
+      padding: 0.75rem 1rem;
+      justify-content: center;
+      gap: 0.35rem;
+    }
     .pl-spacer { display: none; }
   }
 </style>
+

@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getInfraConfig, isFeatureEnabled } from '../../utils/config';
-import InfraViz from '../../components/InfraViz.tsx';
 import {
   Server, Network, Boxes, Cpu, HardDrive, Globe,
   Shield, ExternalLink, Lock
@@ -302,12 +301,6 @@ const docLinks: Record<string, string> = {
       </div>
     )}
 
-    <!-- Graph Tab -->
-    {tabs.graph?.enabled && (
-      <div class="tab-panel hidden" data-panel="graph" role="tabpanel">
-        <InfraViz client:only="react" />
-      </div>
-    )}
   </div>
 </BaseLayout>
 
