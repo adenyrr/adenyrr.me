@@ -66,7 +66,7 @@ proxmoxNodes:
     color: "purple"
     services:
       - { name: "CEPH (mon, mgr)", type: "Natif" }
-      - { name: "Forgejo", type: "LXC" }
+      - { name: "Gitlab-CE", type: "VM" }
       - { name: "Deploy", type: "LXC" }
       - { name: "Analytics", type: "LXC" }
       - { name: "Monitoring", type: "LXC" }
@@ -245,9 +245,8 @@ serviceGroups:
     type: "LXC"
     color: "cyan"
     services:
-      - { name: "Nginx Proxy Manager", description: "Reverse Proxy", status: "online" }
+      - { name: "BunkerWeb", description: "WAF", status: "online" }
       - { name: "CrowdSec", description: "Security Engine", status: "online" }
-      - { name: "Fail2ban", description: "Intrusion Prevention", status: "online" }
 
   - vm: "ACME"
     node: "Amélia"
@@ -257,12 +256,13 @@ serviceGroups:
       - { name: "step-ca", description: "ACME Certificate Authority", status: "online" }
 
   # Anne
-  - vm: "Forgejo"
+  - vm: "Gitlab-CE"
     node: "Anne"
-    type: "LXC"
+    type: "VM"
     color: "purple"
     services:
-      - { name: "ForgeJo", description: "Git Forge", status: "online" }
+      - { name: "Gitlab", description: "Git Forge", status: "online" }
+      - { name: "Runner", description: "Runner", status: "online" }
 
   - vm: "Deploy"
     node: "Anne"
