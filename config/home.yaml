@@ -42,10 +42,10 @@ sections:
   jobs: true
 
 # -----------------------------------------------------------------------------
-# CREDLY (récupération automatique au build)
+# CREDLY (instantané local par défaut : aucun appel à leur API pendant le build)
 # -----------------------------------------------------------------------------
 credly:
-  enabled: true
+  enabled: false
   username: "adenyrr"
   # IDs des badges à mettre en avant (l'API Credly ne les expose pas nativement).
   # Les IDs se trouvent dans l'URL des badges sur credly.com.
@@ -68,18 +68,8 @@ projects:
     year: 2024
     image: "/images/docu.png"
 
-  - id: "murmurOS"
-    title: "Système d'exploitation souverain, déclaratif et fédéré"
-    description: "murmurOS est un Proof of Concept de distribution système pensée pour les environnements à fort enjeu de souveraineté numérique."
-    tech: ["NixOS", "GitOps", "OIDC/LDAP"]
-    icon: "Server"
-    link: "https://murmuros.tech"
-    repo: "https://github.com/murmurOS"
-    year: 2026
-    image: "/images/murmurOS.png"
-
   - id: "alyx"
-    title: "Orchestrateur multi-modèle, multimodal et multi-agent fondé sur Mistral"
+    title: "Alyx - Orchestrateur d'agents"
     description: "Alyx est un orchestrateur d'agents intelligents conçu pour faciliter la création de systèmes complexes et adaptatifs, en intégrant des modèles de langage avancés et des capacités multimodales."
     tech: ["Mistral", "Agents", "MCP"]
     icon: "Server"

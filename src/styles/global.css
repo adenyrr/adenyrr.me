@@ -3,6 +3,7 @@
    Versions variables : un seul fichier par famille couvre tous les poids.
    ============================================================================ */
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/inclusive-sans";
 @import "@fontsource-variable/jetbrains-mono";
 
 @import "tailwindcss";
@@ -171,6 +172,7 @@
   /* ---- Familles (§2.4) ---- */
   --font-ui:   'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
   --font-body: var(--font-ui);
+  --font-reading: 'Inclusive Sans Variable', 'Inclusive Sans', var(--font-ui);
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
   --font-code: var(--font-mono);
 
@@ -295,6 +297,41 @@ body {
 
 ::selection {
   background: var(--selection-bg);
+}
+
+/* Mode lecture — opt-in local, notamment utile aux personnes dyslexiques.
+   Il ne prétend pas convenir à tout le monde : le réglage est explicite,
+   persistant et laisse le thème de couleur indépendant. */
+:root[data-reading-mode="comfortable"] {
+  --font-body: var(--font-reading);
+  --text-secondary: var(--text-primary);
+  --text-muted: var(--text-secondary);
+  --glass-bg: var(--bg-1);
+  --glass-bg-strong: var(--bg-1);
+  --glass-border: light-dark(rgba(20,28,38,.28), rgba(255,255,255,.28));
+}
+
+:root[data-reading-mode="comfortable"] body {
+  line-height: 1.85;
+  letter-spacing: .018em;
+  word-spacing: .08em;
+  background-image: none;
+  background-attachment: scroll;
+}
+
+:root[data-reading-mode="comfortable"] #ambient-bg,
+:root[data-reading-mode="comfortable"] .banner-grid,
+:root[data-reading-mode="comfortable"] .banner-blob,
+:root[data-reading-mode="comfortable"] .banner-card::before,
+:root[data-reading-mode="comfortable"] .banner-card::after {
+  display: none;
+}
+
+:root[data-reading-mode="comfortable"] *,
+:root[data-reading-mode="comfortable"] *::before,
+:root[data-reading-mode="comfortable"] *::after {
+  animation: none !important;
+  transition: none !important;
 }
 
 /* ============================================================================

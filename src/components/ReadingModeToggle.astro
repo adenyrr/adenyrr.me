@@ -1,0 +1,83 @@
+---
+---
+
+<button
+  id="reading-mode-toggle"
+  type="button"
+  aria-pressed="false"
+  aria-label="Activer le mode lecture"
+  class="reading-mode-toggle"
+  title="Activer le mode lecture"
+>
+  <span aria-hidden="true">Aa</span>
+</button>
+
+<style>
+  .reading-mode-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.5rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--muted-text);
+    cursor: pointer;
+    font-family: var(--font-reading);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .reading-mode-toggle:hover,
+  .reading-mode-toggle[aria-pressed="true"] {
+    color: var(--accent-blue);
+    border-color: rgba(var(--blue-rgb), .45);
+    background: rgba(var(--blue-rgb), .12);
+  }
+
+  .reading-mode-toggle:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    function readStored() {
+      try { return localStorage.getItem('reading-mode'); } catch (e) { return null; }
+    }
+
+    function writeStored(enabled) {
+      try { localStorage.setItem('reading-mode', enabled ? 'comfortable' : 'default'); } catch (e) { /* réglage temporaire */ }
+    }
+
+    function apply(enabled) {
+      var toggle = document.getElementById('reading-mode-toggle');
+      document.documentElement.dataset.readingMode = enabled ? 'comfortable' : 'default';
+      if (toggle) {
+        toggle.setAttribute('aria-pressed', String(enabled));
+        var label = enabled ? 'Désactiver le mode lecture' : 'Activer le mode lecture';
+        toggle.setAttribute('aria-label', label);
+        toggle.setAttribute('title', label);
+      }
+    }
+
+    function init() {
+      apply(readStored() === 'comfortable');
+      var toggle = document.getElementById('reading-mode-toggle');
+      if (toggle) {
+        toggle.onclick = function () {
+          var enabled = document.documentElement.dataset.readingMode !== 'comfortable';
+          apply(enabled);
+          writeStored(enabled);
+        };
+      }
+    }
+
+    init();
+    document.addEventListener('astro:page-load', init);
+  })();
+</script>

@@ -79,6 +79,15 @@ const canonicalURL = new URL(Astro.url.pathname, config.site.url);
      codée en dur ici. -->
 <script is:inline>
   (function() {
+    // Le mode lecture est appliqué avant le premier rendu, comme le thème,
+    // pour éviter un changement brutal de police et de mise en page.
+    try {
+      document.documentElement.dataset.readingMode =
+        localStorage.getItem('reading-mode') === 'comfortable' ? 'comfortable' : 'default';
+    } catch (e) {
+      document.documentElement.dataset.readingMode = 'default';
+    }
+
     function applyTheme() {
       // localStorage peut lever (mode privé / cookies bloqués) : sans ce
       // garde-fou, le script entier casse et le FOUC revient.

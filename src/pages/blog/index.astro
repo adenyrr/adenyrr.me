@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { isFeatureEnabled } from '../../utils/config';
 import { getCollection } from 'astro:content';
-import { Calendar, Clock } from '@lucide/astro';
+import { ArrowUpRight, Calendar, Clock, Terminal } from '@lucide/astro';
 
 // Redirect if blog is disabled
 if (!isFeatureEnabled('blog')) {
@@ -17,14 +17,21 @@ const posts = (await getCollection('blog')).sort(
 <BaseLayout title="Blog" description="Blog articles">
   <div class="container blog-page blog-enter">
     <header class="blog-header">
-      <h1 class="term-head-path"><span class="term-tilde">~/</span><span class="gradient-text">blog</span></h1>
+      <div>
+        <p><span>~/</span>writing <i aria-hidden="true">▍</i></p>
+        <h1>Notes depuis<br /><em>la console.</em></h1>
+      </div>
+      <aside>
+        <Terminal size={16} />
+        <span>Des retours d’expérience sur Linux, l’infrastructure, le cloud et ce que j’apprends en construisant.</span>
+      </aside>
     </header>
 
     {posts.length === 0 ? (
       <p class="no-articles">Aucun article publié.</p>
     ) : (
       <div class="posts-list">
-        {posts.map((post) => (
+        {posts.map((post, index) => (
           <a href={`/blog/${post.id}`} class="card post-card">
             {post.data.heroImage && (
               <div class="post-image">
@@ -32,6 +39,7 @@ const posts = (await getCollection('blog')).sort(
               </div>
             )}
             <div class="post-content">
+              <span class="post-index">{String(index + 1).padStart(2, '0')}</span>
               <h2>{post.data.title}</h2>
               <p class="post-description">{post.data.description}</p>
               <div class="post-meta">
@@ -54,7 +62,7 @@ const posts = (await getCollection('blog')).sort(
                   </span>
                 )}
               </div>
-              <span class="read-more">Lire la suite →</span>
+              <span class="read-more">Lire la note <ArrowUpRight size={15} /></span>
             </div>
           </a>
         ))}
@@ -65,18 +73,41 @@ const posts = (await getCollection('blog')).sort(
 
 <style>
   .blog-page {
-    max-width: 800px;
-    padding-top: 2rem;
-    padding-bottom: 4rem;
+    max-width: 1000px;
+    padding-top: clamp(4rem, 9vw, 7rem);
+    padding-bottom: 7rem;
   }
 
   .blog-header {
-    margin-bottom: 2rem;
+    display: grid;
+    grid-template-columns: 1fr minmax(260px, .55fr);
+    gap: 3rem;
+    align-items: end;
+    margin-bottom: clamp(3rem, 7vw, 5rem);
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--glass-border);
   }
 
-  .blog-header h1 {
-    font-size: 2rem;
+  .blog-header p {
+    margin: 0;
+    color: var(--text-muted);
+    font: 650 .75rem var(--font-code);
+    letter-spacing: .1em;
+    text-transform: uppercase;
   }
+  .blog-header p span { color: var(--accent-blue); }
+  .blog-header p i { color: var(--accent-amber); font-style: normal; animation: blog-cursor 1.1s steps(1) infinite; }
+  @keyframes blog-cursor { 50% { opacity: 0; } }
+
+  .blog-header h1 {
+    margin: .7rem 0 0;
+    font-size: clamp(3.3rem, 7.5vw, 6.5rem);
+    line-height: .9;
+    letter-spacing: -.07em;
+  }
+  .blog-header h1 em { color: var(--accent-amber); font-style: normal; }
+  .blog-header aside { display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: start; color: var(--text-secondary); font-size: .9rem; line-height: 1.65; }
+  .blog-header aside :global(svg) { margin-top: .25rem; color: var(--accent-teal); }
 
   .no-articles {
     color: var(--muted-text);
@@ -91,12 +122,19 @@ const posts = (await getCollection('blog')).sort(
   }
 
   .post-card {
+    position: relative;
     display: flex;
     gap: 1.5rem;
     text-decoration: none;
     color: var(--text);
-    padding: 1.25rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    overflow: hidden;
+    border-radius: 15px;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
   }
+  .post-card::before { content: ''; position: absolute; inset: 0; opacity: 0; background: linear-gradient(120deg, rgba(var(--amber-rgb), .08), rgba(var(--blue-rgb), .06)); transition: opacity .2s ease; pointer-events: none; }
+  .post-card:hover { transform: translateY(-3px); border-color: rgba(var(--blue-rgb), .4); box-shadow: var(--shadow); }
+  .post-card:hover::before { opacity: 1; }
 
   .post-image {
     flex-shrink: 0;
@@ -113,13 +151,18 @@ const posts = (await getCollection('blog')).sort(
   }
 
   .post-content {
+    position: relative;
     flex: 1;
     display: flex;
     flex-direction: column;
   }
 
+  .post-index { color: var(--accent-amber); font: 650 .65rem var(--font-code); }
+
   .post-content h2 {
-    font-size: 1.25rem;
+    font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+    line-height: 1.15;
+    margin-top: .35rem;
     margin-bottom: 0.5rem;
     transition: color 0.2s ease;
   }
@@ -153,6 +196,10 @@ const posts = (await getCollection('blog')).sort(
   }
 
   .read-more {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    align-self: flex-start;
     font-family: var(--font-code);
     font-size: 0.85rem;
     color: var(--accent);
@@ -164,6 +211,7 @@ const posts = (await getCollection('blog')).sort(
   }
 
   @media (max-width: 640px) {
+    .blog-header { grid-template-columns: 1fr; gap: 1.5rem; }
     .post-card {
       flex-direction: column;
     }
@@ -172,5 +220,9 @@ const posts = (await getCollection('blog')).sort(
       width: 100%;
       height: 180px;
     }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .blog-header p i { animation: none; }
+    .post-card { transition: none; }
   }
 </style>

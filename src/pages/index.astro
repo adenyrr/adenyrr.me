@@ -1,1268 +1,483 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
-import { getHomeConfig, getSiteConfig } from '../utils/config';
+import { getHomeConfig, getInfraConfig } from '../utils/config';
 import { fetchCredlyBadges } from '../utils/credly';
 import {
-  Library, Server, FileText, Code, Globe, ExternalLink, Github,
-  Calendar, MapPin
+  ArrowDownRight, ArrowUpRight, BookOpen, Box, Braces, Check, Cloud,
+  ExternalLink, Github, Network, Server, ShieldCheck, Sparkles,
 } from '@lucide/astro';
 
-const config = getSiteConfig();
 const portfolio = getHomeConfig();
+const infra = getInfraConfig() as any;
+const profile = portfolio.profile || {};
+const sections = portfolio.sections || {};
 
-// Fetch Credly badges at build time
 let credlyBadges: any[] = [];
 if (portfolio.credly?.enabled && portfolio.credly?.username) {
   try {
-    credlyBadges = await fetchCredlyBadges(
-      portfolio.credly.username,
-      portfolio.credly.pinnedIds ?? [],
-    );
-  } catch (e) {
-    console.warn('[Credly] Failed:', e);
+    credlyBadges = await fetchCredlyBadges(portfolio.credly.username, portfolio.credly.pinnedIds ?? []);
+  } catch (error) {
+    console.warn('[Credly] Failed:', error);
   }
 }
 
-// Pinned badges come first (sorted by the order in pinnedIds); limit to 9.
-const MAX_CERTS = 9;
 const certifications = (credlyBadges.length > 0
-  ? credlyBadges.map((b: any) => ({
-      id:          b.id,
-      title:       b.title,
-      issuer:      b.issuer,
-      date:        b.date,
-      credly_url:  b.credlyUrl,
-      badge_image: b.imageUrl,
-      pinned:      b.pinned ?? false,
+  ? credlyBadges.map((badge: any) => ({
+      id: badge.id, title: badge.title, issuer: badge.issuer, date: badge.date,
+      credly_url: badge.credlyUrl, badge_image: badge.imageUrl, pinned: badge.pinned ?? false,
     }))
-  : (portfolio.certifications || []))
-  .slice(0, MAX_CERTS);
+  : (portfolio.certifications || [])).slice(0, 9);
 
-const sections = portfolio.sections || {};
-const iconMap: Record<string, any> = { Library, Server, FileText, Code, Globe };
+const projectPriority: Record<string, number> = { murmurOS: 0, alyx: 1, 'infra & docu': 2, trainCerts: 3 };
+const projects = [...(portfolio.projects || [])].sort(
+  (a: any, b: any) => (projectPriority[a.id] ?? 99) - (projectPriority[b.id] ?? 99),
+);
+const heroLinks = (portfolio.heroLinks || []).filter((link: any) => link.enabled !== false);
+const iconMap: Record<string, any> = { Library: BookOpen, Server, FileText: Braces, Code: Braces, Globe: Cloud };
 
-// Liens d'action du hero (déclarés en config mais jamais rendus jusqu'ici)
-const heroLinks = (portfolio.heroLinks || []).filter((l: any) => l.enabled !== false);
-const profile = portfolio.profile || {};
+const labNodes = [
+  { id: 'edge', label: 'Edge', eyebrow: 'WAN / frontière', title: 'Edge & sécurité', text: 'Filtrage, terminaison TLS et contrôle des flux avant exposition des services.', tech: 'OPNsense · BunkerWeb · CrowdSec', icon: ShieldCheck },
+  { id: 'compute', label: 'Compute', eyebrow: 'Cluster / calcul', title: 'Nœuds Proxmox', text: `${infra.proxmoxNodes?.length || 3} nœuds orchestrent les charges virtuelles, les conteneurs et le stockage distribué.`, tech: `${infra.stats?.totalCpuCores || 32} cœurs · ${infra.stats?.totalRamGB || 80} Go RAM · Ceph`, icon: Server },
+  { id: 'platform', label: 'Platform', eyebrow: 'Services / plateforme', title: 'Services souverains', text: 'Applications, identité, observabilité et workloads Kubernetes exploités en autonomie.', tech: `${infra.stats?.totalServices || 18}+ services · Kubernetes · OIDC`, icon: Box },
+  { id: 'data', label: 'Data', eyebrow: 'Stockage / résilience', title: 'Données & sauvegardes', text: 'Stockage distribué et NAS isolé pour concilier disponibilité, capacité et reprise.', tech: `Ceph ${infra.stats?.cephStorage || '3×2 To'} · NAS ${infra.stats?.nasStorage || '2×12 To'}`, icon: Network },
+];
+
+const networkTechnician = certifications.find((cert: any) =>
+  /network technician/i.test(cert.title || ''),
+);
+const highlightedCerts = [
+  ...certifications.slice(0, 3),
+  ...(networkTechnician && !certifications.slice(0, 3).some((cert: any) => cert.id === networkTechnician.id)
+    ? [networkTechnician]
+    : []),
+];
+const highlightedIds = new Set(highlightedCerts.map((cert: any) => cert.id));
+const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert.id));
 ---
 
-<BaseLayout title="Home" description={portfolio.profile?.tagline}>
-  <div class="container portfolio">
-    <!-- Terminal Banner -->
-    <section class="banner-scene" aria-label="Introduction">
-      <div class="banner-grid"></div>
-      <div class="banner-blob banner-blob-1"></div>
-      <div class="banner-blob banner-blob-2"></div>
+<BaseLayout title="Home" description={profile.tagline}>
+  <div class="portfolio-shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="hero-kicker"><span aria-hidden="true">$</span> whoami</p>
+        <h1 id="hero-title"><span class="title-prefix">.</span>{profile.pseudo}</h1>
+        <p class="hero-role">sysadmin | infra &amp; cloud; open source | privacy | sovereignty</p>
+        <p class="hero-statement">Je construis des infrastructures <strong>ouvertes</strong>, <strong>souveraines</strong> et <strong>automatisées</strong>.</p>
 
-      <div class="banner-card">
-        <div class="banner-dots">
-          <span></span><span></span><span></span>
-        </div>
-        <div class="banner-bar">kitty — zsh</div>
-        <div class="banner-vline"></div>
-
-        <div class="banner-prompt">
-          <span class="prompt-arrow">›</span>~/home
-          <span class="prompt-on">on</span>
-          <span class="prompt-distro"> opensuse</span>
+        <div class="hero-console" aria-label="Technologies pratiquées">
+          <span class="console-prompt" aria-hidden="true">adenyrr@workstation:~$</span>
+          <span id="hero-command">terraform plan</span>
+          <span class="console-cursor" aria-hidden="true"></span>
         </div>
 
-        <h1 class="banner-title">
-          <span class="title-dot">.</span>{portfolio.profile?.pseudo}
-        </h1>
-
-        <div class="banner-tw-wrap">
-          <span class="tw-prefix">›</span>
-          <span class="banner-tw" id="tw"></span>
-          <span class="banner-cursor"></span>
+        <div class="hero-actions">
+          <a class="action action-primary" href="#projects">Explorer mes projets <ArrowDownRight size={17} /></a>
+          <a class="action action-secondary" href="/infra">Ouvrir ~/lab <ArrowUpRight size={16} /></a>
         </div>
+      </div>
 
-        <div class="bottom-bar">
-          <div class="meta">
-            <div class="meta-item">
-              <span class="lbl">date</span>
-              <span class="val" id="date-disp">—</span>
-            </div>
-            <span class="meta-div">·</span>
-            <div class="meta-item">
-              <span class="lbl">uptime</span>
-              <span class="val" id="uptime-disp">00:00:00</span>
-            </div>
+      <aside class="system-card glass-surface" aria-label="Résumé système d’adenyrr">
+        <header class="tui-titlebar">
+          <span class="tui-title"><b aria-hidden="true">┌─</b>[ adenyrr@home ]<b aria-hidden="true">─┐</b></span>
+          <span class="tui-view">fastfetch</span>
+          <span class="tui-online"><i aria-hidden="true"></i> online</span>
+        </header>
+
+        <p class="tui-command"><span aria-hidden="true">❯</span> fastfetch --profile operator</p>
+
+        <div class="tui-main">
+          <div class="tui-identity" aria-hidden="true">
+            <span class="tui-border">╭──────────────╮</span>
+            <div class="tui-monogram"><small>01</small><strong>A</strong><em>_</em></div>
+            <span class="tui-border">╰──────┬───────╯</span>
+            <span class="tui-stem">●</span>
+            <p>ADENYRR<span>// OPERATOR</span></p>
           </div>
-          <div class="banner-tags">
-            <span class="btag btag-accent">hyprland</span>
-            <span class="btag btag-accent">openSUSE</span>
-            <span class="btag">debian</span>
-            <span class="btag btag-accent">proxmox</span>
-          </div>
+
+          <dl class="tui-fields">
+            <div><dt>host</dt><dd>adenyrr.me</dd></div>
+            <div><dt>role</dt><dd>sysadmin</dd></div>
+            <div><dt>region</dt><dd>be / eu</dd></div>
+            <div><dt>status</dt><dd class="available"><Check size={12} /> available</dd></div>
+          </dl>
+        </div>
+
+        <div class="tui-meters" aria-label="Domaines d’activité">
+          <div><span>infra</span><i><b style="width: 88%"></b></i><strong>88</strong></div>
+          <div><span>cloud</span><i><b style="width: 72%"></b></i><strong>72</strong></div>
+          <div><span>privacy</span><i><b style="width: 94%"></b></i><strong>94</strong></div>
+        </div>
+
+        <footer class="tui-footer">
+          <span><kbd>F1</kbd> help</span>
+          <span><kbd>F2</kbd> projects</span>
+          <span class="tui-clock"><span id="local-time">--:--:--</span> · up <span id="page-uptime">00:00</span></span>
+        </footer>
+      </aside>
+    </section>
+
+    <section class="about-strip" aria-label="Présentation">
+      <div class="section-index">01</div>
+      <p class="about-command"><span>~/about.md</span> <span aria-hidden="true">—</span> {profile.title}</p>
+      <div class="about-body">
+        <p>{profile.bio}</p>
+        <div class="about-links">
+          {heroLinks.map((link: any) => {
+            const Icon = iconMap[link.icon];
+            const isExternal = link.internal === false;
+            return (
+              <a href={link.url} target={isExternal ? '_blank' : undefined} rel={isExternal ? 'noopener noreferrer' : undefined}>
+                {Icon && <Icon size={15} />} {link.label}{isExternal && <ExternalLink size={12} />}
+              </a>
+            );
+          })}
         </div>
       </div>
     </section>
 
-    <!-- Intro / about — surface la bio + les liens d'action (config) -->
-    {(profile.bio || heroLinks.length > 0) && (
-      <section class="intro reveal" aria-label="Présentation">
-        <div class="intro-cmd">
-          <span class="intro-prompt">›</span>
-          <span class="intro-cmd-text">cat about.md</span>
+    {sections.projects && (
+      <section class="work-section" id="projects" aria-labelledby="projects-title">
+        <header class="editorial-heading">
+          <div><p class="path-label"><span>02</span> ~/work</p><h2 id="projects-title">Selected work</h2></div>
+          <p>Des systèmes conçus pour être compris, automatisés et réellement opérables.</p>
+        </header>
+
+        <div class="projects-bento">
+          {projects.map((project: any, index: number) => {
+            const Icon = iconMap[project.icon] || Server;
+            return (
+              <article class:list={['project-panel', `project-${index + 1}`, { 'project-primary': index === 0 }]} data-spotlight>
+                {project.image && <img class="project-art" src={project.image} alt="" loading="lazy" decoding="async" />}
+                <div class="project-scrim" aria-hidden="true"></div>
+                <div class="project-topline"><span class="project-number">0{index + 1}</span><span class="project-year">{project.year}</span></div>
+                <div class="project-content">
+                  <span class="project-icon" aria-hidden="true"><Icon size={18} /></span>
+                  <h3>{project.title}</h3>
+                  <p>{project.description}</p>
+                  <ul class="tech-list" aria-label="Technologies">{(project.tech || []).map((tech: string) => <li>{tech}</li>)}</ul>
+                  <div class="project-actions">
+                    {project.link && <a href={project.link} target="_blank" rel="noopener noreferrer">Découvrir <ArrowUpRight size={15} /></a>}
+                    {project.repo && <a href={project.repo} target="_blank" rel="noopener noreferrer" aria-label={`Code source de ${project.title}`}><Github size={16} /> Code</a>}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
-        {profile.title && (
-          <p class="intro-role">{profile.title}</p>
-        )}
-        {profile.bio && (
-          <p class="intro-bio">{profile.bio}</p>
-        )}
-        {heroLinks.length > 0 && (
-          <div class="intro-actions">
-            {heroLinks.map((link: any, i: number) => {
-              const Icon = iconMap[link.icon];
-              const isExternal = link.internal === false;
+      </section>
+    )}
+
+    <section class="lab-section" aria-labelledby="lab-title">
+      <header class="editorial-heading">
+        <div><p class="path-label"><span>03</span> ~/lab</p><h2 id="lab-title">Infrastructure, en direct du plan.</h2></div>
+        <p>Explorez les couches d’un homelab qui sert autant de plateforme que de terrain d’expérimentation.</p>
+      </header>
+
+      <div class="lab-console glass-surface">
+        <div class="lab-toolbar"><span><i aria-hidden="true"></i> topology.map</span><span>{infra.stats?.totalServices || 18} services <b aria-hidden="true">·</b> documentés</span></div>
+        <div class="lab-workspace">
+          <div class="topology" role="group" aria-label="Couches de l’infrastructure">
+            <span class="topology-source">Internet</span><span class="topology-line" aria-hidden="true"></span>
+            {labNodes.map((node, index) => {
+              const Icon = node.icon;
               return (
-                <a
-                  href={link.url}
-                  class={`btn ${i === 0 ? 'btn-primary' : 'btn-outline'}`}
-                  target={isExternal ? '_blank' : undefined}
-                  rel={isExternal ? 'noopener noreferrer' : undefined}
-                >
-                  {Icon && <Icon size={16} />}
-                  {link.label}
-                  {isExternal && <ExternalLink size={13} class="intro-action-ext" />}
-                </a>
+                <button class:list={['topology-node', { active: index === 0 }]} type="button" data-lab-node={node.id}
+                  data-eyebrow={node.eyebrow} data-title={node.title} data-text={node.text} data-tech={node.tech}
+                  aria-pressed={index === 0 ? 'true' : 'false'}>
+                  <span class="node-icon"><Icon size={19} /></span><span>{node.label}</span><small>0{index + 1}</small>
+                </button>
               );
             })}
           </div>
+
+          <aside class="node-inspector" aria-live="polite">
+            <p id="node-eyebrow">{labNodes[0].eyebrow}</p><h3 id="node-title">{labNodes[0].title}</h3>
+            <p id="node-text">{labNodes[0].text}</p><code id="node-tech">{labNodes[0].tech}</code>
+            <a href="/infra">Explorer toute l’infrastructure <ArrowUpRight size={15} /></a>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="journey-section" aria-labelledby="journey-title">
+      <header class="editorial-heading">
+        <div><p class="path-label"><span>04</span> ~/journey</p><h2 id="journey-title">Parcours & credentials</h2></div>
+        <p>Un parcours non linéaire, guidé par le concret, la curiosité et l’apprentissage continu.</p>
+      </header>
+
+      <div class="journey-grid">
+        <div class="timeline-panel glass-surface">
+          <p class="panel-label">journalctl --career</p>
+          <ol class="career-timeline">
+            {(portfolio.jobs || []).map((job: any) => <li><time>{job.period}</time><div><span>Expérience</span><h3>{job.title}</h3><p>{job.company} · {job.location}</p></div></li>)}
+            {(portfolio.diplomas || []).slice().reverse().map((diploma: any) => <li><time>{diploma.period}</time><div><span>Formation</span><h3>{diploma.title}</h3><p>{diploma.institution}</p></div></li>)}
+          </ol>
+        </div>
+
+        {sections.certifications && certifications.length > 0 && (
+          <div class="credentials-panel glass-surface">
+            <div class="credential-heading"><div><p class="panel-label">ls ~/credentials</p><h3>Certifications récentes</h3></div><ShieldCheck size={22} aria-hidden="true" /></div>
+            <div class="credential-list">
+              {highlightedCerts.map((cert: any) => (
+                <a href={cert.credly_url} target="_blank" rel="noopener noreferrer" class="credential">
+                  <Image src={cert.badge_image} alt="" inferSize width={96} height={96} format="webp" loading="lazy" decoding="async" />
+                  <span><strong>{cert.title}</strong><small>{cert.issuer} · {cert.date}</small></span><ArrowUpRight size={15} aria-hidden="true" />
+                </a>
+              ))}
+            </div>
+            {otherCerts.length > 0 && (
+              <details class="other-credentials">
+                <summary><span>+ {otherCerts.length} autres credentials</span><span class="details-plus" aria-hidden="true">+</span></summary>
+                <ul>{otherCerts.map((cert: any) => <li><a href={cert.credly_url} target="_blank" rel="noopener noreferrer">{cert.title}<ArrowUpRight size={13} /></a></li>)}</ul>
+              </details>
+            )}
+          </div>
         )}
-      </section>
-    )}
+      </div>
+    </section>
 
-    <!-- Projects -->
-    {sections.projects && (
-      <section class="section reveal" aria-label="Projets">
-        <div class="section-header">
-          <h2 class="term-head">
-            <span class="term-tilde">~/</span><span class="term-name">projets</span><span class="term-caret" aria-hidden="true">▍</span>
-            <span class="term-count"># {(portfolio.projects || []).length} entries</span>
-          </h2>
-          <div class="section-divider"></div>
-        </div>
-        <div class="projects-grid">
-          {(portfolio.projects || []).map((project: any) => {
-            const Icon = iconMap[project.icon];
-            return (
-              <article class="card project-card">
-                <div class="project-cover">
-                  {project.image ? (
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      loading="lazy"
-                      decoding="async"
-                      class="project-cover-img"
-                    />
-                  ) : (
-                    <div class="project-cover-fallback" aria-hidden="true">
-                      {Icon && <Icon size={40} />}
-                    </div>
-                  )}
-                  <div class="project-cover-overlay"></div>
-                  <div class="project-cover-meta">
-                    <span class="project-chip project-chip-icon" aria-hidden="true">
-                      {Icon && <Icon size={14} />}
-                    </span>
-                    <span class="project-chip project-chip-year">{project.year}</span>
-                  </div>
-                </div>
-
-                <div class="project-body">
-                  <h3 class="project-title">{project.title}</h3>
-                  <p class="project-desc">{project.description}</p>
-                  <div class="project-tags">
-                    {(project.tech || []).map((tag: string) => (
-                      <span class="tag">{tag}</span>
-                    ))}
-                  </div>
-                  <div class="project-links">
-                    {project.link && (
-                      <a href={project.link} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
-                        <ExternalLink size={14} />
-                        Voir le projet
-                      </a>
-                    )}
-                    {project.repo && (
-                      <a href={project.repo} target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
-                        <Github size={14} />
-                        Voir le code
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-    )}
-
-    <!-- Diplomas -->
-    {sections.diplomas && (
-      <section class="section reveal" aria-label="Diplômes">
-        <div class="section-header">
-          <h2 class="term-head">
-            <span class="term-tilde">~/</span><span class="term-name">diplomes</span><span class="term-caret" aria-hidden="true">▍</span>
-            <span class="term-count"># {(portfolio.diplomas || []).length} entries</span>
-          </h2>
-          <div class="section-divider"></div>
-        </div>
-        <div class="log-pane" role="list">
-          {(portfolio.diplomas || []).map((dip: any) => (
-            <article class="log-entry" role="listitem">
-              <div class="log-head">
-                <span class="log-time">[{dip.period}]</span>
-                <span class="log-level log-level-ok">OK</span>
-                <h3 class="log-title">{dip.title}</h3>
-              </div>
-              <div class="log-line">
-                <span class="log-tree" aria-hidden="true">├─</span>
-                <span class="log-label">@</span>
-                <span class="log-value">{dip.institution}</span>
-              </div>
-              <div class="log-line">
-                <span class="log-tree" aria-hidden="true">├─</span>
-                <span class="log-label">info</span>
-                <span class="log-value">{dip.description}</span>
-              </div>
-              {dip.tags && (
-                <div class="log-line">
-                  <span class="log-tree" aria-hidden="true">└─</span>
-                  <span class="log-label">tags</span>
-                  <span class="log-tags">
-                    {dip.tags.map((tag: string) => (
-                      <span class="tag">{tag}</span>
-                    ))}
-                  </span>
-                </div>
-              )}
-            </article>
-          ))}
-        </div>
-      </section>
-    )}
-
-    <!-- Certifications & badges -->
-    {sections.certifications && certifications.length > 0 && (
-      <section class="section reveal" aria-label="Certifications &amp; badges">
-        <div class="section-header">
-          <h2 class="term-head">
-            <span class="term-tilde">~/</span><span class="term-name">certifications</span><span class="term-caret" aria-hidden="true">▍</span>
-            <span class="term-count"># {certifications.length} badges</span>
-          </h2>
-          <div class="section-divider"></div>
-        </div>
-        <div class="certs-grid">
-          {certifications.map((cert: any) => (
-            <a
-              href={cert.credly_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              class={`cert-card${cert.pinned ? ' cert-card--featured' : ''}`}
-            >
-              <div class="cert-image-wrap">
-                {/* Optimisé au build (webp, 88px = 2× l'affichage 44px pour
-                    les écrans HiDPI) au lieu du PNG d'origine de Credly. */}
-                <Image
-                  src={cert.badge_image}
-                  alt=""
-                  inferSize
-                  width={88}
-                  height={88}
-                  format="webp"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div class="cert-body">
-                <p class="cert-title">
-                  {cert.title}
-                  {cert.pinned && (
-                    <span class="cert-star" title="En vedette">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
-                      <span class="sr-only">En vedette</span>
-                    </span>
-                  )}
-                </p>
-                {/* issuer et date sur une seule ligne : économise une ligne par carte */}
-                <p class="cert-meta">
-                  <span class="cert-issuer">{cert.issuer}</span>
-                  <span class="cert-meta-sep" aria-hidden="true">·</span>
-                  <span class="cert-date">{cert.date}</span>
-                </p>
-              </div>
-              <svg class="cert-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M7 17L17 7M17 7H7M17 7v10"/>
-              </svg>
-            </a>
-          ))}
-        </div>
-      </section>
-    )}
-
-    <!-- Jobs -->
-    {sections.jobs && (
-      <section class="section reveal" aria-label="Expériences">
-        <div class="section-header">
-          <h2 class="term-head">
-            <span class="term-tilde">~/</span><span class="term-name">experiences</span><span class="term-caret" aria-hidden="true">▍</span>
-            <span class="term-count"># {(portfolio.jobs || []).length} entries</span>
-          </h2>
-          <div class="section-divider"></div>
-        </div>
-        <div class="log-pane" role="list">
-          {(portfolio.jobs || []).map((job: any, i: number) => {
-            // Heuristique : si "period" contient "-" mais pas un chiffre après, on considère actif
-            const period = String(job.period || '');
-            const isActive = /présent|present|now|en cours|today/i.test(period) || /-\s*$/.test(period);
-            const level = isActive ? 'wip' : 'info';
-            const levelLabel = isActive ? 'WIP' : 'INFO';
-            return (
-              <article class="log-entry" role="listitem">
-                <div class="log-head">
-                  <span class="log-time">[{job.period}]</span>
-                  <span class={`log-level log-level-${level}`}>{levelLabel}</span>
-                  <h3 class="log-title">{job.title}</h3>
-                </div>
-                <div class="log-line">
-                  <span class="log-tree" aria-hidden="true">├─</span>
-                  <span class="log-label">@</span>
-                  <span class="log-value">
-                    {job.company}
-                    {job.location && (
-                      <span class="job-location">
-                        <MapPin size={11} /> {job.location}
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div class="log-line">
-                  <span class="log-tree" aria-hidden="true">└─</span>
-                  <span class="log-label">info</span>
-                  <span class="log-value">{job.description}</span>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-    )}
+    <section class="contact-panel" aria-labelledby="contact-title">
+      <div><p class="path-label"><span>05</span> ~/contact</p><h2 id="contact-title">Construisons quelque chose de robuste.</h2></div>
+      <p>Une idée, une infrastructure à fiabiliser ou simplement envie de parler Linux et open source&nbsp;?</p>
+      <a class="action action-primary" href="mailto:adenyrr@proton.me">Démarrer une conversation <Sparkles size={16} /></a>
+    </section>
   </div>
 </BaseLayout>
 
-
 <style>
-  .portfolio { max-width: 900px; padding-bottom: 4rem; }
-
-  /* ══════════════════════════════
-     INTRO / ABOUT
-  ══════════════════════════════ */
-  .intro {
-    max-width: 760px;
-    margin: 0 auto 4rem;
-    padding-left: 1.25rem;
-    border-left: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  }
-  .intro-cmd {
-    font-family: var(--font-code);
-    font-size: 0.8rem;
-    color: var(--muted-text);
-    margin-bottom: 0.85rem;
-    letter-spacing: 0.02em;
-  }
-  .intro-prompt { color: var(--link-color); margin-right: 0.4rem; }
-  .intro-cmd-text { color: var(--text-secondary); }
-
-  .intro-role {
-    font-family: var(--font-code);
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: var(--accent);
-    margin: 0 0 0.6rem;
-  }
-
-  .intro-bio {
-    font-size: var(--fs-lead);
-    line-height: 1.65;
-    color: var(--text-secondary);
-    margin: 0 0 1.6rem;
-    max-width: 60ch;
-  }
-
-  .intro-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.65rem;
-  }
-  .intro-action-ext { opacity: 0.65; }
-
-  @media (max-width: 768px) {
-    .intro {
-      margin-bottom: 3rem;
-      padding-left: 1rem;
-    }
-  }
-
-  /* ══════════════════════════════
-     BANNER SCENE
-  ══════════════════════════════ */
-  .banner-scene {
+  .portfolio-shell { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 3.5rem 0 5rem; }
+  .glass-surface { background: color-mix(in srgb, var(--glass-bg-strong) 86%, transparent); border: 1px solid var(--glass-border); box-shadow: var(--shadow), inset 0 1px var(--glint); backdrop-filter: blur(var(--glass-blur)) saturate(135%); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(135%); }
+  .hero { min-height: calc(100svh - 7rem); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(320px, .7fr); align-items: center; gap: clamp(2rem, 7vw, 7rem); padding: clamp(3rem, 8vh, 6.5rem) 0; }
+  .hero-kicker, .path-label, .panel-label { margin: 0; color: var(--text-muted); font: 600 .76rem/1.4 var(--font-code); letter-spacing: .12em; text-transform: uppercase; }
+  .hero-kicker span { color: var(--accent-teal); margin-right: .55rem; }
+  .hero h1 { margin: .3rem 0 .8rem; font-size: clamp(4rem, 10vw, 8.8rem); font-weight: 740; letter-spacing: -.085em; line-height: .9; }
+  .title-prefix { color: var(--accent-amber); }
+  .hero-role { margin: 0 0 1.65rem; color: var(--accent-blue); font: 600 clamp(.78rem, 1.4vw, .98rem)/1.5 var(--font-code); letter-spacing: .04em; }
+  .hero-role span { color: var(--text-muted); margin: 0 .2rem; }
+  .hero-statement { max-width: 670px; margin: 0; color: var(--text-secondary); font-size: clamp(1.28rem, 2.35vw, 2rem); line-height: 1.42; letter-spacing: -.025em; text-wrap: balance; }
+  .hero-statement strong { color: var(--text-primary); font-weight: 650; }
+  .hero-console { display: flex; align-items: center; width: min(100%, 570px); min-height: 44px; margin: 2.1rem 0 0; padding: .65rem .9rem; overflow: hidden; color: var(--text-primary); background: color-mix(in srgb, var(--bg-1) 88%, transparent); border: 1px solid var(--glass-border); border-radius: 9px; font: .8rem/1.5 var(--font-code); box-shadow: inset 0 1px var(--glint); }
+  .console-prompt { color: var(--accent-teal); margin-right: .65rem; white-space: nowrap; }
+  #hero-command { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .console-cursor { width: .55em; height: 1.15em; margin-left: .22rem; background: var(--accent-amber); animation: cursor-blink 1.05s steps(1) infinite; }
+  @keyframes cursor-blink { 50% { opacity: 0; } }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.55rem; }
+  .action { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; min-height: 46px; padding: .72rem 1rem; border: 1px solid var(--glass-border); border-radius: 9px; font: 650 .82rem/1 var(--font-code); text-decoration: none; transition: transform .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+  .action-primary { color: var(--bg-0); background: var(--accent-amber); border-color: var(--accent-amber); }
+  .action-primary:hover { color: var(--bg-0); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(var(--amber-rgb), .22); }
+  .action-secondary { color: var(--text-primary); background: var(--glass-bg); }
+  .action-secondary:hover { color: var(--accent-blue); border-color: rgba(var(--blue-rgb), .55); transform: translateY(-2px); }
+  .system-card {
     position: relative;
-    width: 100%;
-    max-width: 900px;
-    margin: 3rem auto 3rem;
-  }
-
-  .banner-grid {
-    position: absolute;
-    inset: -60px;
-    background-image:
-      linear-gradient(var(--grid-line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%);
-    animation: gridDrift 20s linear infinite;
-    pointer-events: none;
-  }
-  @keyframes gridDrift { to { transform: translate(48px, 48px); } }
-
-  .banner-blob {
-    position: absolute; border-radius: 50%;
-    filter: blur(60px); opacity: 0;
-    pointer-events: none;
-  }
-  @media (max-width: 768px) {
-    .banner-blob {
-      filter: blur(30px);
-    }
-    .banner-grid {
-      animation: none;
-    }
-  }
-  .banner-blob-1 {
-    width: 320px; height: 220px;
-    background: radial-gradient(circle, var(--blob-teal) 0%, transparent 70%);
-    top: -60px; left: -80px;
-    animation: blobIn .8s ease .1s forwards;
-  }
-  .banner-blob-2 {
-    width: 260px; height: 180px;
-    background: radial-gradient(circle, var(--blob-salmon) 0%, transparent 70%);
-    bottom: -40px; right: -40px;
-    animation: blobIn .8s ease .4s forwards;
-  }
-  @keyframes blobIn { to { opacity: 1; } }
-
-  /* ── Glass Card ── */
-  .banner-card {
-    position: relative; width: 100%;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
-    box-shadow:
-      0 0 0 1px var(--glass-edge),
-      0 8px 48px var(--glass-shadow),
-      inset 0 1px 0 var(--glass-inner);
-    overflow: hidden;
-    display: flex; flex-direction: column; justify-content: center;
-    padding: 44px 56px 58px;
-  }
-  @media (max-width: 768px) {
-    .banner-card {
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      background: var(--surface);
-    }
-  }
-  .banner-card::before {
-    content: ''; position: absolute; top: 0; right: 0;
-    width: 280px; height: 130px;
-    background: radial-gradient(ellipse at top right, var(--glass-glow), transparent 70%);
-    border-radius: 0 20px 0 0; pointer-events: none;
-  }
-  .banner-card::after {
-    content: ''; position: absolute; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--scan-color), transparent);
-    top: 0;
-    transform: translateY(-2px);
-    animation: scanDown 6s ease-in-out 1.8s infinite;
-  }
-  @keyframes scanDown {
-    0%   { transform: translateY(-2px); opacity: 0; }
-    5%   { opacity: 1; }
-    95%  { opacity: 1; }
-    100% { transform: translateY(600px); opacity: 0; }
-  }
-
-  /* ── Terminal dots — pop + bounce ── */
-  .banner-dots {
-    position: absolute; top: 18px; left: 22px;
-    display: flex; gap: 7px;
-  }
-  .banner-dots span {
-    width: 11px; height: 11px; border-radius: 50%;
-    opacity: 0;
-    animation: dotPop .5s cubic-bezier(.36,.07,.19,.97) both;
-  }
-  .banner-dots span:nth-child(1) { background: var(--dot-r); animation-delay: .3s; }
-  .banner-dots span:nth-child(2) { background: var(--dot-y); animation-delay: .46s; }
-  .banner-dots span:nth-child(3) { background: var(--dot-g); animation-delay: .62s; }
-  @keyframes dotPop {
-    0%   { opacity: 0; transform: scale(0); }
-    55%  { opacity: 1; transform: scale(1.4); }
-    75%  { transform: scale(0.85); }
-    90%  { transform: scale(1.08); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-
-  /* ── Win-bar — CRT flicker ── */
-  .banner-bar {
-    position: absolute; top: 15px; left: 0; right: 0;
-    text-align: center; font-family: var(--font-code);
-    font-size: 11px; color: var(--banner-muted);
-    letter-spacing: .08em;
-    opacity: 0;
-    animation: flicker .7s ease .9s forwards;
-  }
-  @keyframes flicker {
-    0%   { opacity: 0; }
-    15%  { opacity: .5; }
-    20%  { opacity: 0; }
-    38%  { opacity: .7; }
-    42%  { opacity: .1; }
-    58%  { opacity: 1; }
-    100% { opacity: 1; }
-  }
-
-  /* ── Vertical line — draws top to bottom ── */
-  .banner-vline {
-    position: absolute; left: 46px; top: 48px; bottom: 46px;
-    width: 1px;
-    background: linear-gradient(to bottom, transparent, var(--banner-teal-dim) 30%, var(--banner-teal-dim) 70%, transparent);
-    transform-origin: top center;
-    opacity: 0;
-    animation: drawLine .6s ease .8s forwards;
-  }
-  @keyframes drawLine {
-    from { transform: scaleY(0); opacity: 0; }
-    5%   { opacity: 1; }
-    to   { transform: scaleY(1); opacity: 1; }
-  }
-
-  /* ── Prompt — slides from left ── */
-  .banner-prompt {
-    font-family: var(--font-code); font-size: 12px;
-    color: var(--banner-teal-dim); letter-spacing: .06em;
-    margin-bottom: 8px; opacity: 0;
-    animation: fromLeft .45s ease 1s forwards;
-  }
-  .prompt-arrow { color: var(--banner-salmon); margin-right: 6px; }
-  .prompt-on { color: var(--banner-muted); }
-  .prompt-distro { color: var(--banner-salmon); }
-  @keyframes fromLeft {
-    from { opacity: 0; transform: translateX(-20px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-
-  /* ── Title — clip-path wipe ── */
-  .banner-title {
-    font-family: 'JetBrains Mono', var(--font-code), monospace;
-    font-size: clamp(2.6rem, 5.5vw, 5rem);
-    font-weight: 700; color: var(--banner-text);
-    letter-spacing: -.02em; line-height: 1;
-    margin-bottom: 18px;
-    clip-path: inset(0 100% 0 0);
-    animation: wipeIn .55s cubic-bezier(.77,0,.18,1) 1.2s forwards;
-  }
-  .title-dot { color: var(--banner-teal); }
-  @keyframes wipeIn {
-    from { clip-path: inset(0 100% 0 0); }
-    to   { clip-path: inset(0 0% 0 0); }
-  }
-
-  /* ── Typewriter — glitch entrance ── */
-  .banner-tw-wrap {
-    display: flex; align-items: center; gap: 8px;
-    min-height: 24px;
-    opacity: 0;
-    animation: glitchIn .5s ease 1.75s forwards;
-  }
-  .tw-prefix { color: var(--banner-teal-dim); font-family: var(--font-code); font-size: 13px; flex-shrink: 0; }
-  .banner-tw {
-    font-family: var(--font-code); font-size: 13px;
-    color: var(--banner-text-dim); letter-spacing: .04em;
-    white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis; max-width: 100%;
-  }
-  .banner-cursor {
-    display: inline-block; width: 8px; height: 14px;
-    background: var(--banner-teal); vertical-align: middle;
-    margin-left: 2px; flex-shrink: 0;
-    animation: blink .7s step-end infinite;
-  }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
-  @keyframes glitchIn {
-    0%   { opacity: 0; transform: translateX(6px) skewX(4deg); }
-    30%  { opacity: .8; transform: translateX(-3px) skewX(-2deg); }
-    55%  { opacity: .5; transform: translateX(2px) skewX(1deg); }
-    80%  { opacity: .95; transform: translateX(-1px) skewX(0deg); }
-    100% { opacity: 1; transform: translateX(0) skewX(0deg); }
-  }
-
-  /* ── Bottom bar — rises from below ── */
-  .bottom-bar {
-    position: absolute; bottom: 14px; left: 24px; right: 24px;
-    display: flex; justify-content: space-between; align-items: center; gap: 10px;
-    opacity: 0;
-    animation: riseUp .5s ease 2.1s forwards;
-  }
-  @keyframes riseUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .meta { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
-  .meta-item {
-    font-family: var(--font-code); font-size: 10px; color: var(--banner-muted);
-    letter-spacing: .06em; display: flex; align-items: center; gap: 4px;
-  }
-  .meta-item .lbl { opacity: .55; }
-  .meta-item .val { color: var(--banner-teal-dim); }
-  .meta-div { color: var(--banner-muted); opacity: .3; font-size: 10px; }
-
-  /* ── Tags (inside bottom-bar) ── */
-  .banner-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .btag {
-    font-family: var(--font-code); font-size: 10px;
-    color: var(--banner-muted);
-    border: 1px solid var(--banner-muted);
-    padding: 2px 8px; border-radius: 4px;
-    letter-spacing: .09em; text-transform: uppercase;
-    cursor: pointer; user-select: none;
-    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-  }
-  .btag:hover {
-    color: var(--banner-teal); border-color: var(--banner-teal);
-    background: color-mix(in srgb, var(--banner-teal) 7%, transparent);
-  }
-  .btag.btag-accent { color: var(--banner-teal-dim); border-color: var(--banner-teal-dim); }
-  .btag.btag-accent:hover { color: var(--banner-teal); border-color: var(--banner-teal); }
-
-  @media (max-width: 768px) {
-    .banner-card { padding: 36px 24px 50px; }
-    .banner-vline { left: 20px; }
-    .bottom-bar { flex-direction: column; align-items: flex-start; gap: 6px; }
-    .banner-tags { display: none; }
-  }
-
-  .section { margin-bottom: 3.5rem; }
-  .section-header { margin-bottom: 1.5rem; }
-  .section-header h2 {
-    font-size: 1.15rem;
-    margin-bottom: 0.4rem;
-    display: flex;
-    align-items: baseline;
-    gap: 0.05rem;
-    flex-wrap: wrap;
-  }
-  .term-name { color: var(--text); font-weight: 600; }
-  .term-caret {
-    color: var(--accent);
-    margin-left: 0.1rem;
-    line-height: 1;
-    animation: term-blink 1.05s steps(1, end) infinite;
-  }
-  @keyframes term-blink {
-    0%, 55% { opacity: 1; }
-    56%, 100% { opacity: 0; }
-  }
-  .term-count {
-    margin-left: auto;
-    font-family: var(--font-code);
-    font-size: 0.78rem;
-    font-weight: 400;
-    color: var(--muted-text);
-    letter-spacing: 0.02em;
-    opacity: 0.75;
-  }
-  .section-divider {
-    height: 1px;
-    background-image: linear-gradient(
-      to right,
-      color-mix(in srgb, var(--accent) 35%, transparent) 0,
-      color-mix(in srgb, var(--accent) 35%, transparent) 6px,
-      transparent 6px,
-      transparent 12px
-    );
-    background-size: 12px 1px;
-    background-repeat: repeat-x;
-    opacity: 0.9;
-  }
-
-  .projects-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1.5rem;
-    max-width: 880px;
-    margin: 0 auto;
-  }
-
-  .project-card {
-    display: flex;
-    flex-direction: column;
-    flex: 0 1 380px;
-    min-width: 280px;
-    max-width: 420px;
+    min-height: 490px;
     padding: 0;
     overflow: hidden;
-    position: relative;
+    border-radius: 14px;
+    font-family: var(--font-code);
   }
-
-  /* Liseré d'accent qui se déploie au survol */
-  .project-card::before {
+  .system-card::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    z-index: 3;
-    background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  @media (hover: hover) {
-    .project-card:hover::before { transform: scaleX(1); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .project-card::before { transition: none; }
-  }
-
-  /* ── Cover ─────────────────────────────────────────── */
-  .project-cover {
-    position: relative;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    background:
-      radial-gradient(120% 80% at 30% 20%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
-      linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
-      var(--surface);
-    border-bottom: 1px solid var(--card-border);
-  }
-
-  .project-cover-img {
-    position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scale(1.02);
-    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-                filter 0.4s ease;
-  }
-
-  .project-cover-fallback {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: color-mix(in srgb, var(--accent) 70%, transparent);
-    opacity: 0.55;
-  }
-
-  /* Scrim léger pour la lisibilité des chips — sombre dans les DEUX thèmes :
-     basé sur var(--bg), il posait un voile blanc sur les images en light. */
-  .project-cover-overlay {
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(180deg, transparent 55%,
-        light-dark(#24211c33, color-mix(in srgb, var(--bg) 70%, transparent)) 100%),
-      linear-gradient(180deg,
-        light-dark(#24211c24, color-mix(in srgb, var(--bg) 35%, transparent)) 0%,
-        transparent 30%);
+    background-image:
+      linear-gradient(rgba(var(--blue-rgb), .035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--blue-rgb), .035) 1px, transparent 1px);
+    background-size: 24px 24px;
     pointer-events: none;
   }
-
-  .project-cover-meta {
-    position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
-    right: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    z-index: 1;
-  }
-
-  .project-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.3rem 0.6rem;
-    border-radius: 9999px;
-    font-family: var(--font-code);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    background: color-mix(in srgb, var(--bg) 65%, transparent);
-    backdrop-filter: blur(10px) saturate(1.3);
-    -webkit-backdrop-filter: blur(10px) saturate(1.3);
-    border: 1px solid color-mix(in srgb, var(--card-border) 80%, transparent);
-    color: var(--text);
-  }
-  .project-chip-icon {
-    padding: 0.32rem;
-    color: var(--accent);
-  }
-  .project-chip-year {
-    color: var(--accent);
-  }
-
-  /* ── Body ──────────────────────────────────────────── */
-  .project-body {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    padding: 1.25rem 1.35rem 1.35rem;
-    gap: 0.65rem;
-  }
-
-  .project-title {
-    font-family: var(--font-code);
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.4;
-    color: var(--text);
-    margin: 0;
-    letter-spacing: -0.01em;
-    /* clamp pour homogénéiser la hauteur des cartes */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .project-title::before {
-    content: '$ ';
-    color: var(--accent);
-    font-weight: 400;
-    opacity: 0.7;
-  }
-
-  .project-desc {
-    color: var(--text-secondary);
-    font-size: 0.88rem;
-    line-height: 1.55;
-    margin: 0;
-    flex: 1;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .project-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    margin-top: 0.25rem;
-  }
-
-  .project-links {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-top: 0.5rem;
-    padding-top: 0.85rem;
-    border-top: 1px dashed color-mix(in srgb, var(--card-border) 90%, transparent);
-  }
-
-  .btn-sm {
-    padding: 0.5rem 0.9rem;
-    font-size: 0.8rem;
-    min-height: 38px;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  /* ── Hover ─────────────────────────────────────────── */
-  @media (hover: hover) {
-    .project-card:hover .project-cover-img {
-      transform: scale(1.06);
-    }
-    .project-card:hover .project-title {
-      color: var(--accent);
-    }
-  }
-  .project-title { transition: color 0.25s ease; }
-
-  /* ── Log pane (dmesg-style) ────────────────────────── */
-  .log-pane {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    font-family: var(--font-code);
-    background:
-      linear-gradient(180deg, transparent, color-mix(in srgb, var(--surface) 30%, transparent) 100%),
-      var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 0.75rem;
-    padding: 1rem 0.4rem;
-    overflow: hidden;
-    backdrop-filter: blur(14px) saturate(1.3);
-    -webkit-backdrop-filter: blur(14px) saturate(1.3);
-  }
-  @media (max-width: 768px) {
-    .log-pane {
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      background: var(--surface);
-    }
-  }
-
-  .log-entry {
-    padding: 1.1rem 1.1rem;
-    border-bottom: 1px dashed color-mix(in srgb, var(--card-border) 100%, transparent);
-    transition: background 0.2s ease;
-  }
-  .log-entry + .log-entry {
-    margin-top: 0.25rem;
-  }
-  .log-entry:last-child { border-bottom: none; }
-  @media (hover: hover) {
-    .log-entry:hover {
-      background: color-mix(in srgb, var(--accent) 4%, transparent);
-    }
-  }
-
-  .log-head {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.7rem;
-  }
-
-  .log-time {
-    color: var(--muted-text);
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-  }
-
-  .log-level {
-    display: inline-block;
-    padding: 0.05rem 0.4rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    border-radius: 0.2rem;
-    text-transform: uppercase;
-    min-width: 3.2rem;
-    text-align: center;
-  }
-  .log-level-ok   { color: var(--sem-ok);   background: color-mix(in srgb, var(--sem-ok) 12%, transparent);   border: 1px solid color-mix(in srgb, var(--sem-ok) 25%, transparent); }
-  .log-level-info { color: var(--sem-info); background: color-mix(in srgb, var(--sem-info) 12%, transparent); border: 1px solid color-mix(in srgb, var(--sem-info) 25%, transparent); }
-  .log-level-wip  { color: var(--sem-warn); background: color-mix(in srgb, var(--sem-warn) 12%, transparent); border: 1px solid color-mix(in srgb, var(--sem-warn) 25%, transparent); }
-
-  .log-title {
-    font-family: var(--font-code);
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text);
-    margin: 0;
-    letter-spacing: -0.005em;
-    line-height: 1.4;
-  }
-
-  .log-line {
-    display: grid;
-    grid-template-columns: 1.6rem 3.6rem 1fr;
-    gap: 0.55rem;
-    align-items: baseline;
-    padding: 0.25rem 0 0.25rem 0.35rem;
-    font-size: 0.85rem;
-    line-height: 1.65;
-  }
-  .log-line + .log-line { margin-top: 0.15rem; }
-
-  .log-tree {
-    color: color-mix(in srgb, var(--accent) 55%, transparent);
-    user-select: none;
-    text-align: center;
-  }
-
-  .log-label {
-    color: var(--muted-text);
-    font-size: 0.72rem;
-    text-transform: lowercase;
-    letter-spacing: 0.04em;
-    text-align: right;
-  }
-
-  .log-value {
-    color: var(--text-secondary);
-    font-family: var(--font-body);
-    font-size: 0.88rem;
-    line-height: 1.55;
-  }
-
-  .log-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    align-items: center;
-  }
-
-  .job-location {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-    color: var(--muted-text);
-    font-size: 0.78rem;
-    margin-left: 0.55rem;
-    font-family: var(--font-code);
-  }
-
-  @media (max-width: 640px) {
-    .log-line {
-      grid-template-columns: 1.2rem 1fr;
-    }
-    .log-label { display: none; }
-  }
-
-  /* ── Badge grid ── */
-  /* Disposition compacte : le badge passe à gauche et le texte se lit en
-     ligne. Les cartes centrées de 180px laissaient surtout du vide autour
-     d'une image de 88px — on tombe à ~70px de haut, soit ~60 % de section
-     en moins pour la même information. */
-  .certs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
-    gap: 0.6rem;
-  }
-
-  .cert-card {
+  .tui-titlebar {
     position: relative;
-    display: flex;
-    flex-direction: row;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    text-align: left;
-    text-decoration: none;
-    color: var(--text);
-    padding: 0.6rem 0.75rem;
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glint);
-    gap: 0.7rem;
-    transition:
-      transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1),
-      border-color 0.25s ease,
-      box-shadow 0.3s ease;
-    overflow: hidden;
-  }
-
-  @media (max-width: 768px) {
-    .cert-card {
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      background: var(--surface);
-    }
-  }
-
-  /* Mise en avant : liseré latéral en couleur « vive » (non textuelle) —
-     l'étoile + le libellé lecteur d'écran portent l'information, jamais
-     la couleur seule (§1.3). */
-  .cert-card--featured {
-    border-left: 2px solid rgba(var(--amber-rgb), .55);
-  }
-
-  .cert-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--card-border-hover);
-    box-shadow: var(--shadow-md), var(--shadow-glow), inset 0 1px 0 var(--glint);
-  }
-
-  .cert-star {
-    display: inline-flex;
-    align-items: center;
-    color: var(--accent-amber);
-    margin-left: 0.3rem;
-    vertical-align: -1px;
-  }
-
-  .cert-image-wrap {
-    width: 44px;
-    height: 44px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .cert-image-wrap img {
-    width: 44px;
-    height: 44px;
-    object-fit: contain;
-    transition: transform 0.3s ease;
-  }
-  .cert-card:hover .cert-image-wrap img {
-    transform: scale(1.08);
-  }
-
-  .cert-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-width: 0; /* autorise l'ellipse dans une grille */
-    flex: 1;
-  }
-
-  .cert-title {
-    font-size: 0.82rem;
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--text);
-    margin: 0;
-    /* Deux lignes maxi : garantit une hauteur de carte homogène */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Émetteur et date sur une seule ligne */
-  .cert-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-family: var(--font-code);
-    font-size: 0.7rem;
-    margin: 0;
-    min-width: 0;
-  }
-
-  .cert-issuer {
-    color: var(--accent-amber);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .cert-meta-sep { color: var(--text-muted); opacity: 0.6; }
-
-  .cert-date {
+    min-height: 39px;
+    padding: 0 .8rem;
     color: var(--text-muted);
-    white-space: nowrap;
+    border-bottom: 1px solid var(--glass-border);
+    background: color-mix(in srgb, var(--bg-1) 72%, transparent);
+    font-size: .61rem;
   }
+  .tui-title { color: var(--text-secondary); white-space: nowrap; }
+  .tui-title b { color: var(--accent-blue); font-weight: 500; }
+  .tui-view { text-transform: uppercase; letter-spacing: .1em; }
+  .tui-online { display: inline-flex; align-items: center; justify-self: end; gap: .35rem; color: var(--accent-teal); text-transform: uppercase; letter-spacing: .08em; }
+  .tui-online i { width: 6px; height: 6px; border-radius: 1px; background: currentColor; box-shadow: 0 0 9px rgba(var(--teal-rgb), .75); }
+  .tui-command { position: relative; z-index: 1; margin: 0; padding: .7rem .9rem; color: var(--text-muted); border-bottom: 1px dashed var(--glass-border); font-size: .66rem; }
+  .tui-command span { color: var(--accent-amber); font-weight: 700; }
+  .tui-main { position: relative; z-index: 1; display: grid; grid-template-columns: .95fr 1.05fr; align-items: center; min-height: 220px; }
+  .tui-identity { display: grid; place-items: center; align-content: center; min-height: 100%; padding: 1.1rem; color: var(--accent-blue); border-right: 1px solid var(--glass-border); }
+  .tui-border { font-size: clamp(.68rem, 1.1vw, .82rem); letter-spacing: .02em; white-space: pre; }
+  .tui-monogram { display: flex; align-items: baseline; justify-content: center; width: 14ch; min-height: 76px; color: var(--text-primary); border-inline: 1px solid var(--accent-blue); }
+  .tui-monogram small { align-self: flex-start; margin: .45rem 0 0 .45rem; color: var(--text-muted); font-size: .52rem; }
+  .tui-monogram strong { margin-left: auto; font-size: 3.3rem; line-height: 1.35; letter-spacing: -.12em; }
+  .tui-monogram em { align-self: flex-end; margin: 0 auto .7rem .12rem; color: var(--accent-amber); font-size: 1.4rem; font-style: normal; animation: tui-cursor 1.1s steps(1) infinite; }
+  .tui-stem { margin-top: -.22rem; color: var(--accent-teal); font-size: .7rem; line-height: 1; }
+  .tui-identity p { margin: .55rem 0 0; color: var(--text-primary); font-size: .66rem; font-weight: 700; letter-spacing: .12em; }
+  .tui-identity p span { display: block; margin-top: .15rem; color: var(--text-muted); font-size: .5rem; font-weight: 500; letter-spacing: .08em; text-align: center; }
+  @keyframes tui-cursor { 50% { opacity: 0; } }
 
-  /* External link arrow */
-  .cert-arrow {
-    flex-shrink: 0;
-    color: var(--text-muted);
-    opacity: 0;
-    transition: opacity 0.2s ease, color 0.2s ease;
-  }
-  .cert-card:hover .cert-arrow,
-  .cert-card:focus-visible .cert-arrow {
-    opacity: 1;
-    color: var(--accent-amber);
-  }
-  /* Sur tactile il n'y a pas de survol : la flèche reste visible */
-  @media (hover: none) {
-    .cert-arrow { opacity: 0.5; }
-  }
+  .tui-fields { margin: 0; padding: 1rem 1.2rem; }
+  .tui-fields div { display: grid; grid-template-columns: 1fr auto; gap: 1rem; padding: .48rem 0; border-bottom: 1px dotted color-mix(in srgb, var(--glass-border) 80%, transparent); font-size: .66rem; }
+  .tui-fields div:last-child { border-bottom: 0; }
+  .tui-fields dt { color: var(--text-muted); text-transform: uppercase; letter-spacing: .09em; }
+  .tui-fields dt::before { content: '› '; color: var(--accent-blue); }
+  .tui-fields dd { margin: 0; color: var(--text-primary); text-align: right; }
+  .tui-fields .available { display: inline-flex; align-items: center; gap: .35rem; color: var(--accent-teal); }
 
-  /* .certs-grid n'a plus de palier fixe : auto-fill + minmax(300px)
-     gère seul 3 → 2 → 1 colonne selon la largeur disponible. */
-  @media (max-width: 768px) {
-    .hero { padding: 4rem 0 2.5rem; }
-    .hero-name { font-size: 2.2rem; }
-    .projects-grid { gap: 1.25rem; }
-    .project-card { flex: 1 1 100%; max-width: 100%; }
+  .tui-meters { position: relative; z-index: 1; display: grid; gap: .55rem; padding: 1rem; border-block: 1px solid var(--glass-border); background: color-mix(in srgb, var(--bg-1) 45%, transparent); }
+  .tui-meters > div { display: grid; grid-template-columns: 58px 1fr 24px; align-items: center; gap: .65rem; color: var(--text-muted); font-size: .58rem; text-transform: uppercase; letter-spacing: .08em; }
+  .tui-meters i { position: relative; height: 6px; overflow: hidden; border: 1px solid var(--glass-border); background: rgba(var(--blue-rgb), .04); }
+  .tui-meters i::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 7px, var(--bg-1) 7px 9px); }
+  .tui-meters i b { display: block; height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-teal)); }
+  .tui-meters strong { color: var(--text-secondary); font-weight: 500; text-align: right; }
+
+  .tui-footer { position: relative; z-index: 1; display: flex; align-items: center; gap: .8rem; min-height: 41px; padding: .55rem .8rem; color: var(--text-muted); background: color-mix(in srgb, var(--bg-1) 72%, transparent); font-size: .56rem; text-transform: uppercase; }
+  .tui-footer kbd { padding: .16rem .28rem; color: var(--bg-0); border: 0; border-radius: 2px; background: var(--accent-amber); box-shadow: none; font: inherit; }
+  .tui-clock { margin-left: auto; color: var(--text-secondary); }
+  .about-strip { display: grid; grid-template-columns: 80px minmax(170px, .48fr) 1fr; gap: 1.5rem; align-items: start; padding: 1.5rem 0; border-block: 1px solid var(--glass-border); }
+  .section-index { color: var(--accent-amber); font: 700 .75rem var(--font-code); }
+  .about-command { margin: 0; color: var(--text-muted); font: .78rem/1.6 var(--font-code); }
+  .about-command span:first-child { color: var(--accent-blue); }
+  .about-body > p { max-width: 68ch; margin: 0; color: var(--text-secondary); font-size: 1.04rem; }
+  .about-links { display: flex; flex-wrap: wrap; gap: .55rem 1rem; margin-top: 1rem; }
+  .about-links a { display: inline-flex; align-items: center; gap: .35rem; color: var(--text-primary); font: .75rem var(--font-code); text-underline-offset: 4px; }
+  .about-links a:hover { color: var(--accent-blue); }
+  .work-section, .lab-section, .journey-section { padding-top: clamp(5rem, 10vw, 8rem); scroll-margin-top: 5rem; }
+  .editorial-heading { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(260px, .55fr); gap: 3rem; align-items: end; margin-bottom: 2.25rem; }
+  .path-label span { color: var(--accent-amber); margin-right: 1rem; }
+  .editorial-heading h2, .contact-panel h2 { margin: .45rem 0 0; font-size: clamp(2.35rem, 5.5vw, 4.75rem); line-height: .98; letter-spacing: -.06em; }
+  .editorial-heading > p { margin: 0; color: var(--text-secondary); font-size: .96rem; line-height: 1.65; }
+  .projects-bento { display: grid; grid-template-columns: 1.1fr .9fr; grid-template-rows: repeat(2, minmax(330px, auto)); gap: 1rem; }
+  .project-panel { --pointer-x: 50%; --pointer-y: 50%; position: relative; min-height: 330px; overflow: hidden; border: 1px solid var(--glass-border); border-radius: 18px; background: var(--bg-1); box-shadow: inset 0 1px var(--glint); transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease; }
+  .project-panel::after { content: ''; position: absolute; inset: 0; opacity: 0; background: radial-gradient(420px circle at var(--pointer-x) var(--pointer-y), rgba(var(--blue-rgb), .15), transparent 45%); pointer-events: none; transition: opacity .25s ease; }
+  .project-panel:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent-blue) 45%, var(--glass-border)); box-shadow: var(--shadow); }
+  .project-panel:hover::after { opacity: 1; }
+  .project-primary { grid-row: span 2; min-height: 676px; }
+  .project-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .38; filter: saturate(.65) contrast(1.05); transition: transform .6s cubic-bezier(.2,.8,.2,1), opacity .3s ease; }
+  .project-panel:hover .project-art { transform: scale(1.035); opacity: .48; }
+  .project-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--bg-1) 18%, transparent), var(--bg-1) 82%); }
+  .project-topline { position: absolute; z-index: 2; inset: 1rem 1rem auto; display: flex; justify-content: space-between; color: var(--text-muted); font: .65rem var(--font-code); }
+  .project-number { color: var(--accent-amber); }
+  .project-content { position: absolute; z-index: 3; inset: auto 1.4rem 1.35rem; }
+  .project-icon { display: grid; place-items: center; width: 37px; height: 37px; margin-bottom: .85rem; color: var(--accent-blue); border: 1px solid rgba(var(--blue-rgb), .35); border-radius: 9px; background: rgba(var(--blue-rgb), .1); }
+  .project-content h3 { max-width: 18ch; margin: 0; font-size: clamp(1.35rem, 2.5vw, 2.1rem); line-height: 1.08; }
+  .project-content > p { display: -webkit-box; max-width: 56ch; margin: .7rem 0 1rem; overflow: hidden; color: var(--text-secondary); font-size: .88rem; line-height: 1.55; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  .tech-list { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+  .tech-list li { color: var(--text-secondary); font: .64rem var(--font-code); }
+  .tech-list li::before { content: '['; color: var(--accent-amber); margin-right: .15rem; } .tech-list li::after { content: ']'; color: var(--accent-amber); margin-left: .15rem; }
+  .project-actions { display: flex; gap: .65rem; margin-top: 1.15rem; }
+  .project-actions a { display: inline-flex; align-items: center; gap: .35rem; min-height: 39px; padding: .5rem .65rem; color: var(--text-primary); border: 1px solid var(--glass-border); border-radius: 7px; background: color-mix(in srgb, var(--bg-1) 75%, transparent); font: 650 .69rem var(--font-code); text-decoration: none; }
+  .project-actions a:hover { color: var(--accent-blue); border-color: rgba(var(--blue-rgb), .5); }
+  .lab-console { overflow: hidden; border-radius: 18px; }
+  .lab-toolbar { display: flex; justify-content: space-between; gap: 1rem; padding: .85rem 1rem; color: var(--text-muted); border-bottom: 1px solid var(--glass-border); font: .68rem var(--font-code); }
+  .lab-toolbar span { display: inline-flex; align-items: center; gap: .45rem; } .lab-toolbar i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-teal); box-shadow: 0 0 10px rgba(var(--teal-rgb), .7); } .lab-toolbar b { color: var(--accent-amber); }
+  .lab-workspace { display: grid; grid-template-columns: 1.15fr .85fr; min-height: 420px; }
+  .topology { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-content: center; padding: 3.5rem; border-right: 1px solid var(--glass-border); background-image: linear-gradient(rgba(var(--blue-rgb), .035) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--blue-rgb), .035) 1px, transparent 1px); background-size: 28px 28px; }
+  .topology-source { position: absolute; top: 1.25rem; left: 50%; transform: translateX(-50%); color: var(--text-muted); font: .65rem var(--font-code); text-transform: uppercase; letter-spacing: .14em; }
+  .topology-line { position: absolute; inset: 3.2rem 17% 3.2rem; border: 1px dashed rgba(var(--blue-rgb), .2); border-radius: 50%; pointer-events: none; }
+  .topology-node { position: relative; z-index: 1; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .65rem; min-height: 66px; padding: .7rem; color: var(--text-secondary); border: 1px solid var(--glass-border); border-radius: 11px; background: color-mix(in srgb, var(--bg-1) 90%, transparent); font: .74rem var(--font-code); text-align: left; cursor: pointer; transition: transform .2s ease, color .2s ease, border-color .2s ease, background-color .2s ease; }
+  .topology-node:hover { transform: translateY(-2px); color: var(--text-primary); }
+  .topology-node.active { color: var(--text-primary); border-color: rgba(var(--amber-rgb), .55); background: rgba(var(--amber-rgb), .09); box-shadow: 0 0 22px rgba(var(--amber-rgb), .08); }
+  .node-icon { display: grid; place-items: center; width: 35px; height: 35px; color: var(--accent-blue); border: 1px solid rgba(var(--blue-rgb), .25); border-radius: 8px; }
+  .topology-node.active .node-icon { color: var(--accent-amber); border-color: rgba(var(--amber-rgb), .35); }
+  .topology-node small { color: var(--text-muted); font-size: .6rem; }
+  .node-inspector { display: flex; flex-direction: column; justify-content: center; padding: clamp(2rem, 5vw, 4rem); }
+  .node-inspector > p:first-child { margin: 0; color: var(--accent-amber); font: 650 .68rem var(--font-code); text-transform: uppercase; letter-spacing: .1em; }
+  .node-inspector h3 { margin: .7rem 0; font-size: clamp(1.6rem, 3vw, 2.25rem); }
+  .node-inspector > p:not(:first-child) { margin: 0; color: var(--text-secondary); font-size: .9rem; }
+  .node-inspector code { display: block; margin-top: 1.4rem; padding: .75rem; color: var(--accent-teal); border-left: 2px solid var(--accent-teal); background: rgba(var(--teal-rgb), .06); font: .7rem/1.6 var(--font-code); }
+  .node-inspector a { display: inline-flex; align-items: center; gap: .4rem; align-self: flex-start; margin-top: 1.5rem; color: var(--text-primary); font: 650 .72rem var(--font-code); text-underline-offset: 4px; }
+  .node-inspector a:hover { color: var(--accent-blue); }
+  .journey-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .timeline-panel, .credentials-panel { padding: clamp(1.3rem, 3vw, 2rem); border-radius: 16px; }
+  .career-timeline { position: relative; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+  .career-timeline::before { content: ''; position: absolute; top: .5rem; bottom: .5rem; left: 99px; width: 1px; background: var(--glass-border); }
+  .career-timeline li { position: relative; display: grid; grid-template-columns: 82px 1fr; gap: 2rem; padding: .6rem 0 1.45rem; }
+  .career-timeline li::before { content: ''; position: absolute; top: .83rem; left: 95px; width: 9px; height: 9px; border: 2px solid var(--bg-1); border-radius: 50%; background: var(--accent-blue); box-shadow: 0 0 0 1px var(--accent-blue); }
+  .career-timeline time { padding-top: .05rem; color: var(--text-muted); font: .62rem/1.5 var(--font-code); }
+  .career-timeline div > span { color: var(--accent-amber); font: 650 .58rem var(--font-code); text-transform: uppercase; letter-spacing: .1em; }
+  .career-timeline h3 { margin: .2rem 0 .25rem; font-size: .98rem; } .career-timeline p { margin: 0; color: var(--text-muted); font-size: .78rem; }
+  .credential-heading { display: flex; align-items: flex-start; justify-content: space-between; color: var(--accent-teal); }
+  .credential-heading h3 { margin: .45rem 0 0; color: var(--text-primary); font-size: 1.35rem; }
+  .credential-list { display: grid; gap: .55rem; margin-top: 1.3rem; }
+  .credential { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: .8rem; min-height: 67px; padding: .55rem; color: var(--text-primary); border: 1px solid transparent; border-radius: 10px; text-decoration: none; transition: background-color .2s ease, border-color .2s ease, transform .2s ease; }
+  .credential:hover { transform: translateX(3px); border-color: var(--glass-border); background: var(--glass-bg); }
+  .credential :global(img) { width: 48px; height: 48px; object-fit: contain; }
+  .credential span { min-width: 0; } .credential strong, .credential small { display: block; }
+  .credential strong { overflow: hidden; font-size: .82rem; white-space: nowrap; text-overflow: ellipsis; }
+  .credential small { margin-top: .15rem; color: var(--text-muted); font: .62rem var(--font-code); }
+  .other-credentials { margin-top: .85rem; border-top: 1px solid var(--glass-border); }
+  .other-credentials summary { display: flex; justify-content: space-between; padding: 1rem .3rem .4rem; color: var(--accent-blue); font: .7rem var(--font-code); cursor: pointer; list-style: none; }
+  .other-credentials summary::-webkit-details-marker { display: none; } .other-credentials[open] .details-plus { transform: rotate(45deg); }
+  .details-plus { font-size: 1.1rem; transition: transform .2s ease; }
+  .other-credentials ul { margin: .5rem 0 0; padding: 0; list-style: none; }
+  .other-credentials a { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .42rem .3rem; color: var(--text-secondary); font-size: .73rem; text-decoration: none; }
+  .other-credentials a:hover { color: var(--text-primary); }
+  .contact-panel { display: grid; grid-template-columns: 1.1fr .75fr auto; gap: 2rem; align-items: end; margin-top: clamp(5rem, 12vw, 9rem); padding: clamp(1.5rem, 4vw, 3rem); border: 1px solid var(--glass-border); border-radius: 18px; background: linear-gradient(120deg, rgba(var(--amber-rgb), .1), rgba(var(--blue-rgb), .06)); box-shadow: inset 0 1px var(--glint); }
+  .contact-panel h2 { font-size: clamp(2rem, 4vw, 3.5rem); }
+  .contact-panel > p { margin: 0; color: var(--text-secondary); font-size: .92rem; }
+  .contact-panel .action { white-space: nowrap; }
+
+  @media (max-width: 900px) {
+    .hero { min-height: auto; grid-template-columns: 1fr; padding-top: 4rem; } .system-card { min-height: 0; }
+    .about-strip { grid-template-columns: 55px 1fr; } .about-body { grid-column: 2; }
+    .editorial-heading { grid-template-columns: 1fr; gap: 1rem; }
+    .lab-workspace { grid-template-columns: 1fr; } .topology { min-height: 330px; padding: 3.3rem 2rem 2rem; border-right: 0; border-bottom: 1px solid var(--glass-border); }
+    .journey-grid { grid-template-columns: 1fr; } .contact-panel { grid-template-columns: 1fr; align-items: start; } .contact-panel .action { justify-self: start; }
   }
+  @media (max-width: 650px) {
+    .portfolio-shell { width: min(100% - 1.25rem, 1180px); padding-top: 1.5rem; } .hero h1 { font-size: clamp(3.7rem, 20vw, 6rem); }
+    .hero-role { max-width: 42ch; } .hero-console { font-size: .69rem; } .console-prompt { max-width: 8.2rem; overflow: hidden; text-overflow: ellipsis; }
+    .system-card { min-height: 0; } .tui-main { grid-template-columns: .9fr 1.1fr; } .tui-fields { padding-inline: .8rem; } .tui-fields div { gap: .45rem; font-size: .6rem; } .about-strip { grid-template-columns: 38px 1fr; gap: .75rem; } .about-body > p { font-size: .96rem; }
+    .projects-bento { grid-template-columns: 1fr; grid-template-rows: auto; } .project-primary, .project-panel { grid-row: auto; min-height: 460px; } .project-panel:not(.project-primary) { min-height: 390px; }
+    .topology { grid-template-columns: 1fr; min-height: auto; padding: 4rem 1rem 1.5rem; } .topology-line { display: none; } .node-inspector { padding: 2rem 1.2rem; } .lab-toolbar span:last-child { display: none; }
+    .career-timeline::before { left: 75px; } .career-timeline li { grid-template-columns: 60px 1fr; gap: 1.6rem; } .career-timeline li::before { left: 71px; }
+    .credential { grid-template-columns: 47px 1fr auto; } .credential :global(img) { width: 43px; height: 43px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .console-cursor, .tui-monogram em { animation: none; } .project-panel, .project-art, .credential, .action, .topology-node { transition: none; } }
+  @media (prefers-reduced-transparency: reduce) { .glass-surface { background: var(--bg-1); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+  @media (prefers-contrast: more) { .project-panel, .lab-console, .timeline-panel, .credentials-panel, .contact-panel { border-color: currentColor; } }
 </style>
 
 <script>
-  /* ── Date display ── */
-  const dateEl = document.getElementById('date-disp');
-  if (dateEl) {
-    dateEl.textContent = new Date().toLocaleDateString('fr-FR', {
-      day: '2-digit', month: '2-digit', year: 'numeric'
-    });
-  }
+  const commands = ['terraform plan', 'kubectl get nodes', 'ansible-playbook deploy.yml', 'podman ps --format table'];
+  let commandTimer: number | undefined;
+  let uptimeTimer: number | undefined;
+  let pageStarted = Date.now();
 
-  /* ── Uptime (visit duration) ── */
-  const start = Date.now();
-  const upEl = document.getElementById('uptime-disp');
-  function tick() {
-    const e = Math.floor((Date.now() - start) / 1000);
-    const h = String(Math.floor(e / 3600)).padStart(2, '0');
-    const m = String(Math.floor((e % 3600) / 60)).padStart(2, '0');
-    const s = String(e % 60).padStart(2, '0');
-    if (upEl) upEl.textContent = `${h}:${m}:${s}`;
-  }
-  setInterval(tick, 1000);
-
-  /* ── Typewriter — infinite loop ── */
-  (async function () {
-    const tw = document.getElementById('tw');
-    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-    if (!tw) return;
-
-    const phrases = [
-      "sysadmin | infra & cloud",
-      "open source | privacy | sovereignty",
-      "sysadmin | infra & cloud; open source | privacy | sovereignty",
-    ];
-
-    const TYPE_SPEED = { min: 34, rnd: 22 };
-    const DEL_SPEED  = { min: 14, rnd: 10 };
-    const HOLD_SHORT = 1400;
-    const HOLD_LONG  = 2800;
-
-    await sleep(2200);
-
-    while (true) {
-      for (let i = 0; i < phrases.length; i++) {
-        const txt = phrases[i];
-        const hold = i === phrases.length - 1 ? HOLD_LONG : HOLD_SHORT;
-
-        for (let c = 0; c <= txt.length; c++) {
-          tw.textContent = txt.slice(0, c);
-          await sleep(TYPE_SPEED.min + Math.random() * TYPE_SPEED.rnd);
-        }
-
-        await sleep(hold);
-
-        for (let c = txt.length; c >= 0; c--) {
-          tw.textContent = txt.slice(0, c);
-          await sleep(DEL_SPEED.min + Math.random() * DEL_SPEED.rnd);
-        }
-
-        await sleep(260);
-      }
+  function initHome() {
+    window.clearInterval(commandTimer); window.clearInterval(uptimeTimer); pageStarted = Date.now();
+    const command = document.querySelector<HTMLElement>('#hero-command');
+    const time = document.querySelector<HTMLElement>('#local-time');
+    const uptime = document.querySelector<HTMLElement>('#page-uptime');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let commandIndex = 0;
+    const updateClock = () => {
+      if (time) time.textContent = new Intl.DateTimeFormat('fr-BE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
+      if (uptime) { const elapsed = Math.floor((Date.now() - pageStarted) / 1000); uptime.textContent = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`; }
+    };
+    updateClock(); uptimeTimer = window.setInterval(updateClock, 1000);
+    if (command && !reduceMotion) {
+      commandTimer = window.setInterval(() => {
+        command.animate([{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-5px)' }], { duration: 180, fill: 'forwards' }).finished.then(() => {
+          commandIndex = (commandIndex + 1) % commands.length; command.textContent = commands[commandIndex];
+          command.animate([{ opacity: 0, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 220, fill: 'forwards' });
+        });
+      }, 3200);
     }
-  })();
+    document.querySelectorAll<HTMLElement>('[data-spotlight]').forEach((card) => {
+      card.onpointermove = (event) => { if (reduceMotion) return; const rect = card.getBoundingClientRect(); card.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`); card.style.setProperty('--pointer-y', `${event.clientY - rect.top}px`); };
+    });
+    const nodes = document.querySelectorAll<HTMLButtonElement>('[data-lab-node]');
+    const eyebrow = document.querySelector<HTMLElement>('#node-eyebrow'); const title = document.querySelector<HTMLElement>('#node-title');
+    const text = document.querySelector<HTMLElement>('#node-text'); const tech = document.querySelector<HTMLElement>('#node-tech');
+    nodes.forEach((node) => { node.onclick = () => {
+      nodes.forEach((item) => { const selected = item === node; item.classList.toggle('active', selected); item.setAttribute('aria-pressed', String(selected)); });
+      if (eyebrow) eyebrow.textContent = node.dataset.eyebrow || ''; if (title) title.textContent = node.dataset.title || '';
+      if (text) text.textContent = node.dataset.text || ''; if (tech) tech.textContent = node.dataset.tech || '';
+    }; });
+  }
+  initHome(); document.addEventListener('astro:page-load', initHome);
 </script>
