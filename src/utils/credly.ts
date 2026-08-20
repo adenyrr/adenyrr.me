@@ -8,16 +8,33 @@ export async function fetchCredlyBadges(
   pinnedIds: string[] = [],
 ): Promise<CredlyBadge[]> {
   try {
-    const response = await fetch(
-      `https://www.credly.com/users/${username}/badges.json`
-    );
-    if (!response.ok) {
-      console.warn(`[Credly] Failed to fetch badges for ${username}: ${response.status}`);
-      return [];
+    const rawBadges: any[] = [];
+    let nextPageUrl: string | undefined = `https://www.credly.com/users/${encodeURIComponent(username)}/badges.json`;
+    let pageCount = 0;
+
+    while (nextPageUrl && pageCount < 50) {
+      const response = await fetch(nextPageUrl);
+      if (!response.ok) {
+        console.warn(`[Credly] Failed to fetch badges for ${username}: ${response.status}`);
+        if (rawBadges.length === 0) return [];
+        break;
+      }
+
+      const page = await response.json();
+      rawBadges.push(...(page.data || []));
+      pageCount += 1;
+
+      const next = page.metadata?.next_page_url;
+      nextPageUrl = next ? new URL(next, 'https://www.credly.com').toString() : undefined;
     }
-    const data = await response.json();
+
     const pinnedSet = new Set(pinnedIds);
-    const badges: CredlyBadge[] = (data.data || []).map((badge: any) => ({
+    const seenIds = new Set<string>();
+    const badges: CredlyBadge[] = rawBadges.filter((badge: any) => {
+      if (!badge.id || seenIds.has(badge.id)) return false;
+      seenIds.add(badge.id);
+      return true;
+    }).map((badge: any) => ({
       id: badge.id,
       title: badge.badge_template?.name || 'Unknown',
       issuer: badge.issuer?.entities?.[0]?.entity?.name || 'Unknown',
@@ -28,7 +45,7 @@ export async function fetchCredlyBadges(
       pinned: pinnedSet.has(badge.id),
     }));
 
-    // Pinned badges first (in the order given in pinnedIds), then the rest
+    // Pinned badges first (in configured order), then every remaining page.
     const pinned   = pinnedIds
       .map(id => badges.find(b => b.id === id))
       .filter((b): b is CredlyBadge => b !== undefined);

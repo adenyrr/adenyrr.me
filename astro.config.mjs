@@ -7,11 +7,15 @@ import react from '@astrojs/react';
 import expressiveCode from 'astro-expressive-code';
 import robotsTxt from 'astro-robots-txt';
 import compress from '@playform/compress';
+import fs from 'node:fs';
+import YAML from 'yaml';
 import { remarkReadingTime } from './src/utils/reading-time.ts';
+
+const siteConfig = YAML.parse(fs.readFileSync(new URL('./config/site.yaml', import.meta.url), 'utf8'));
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://adenyrr.me',
+  site: siteConfig.site.url,
   integrations: [
     expressiveCode({
       themes: ['one-dark-pro'],
@@ -23,11 +27,11 @@ export default defineConfig({
       },
     }),
     mdx(),
-    sitemap(),
-    robotsTxt({
+    ...(siteConfig.seo.sitemap ? [sitemap()] : []),
+    ...(siteConfig.seo.robots ? [robotsTxt({
       policy: [{ userAgent: '*', allow: '/' }],
-      sitemap: 'https://adenyrr.me/sitemap-index.xml',
-    }),
+      sitemap: `${siteConfig.site.url}/sitemap-index.xml`,
+    })] : []),
     react(),
     compress(),
   ],

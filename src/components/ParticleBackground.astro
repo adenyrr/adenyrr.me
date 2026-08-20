@@ -3,11 +3,11 @@
  * Fond ambiant — remplace l'ancien canvas de particules (rAF permanent).
  * 100 % CSS, zéro JavaScript : grille de points masquée + deux nappes
  * "aurora" en dégradés radiaux qui dérivent lentement.
- * Respecte le flag `theme.particles.enabled` du site.yaml.
+ * Respecte le flag `appearance.ambientBackground` du site.yaml.
  */
 import { getSiteConfig } from '../utils/config';
 const config = getSiteConfig();
-const enabled = config.theme?.particles?.enabled !== false;
+const enabled = config.appearance.ambientBackground;
 ---
 
 {enabled && (

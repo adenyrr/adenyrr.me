@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { isFeatureEnabled } from '../../utils/config';
+import { getSiteConfig, isFeatureEnabled } from '../../utils/config';
 import { getCollection } from 'astro:content';
 import { ArrowUpRight, Calendar, Clock, Terminal } from '@lucide/astro';
 
@@ -12,23 +12,25 @@ if (!isFeatureEnabled('blog')) {
 const posts = (await getCollection('blog')).sort(
   (a, b) => (b.data.pubDate?.valueOf() || 0) - (a.data.pubDate?.valueOf() || 0)
 );
+const siteConfig = getSiteConfig();
+const blog = siteConfig.blog;
 ---
 
-<BaseLayout title="Blog" description="Blog articles">
+<BaseLayout title={blog.pageTitle} description={blog.pageDescription}>
   <div class="container blog-page blog-enter">
     <header class="blog-header">
       <div>
-        <p><span>~/</span>writing <i aria-hidden="true">▍</i></p>
-        <h1>Notes depuis<br /><em>la console.</em></h1>
+        <p><span>~/</span>{blog.path} <i aria-hidden="true">▍</i></p>
+        <h1>{blog.heading}<br /><em>{blog.headingAccent}</em></h1>
       </div>
       <aside>
         <Terminal size={16} />
-        <span>Des retours d’expérience sur Linux, l’infrastructure, le cloud et ce que j’apprends en construisant.</span>
+        <span>{blog.introduction}</span>
       </aside>
     </header>
 
     {posts.length === 0 ? (
-      <p class="no-articles">Aucun article publié.</p>
+      <p class="no-articles">{blog.emptyLabel}</p>
     ) : (
       <div class="posts-list">
         {posts.map((post, index) => (
@@ -47,7 +49,7 @@ const posts = (await getCollection('blog')).sort(
                   <span class="post-date">
                     <Calendar size={14} />
                     <time datetime={post.data.pubDate.toISOString()}>
-                      {post.data.pubDate.toLocaleDateString('fr-FR', {
+                      {post.data.pubDate.toLocaleDateString(siteConfig.site.locale, {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
@@ -58,11 +60,11 @@ const posts = (await getCollection('blog')).sort(
                 {post.data.readingMinutes && (
                   <span class="post-reading">
                     <Clock size={14} />
-                    {post.data.readingMinutes} min de lecture
+                    {post.data.readingMinutes} {blog.readingTimeSuffix}
                   </span>
                 )}
               </div>
-              <span class="read-more">Lire la note <ArrowUpRight size={15} /></span>
+              <span class="read-more">{blog.readMoreLabel} <ArrowUpRight size={15} /></span>
             </div>
           </a>
         ))}

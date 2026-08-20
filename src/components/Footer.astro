@@ -1,32 +1,35 @@
 ---
 import { getSiteConfig } from '../utils/config';
-import { ArrowUp, GitBranch, Github, Gitlab, Linkedin, Mail, Rss } from '@lucide/astro';
+import { ArrowUp, GitBranch, Github, Gitlab, Linkedin, Mail, MessageCircle, Rss } from '@lucide/astro';
 
 const config = getSiteConfig();
 const footer = config.footer || {};
 const year = new Date().getFullYear();
 const socials = (config.header?.socialLinks || []).filter((link: any) => link.enabled);
-const iconMap: Record<string, any> = { Github, Gitlab, Linkedin, Mail, Rss };
+const navigation = (config.header?.navigation || []).filter(
+  (item: any) => item.enabled && (!item.feature || config.features[item.feature]),
+);
+const iconMap: Record<string, any> = { Github, Gitlab, Linkedin, Mail, MessageCircle, Rss };
 ---
 
-<footer id="site-footer">
+{footer.show && <footer id="site-footer">
   <div class="footer-shell">
     <div class="footer-main">
       <div class="footer-signature">
-        <p><span aria-hidden="true">$</span> echo "thanks for visiting"</p>
-        <a href="/" class="footer-brand">.adenyrr</a>
-        <p class="footer-note">Infrastructure · Cloud · Open source<br />Construit sobrement, hébergé avec intention.</p>
+        <p><span aria-hidden="true">$</span> {footer.signatureCommand}</p>
+        <a href={footer.authorUrl} class="footer-brand">.{footer.author}</a>
+        <p class="footer-note">{footer.note}</p>
       </div>
 
       <nav class="footer-nav" aria-label="Navigation du pied de page">
-        <p>~/sitemap</p>
-        {(config.header?.navigation || []).filter((item: any) => item.enabled).map((item: any) => (
+        <p>{footer.navigationLabel}</p>
+        {navigation.map((item: any) => (
           <a href={item.external ? item.url : item.route} target={item.external ? '_blank' : undefined} rel={item.external ? 'noopener noreferrer' : undefined}>/{item.label}</a>
         ))}
       </nav>
 
       <div class="footer-connect">
-        <p>~/connect</p>
+        <p>{footer.connectLabel}</p>
         <div>
           {socials.map((link: any) => {
             const Icon = iconMap[link.icon];
@@ -36,17 +39,17 @@ const iconMap: Record<string, any> = { Github, Gitlab, Linkedin, Mail, Rss };
         </div>
       </div>
 
-      <a href="#main" class="back-top"><ArrowUp size={16} /><span>Haut de page</span></a>
+      <a href="#main" class="back-top"><ArrowUp size={16} /><span>{footer.backToTopLabel}</span></a>
     </div>
 
     <div class="footer-status">
-      <span class="shell-prompt"><b aria-hidden="true">adenyrr@home</b>:~$ <i aria-hidden="true"></i></span>
-      <span class="branch"><GitBranch size={13} /> main <span class="sync-mark" aria-hidden="true"></span><span class="sr-only">branche à jour</span></span>
-      <span class="build">Astro · HTML/CSS natifs</span>
+      <span class="shell-prompt"><b aria-hidden="true">{footer.shellPrompt}</b>:~$ <i aria-hidden="true"></i></span>
+      <span class="branch"><GitBranch size={13} /> {footer.branch} <span class="sync-mark" aria-hidden="true"></span><span class="sr-only">branche à jour</span></span>
+      <span class="build">{footer.poweredBy?.map((item: any, index: number) => <>{index > 0 && ' · '}<a href={item.url} target="_blank" rel="noopener noreferrer">{item.label}</a></>)}</span>
       <span>{footer.copyright || 'Copyleft'} · {year}</span>
     </div>
   </div>
-</footer>
+</footer>}
 
 <style>
   #site-footer { position: relative; z-index: 2; padding: 0 1rem 1rem; }
@@ -56,7 +59,7 @@ const iconMap: Record<string, any> = { Github, Gitlab, Linkedin, Mail, Rss };
   .footer-signature > p:first-child span { color: var(--accent-teal); }
   .footer-brand { display: inline-block; color: var(--text-primary); font: 750 clamp(2rem, 5vw, 3.2rem)/1 var(--font-body); letter-spacing: -.06em; text-decoration: none; }
   .footer-brand::first-letter { color: var(--accent-amber); }
-  .footer-note { margin: 1rem 0 0; color: var(--text-muted); font-size: .78rem; line-height: 1.65; }
+  .footer-note { margin: 1rem 0 0; color: var(--text-muted); font-size: .78rem; line-height: 1.65; white-space: pre-line; }
   .footer-nav { display: grid; align-content: start; }
   .footer-nav a { padding: .23rem 0; color: var(--text-secondary); font: .72rem var(--font-code); text-decoration: none; }
   .footer-nav a:hover { color: var(--accent-blue); transform: translateX(2px); }
@@ -72,6 +75,7 @@ const iconMap: Record<string, any> = { Github, Gitlab, Linkedin, Mail, Rss };
   .branch { display: inline-flex; align-items: center; gap: .35rem; color: var(--accent-blue); }
   .sync-mark { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-teal); }
   .build { margin-left: auto; }
+  .build a { color: inherit; text-decoration: none; } .build a:hover { color: var(--accent-blue); }
   @keyframes footer-cursor { 50% { opacity: 0; } }
   @media (max-width: 760px) {
     .footer-main { grid-template-columns: 1fr 1fr; }

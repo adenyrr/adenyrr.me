@@ -1,5 +1,6 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import { getSiteConfig } from '../utils/config';
 
 interface Props {
   title: string;
@@ -10,17 +11,18 @@ interface Props {
 }
 
 const { title, description, pubDate, heroImage, readingTime } = Astro.props;
+const config = getSiteConfig();
 ---
 
 <BaseLayout title={title} description={description} image={heroImage} article={true}>
   <article class="container blog-article blog-enter">
     <header class="article-header">
-      <a href="/blog" class="back-link">← Retour aux articles</a>
+      <a href="/blog" class="back-link">← {config.blog.backLabel}</a>
       <h1 class="gradient-text">{title}</h1>
       <div class="article-meta">
         {pubDate && (
           <time datetime={pubDate.toISOString()}>
-            {pubDate.toLocaleDateString('fr-FR', {
+            {pubDate.toLocaleDateString(config.site.locale, {
               year: 'numeric',
               month: 'long',
               day: 'numeric',

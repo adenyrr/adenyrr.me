@@ -11,69 +11,55 @@ site:
   url: "https://adenyrr.me"
   author: "adenyrr"
   email: "adenyrr@proton.me"
+  locale: "fr"
+  defaultImage: "/images/og-default.jpg"
+
+# -----------------------------------------------------------------------------
+# CLÉ PUBLIQUE GPG
+# Cette clé publique peut être téléchargée depuis la section contact.
+# Ne publiez jamais la clé privée.
+# -----------------------------------------------------------------------------
+gpg:
+  enabled: true
+  publicKeyUrl: "/keys/adenyrr.asc"
+  fingerprint: "5EB9 CF03 84B1 52AF 0EEF  10C5 1AF8 05A5 CCB3 02DA"
 
 # -----------------------------------------------------------------------------
 # FONCTIONNALITÉS ACTIVABLES/DÉSACTIVABLES
 # -----------------------------------------------------------------------------
 features:
-  home: true
   infra: true
   blog: true
   docu: true
 
 # -----------------------------------------------------------------------------
-# THÈME
+# APPARENCE
 # -----------------------------------------------------------------------------
-theme:
-  mode: "auto" # auto | dark | light
-  colors:
-    primary: "#d4845a"
-    secondary: "#c06a3a"
-    accent: "#d4845a"
-    dark:
-      background: "#141416"
-      surface: "#1c1c1f"
-      card: "rgba(255, 255, 255, 0.03)"
-      text: "#e4e4e7"
-      muted: "#737378"
-    light:
-      background: "#f8f8fa"
-      surface: "#ffffff"
-      card: "rgba(255, 255, 255, 0.65)"
-      text: "#18181b"
-      muted: "#71717a"
-  particles:
-    enabled: true
-    count: 50
-    color: "purple" # purple | cyan | mixed
-    connectDistance: 120
-    mouseRadius: 150
-  fonts:
-    body: "Inclusive Sans"
-    code: "JetBrains Mono"
+appearance:
+  ambientBackground: true
 
 # -----------------------------------------------------------------------------
 # NAVIGATION HEADER
 # -----------------------------------------------------------------------------
 header:
   show: true
-  brandName: "adenyrr.me"
+  brandName: "adenyrr"
+  brandHost: "@home"
   navigation:
     - label: "home"
       route: "/"
-      icon: "User"
       enabled: true
     - label: "blog"
       route: "/blog"
-      icon: "FileText"
+      feature: "blog"
       enabled: true
     - label: "infra"
       route: "/infra"
-      icon: "Server"
+      feature: "infra"
       enabled: true
     - label: "docu"
       url: "https://docu.adenyrr.me"
-      icon: "Library"
+      feature: "docu"
       enabled: true
       external: true
   socialLinks:
@@ -106,6 +92,13 @@ footer:
   copyright: "Copyleft CC - BY-NC"
   author: "adenyrr"
   authorUrl: "https://adenyrr.me"
+  signatureCommand: 'echo "thanks for visiting"'
+  note: "Infrastructure · Cloud · Open source\nConstruit sobrement, hébergé avec intention."
+  navigationLabel: "~/sitemap"
+  connectLabel: "~/connect"
+  backToTopLabel: "Haut de page"
+  shellPrompt: "adenyrr@home"
+  branch: "main"
   poweredBy:
     - label: "Astro"
       url: "https://astro.build/"
@@ -123,10 +116,18 @@ seo:
   twitterCard: true
 
 # -----------------------------------------------------------------------------
-# ANALYTICS (optionnel)
+# BLOG
 # -----------------------------------------------------------------------------
-analytics:
-  enabled: false
-  provider: "umami"
-  url: ""
-  websiteId: ""
+blog:
+  pageTitle: "Blog"
+  pageDescription: "Blog articles"
+  path: "writing"
+  heading: "Notes depuis"
+  headingAccent: "la console."
+  introduction: "Des retours d’expérience sur Linux, l’infrastructure, le cloud et ce que j’apprends en construisant."
+  emptyLabel: "Aucun article publié."
+  readMoreLabel: "Lire la note"
+  readingTimeSuffix: "min de lecture"
+  backLabel: "Retour aux articles"
+  rssTitle: "adenyrr.me - Blog"
+  rssDescription: "Blog personnel - Tech, Homelab & DevOps"

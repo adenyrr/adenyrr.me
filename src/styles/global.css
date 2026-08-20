@@ -83,23 +83,22 @@
      Base Okabe–Ito : le « succès » est un vert BLEUTÉ, distinguable du
      corail en deutéranopie/protanopie.
      ========================================================================== */
-  --accent-amber: light-dark(#9a5b00, #e8a94c);
-  --accent-blue:  light-dark(#0f6fae, #6fb4ea);
-  --accent-teal:  light-dark(#067a5f, #34d1a6);
-  /* Réf. §2.2 : #b94726. Sur une pilule teintée corail (vif à .16) il
-     retombe à 4.47:1 — un cheveu sous le seuil. Assombri d'un cran pour
-     tenir 4.53 sur la pilule comme sur le verre nu. */
-  --accent-coral: light-dark(#b84625, #f08767);
-  --focus-ring:   light-dark(#0f6fae, #6fb4ea);
+  --accent-amber: light-dark(#945000, #e8a94c);
+  --accent-blue:  light-dark(#0969a9, #6fb4ea);
+  --accent-teal:  light-dark(#006b59, #34d1a6);
+  /* Le corail clair reste distinct de l'ambre et conserve 4.79:1 jusque
+     sur la surface surélevée, sans faire reposer l'état sur la couleur. */
+  --accent-coral: light-dark(#b03b20, #f08767);
+  --focus-ring:   light-dark(#0969a9, #6fb4ea);
 
   /* ---- Fonds de page (§2.1 / §2.2) ---- */
-  --bg-0: light-dark(#eef1f5, #0b0f14);
-  --bg-1: light-dark(#e3e8f0, #121820);
+  --bg-0: light-dark(#f8f3e8, #0b0f14);
+  --bg-1: light-dark(#fffdf8, #121820);
 
   /* ---- Verre (§2.1 / §2.2) ---- */
-  --glass-bg:        light-dark(rgba(255,255,255,.6),  rgba(255,255,255,.055));
-  --glass-bg-strong: light-dark(rgba(255,255,255,.82), rgba(255,255,255,.09));
-  --glass-border:    light-dark(rgba(20,28,38,.14),    rgba(255,255,255,.14));
+  --glass-bg:        light-dark(rgba(255,253,248,.68), rgba(255,255,255,.055));
+  --glass-bg-strong: light-dark(rgba(255,255,255,.88), rgba(255,255,255,.09));
+  --glass-border:    light-dark(rgba(29,64,82,.18),    rgba(255,255,255,.14));
   --glass-blur:      22px;
   --glint:           light-dark(rgba(255,255,255,.85), rgba(255,255,255,.07));
   /* Listes multi-ombres : light-dark() sépare ses deux arguments par une
@@ -109,18 +108,16 @@
 
   /* ---- Halos ambiants (§2.1 / §2.2) — assez opaques pour que le
      backdrop-filter ait de la matière à flouter (§1.1) ---- */
-  --blob-amber: light-dark(rgba(var(--amber-rgb),.30), rgba(232,169,76,.20));
-  --blob-blue:  light-dark(rgba(var(--blue-rgb),.22),  rgba(111,180,234,.16));
-  --blob-teal:  light-dark(rgba(var(--teal-rgb),.22),  rgba(52,209,166,.12));
+  --blob-amber: light-dark(rgba(var(--amber-rgb),.34), rgba(232,169,76,.20));
+  --blob-blue:  light-dark(rgba(var(--blue-rgb),.25),  rgba(111,180,234,.16));
+  --blob-teal:  light-dark(rgba(var(--teal-rgb),.18),  rgba(52,209,166,.12));
 
   /* ---- Texte (§2.1 / §2.2) ---- */
-  --text-primary:   light-dark(#10151c, #eef2f6);
-  --text-secondary: light-dark(#454f5e, #a9b4c0);
-  /* Réf. §2.2 : #65707e / #7c8794. Ces valeurs nominales tombent sous 4.5:1
-     une fois COMPOSITÉES sur --glass-bg-strong (4.44 en clair, 4.22 en
-     sombre) — la règle §2.2 impose de vérifier au rendu final, d'où ce
-     décalage minimal qui fait passer les deux thèmes (4.51 / 4.51). */
-  --text-muted:     light-dark(#646f7d, #818c99);
+  --text-primary:   light-dark(#15202b, #eef2f6);
+  --text-secondary: light-dark(#344454, #a9b4c0);
+  /* L'encre secondaire la plus discrète reste à 4.71:1 sur la surface
+     claire la plus sombre ; la valeur du thème sombre est inchangée. */
+  --text-muted:     light-dark(#566675, #818c99);
 
   /* ==========================================================================
      ALIAS DE COMPATIBILITÉ — l'API de tokens consommée par les composants
@@ -128,17 +125,17 @@
      ========================================================================== */
   --bg:             var(--bg-0);
   --surface:        var(--bg-1);
-  --surface-raised: light-dark(#d8dfe9, #1a222c);
+  --surface-raised: light-dark(#ebe5d9, #1a222c);
   --card-bg:        var(--glass-bg);
   --card-border:    var(--glass-border);
-  --card-border-hover: light-dark(rgba(20,28,38,.28), rgba(255,255,255,.30));
+  --card-border-hover: light-dark(rgba(29,64,82,.38), rgba(255,255,255,.30));
 
   --text:       var(--text-primary);
   --muted-text: var(--text-muted);
 
   /* L'ambre reste la teinte de marque ; les liens passent au bleu « info ». */
   --accent:           var(--accent-amber);
-  --accent-mid:       light-dark(#b87510, #f5c47a);
+  --accent-mid:       light-dark(#9f5900, #f5c47a);
   --accent-secondary: light-dark(#7a4700, #c98a2e);
   --accent-warm:      var(--accent-amber);
   --link-color:       var(--accent-blue);
@@ -156,7 +153,7 @@
 
   --gradient-start: light-dark(#7a4700, #c98a2e);
   --gradient-mid:   var(--accent-amber);
-  --gradient-end:   light-dark(#b87510, #f5c47a);
+  --gradient-end:   light-dark(#9f5900, #f5c47a);
 
   /* ---- Code ---- */
   --code-bg:   var(--bg-1);
@@ -219,23 +216,23 @@
 
   /* ---- Décor non textuel (couche « vif ») ---- */
   --scan-color: rgba(var(--amber-rgb), .19);
-  --grid-line:  light-dark(rgba(20,28,38,.05), rgba(255,255,255,.05));
+  --grid-line:  light-dark(rgba(29,64,82,.075), rgba(255,255,255,.05));
 
   /* ---- Fond ambiant : nappes en dérive, volontairement plus faibles que
      les halos §3.2 posés sur <body> — elles s'y ajoutent sans saturer. ---- */
   --blob-drift-amber: rgba(var(--amber-rgb), .10);
   --blob-drift-blue:  rgba(var(--blue-rgb), .10);
-  --ambient-dot: light-dark(rgba(20,28,38,.06), rgba(255,255,255,.045));
+  --ambient-dot: light-dark(rgba(29,64,82,.085), rgba(255,255,255,.045));
 }
 
 /* Le choix explicite de thème (toggle) force le color-scheme : tous les
    tokens light-dark() basculent d'un coup, avant le premier paint. */
 :root[data-theme="light"] {
   color-scheme: light;
-  /* Ombres du thème clair (§2.2) — teintées bleu-ardoise, jamais du noir
-     pur, sinon le verre paraît sale sur fond clair. */
-  --shadow: 0 24px 55px -18px rgba(20,30,45,.30), 0 3px 10px rgba(20,30,45,.12);
-  --shadow-sm: 0 1px 2px rgba(20,30,45,.10), 0 2px 6px rgba(20,30,45,.08);
+  /* Ombres claires colorées : bleu ardoise pour le volume, ambre très
+     diffus pour relier les surfaces au fond ivoire sans effet gris sale. */
+  --shadow: 0 24px 64px -22px rgba(24,69,94,.28), 0 5px 18px rgba(120,76,18,.10);
+  --shadow-sm: 0 1px 3px rgba(24,69,94,.13), 0 3px 9px rgba(120,76,18,.07);
 }
 :root[data-theme="dark"],
 .dark { color-scheme: dark; }
@@ -244,8 +241,8 @@
    pilote seul les ombres, light-dark() gère déjà tout le reste. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --shadow: 0 24px 55px -18px rgba(20,30,45,.30), 0 3px 10px rgba(20,30,45,.12);
-    --shadow-sm: 0 1px 2px rgba(20,30,45,.10), 0 2px 6px rgba(20,30,45,.08);
+    --shadow: 0 24px 64px -22px rgba(24,69,94,.28), 0 5px 18px rgba(120,76,18,.10);
+    --shadow-sm: 0 1px 3px rgba(24,69,94,.13), 0 3px 9px rgba(120,76,18,.07);
   }
 }
 

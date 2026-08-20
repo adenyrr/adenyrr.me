@@ -5,6 +5,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import ParticleBackground from '../components/ParticleBackground.astro';
 import Animations from '../components/Animations.astro';
+import { getSiteConfig } from '../utils/config';
 import '../styles/global.css';
 
 interface Props {
@@ -15,10 +16,11 @@ interface Props {
 }
 
 const { title, description, image, article = false } = Astro.props;
+const config = getSiteConfig();
 ---
 
 <!doctype html>
-<html lang="fr">
+<html lang={config.site.locale}>
   <head>
     <BaseHead title={title} description={description} image={image} article={article} />
     <ClientRouter />

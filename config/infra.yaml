@@ -8,23 +8,35 @@
 # -----------------------------------------------------------------------------
 # PARAMÈTRES GÉNÉRAUX
 # -----------------------------------------------------------------------------
+page:
+  title: "Infrastructure"
+  description: "Infrastructure homelab"
+  path: "lab"
+  heading: "Une infrastructure"
+  headingAccent: "vivante et documentée."
+  introduction: "Un homelab souverain pour expérimenter, comprendre et opérer chaque couche — du réseau physique aux services exposés."
+  explorerLabel: "Explorer la topologie"
+  terminalTitle: "infra.summary"
+  terminalStatus: "online"
+
 documentation:
   url: "https://docu.adenyrr.me"
-  label: "Documentation complète"
+  label: "Lire la documentation"
+  serviceLinks:
+    Jellyfin: "https://docu.adenyrr.me/services/jellyfin"
+    Ollama: "https://docu.adenyrr.me/services/ollama"
+    Open WebUI: "https://docu.adenyrr.me/services/ollama"
+    step-ca: "https://docu.adenyrr.me/reseau/stepca"
+    Nginx Proxy Manager: "https://docu.adenyrr.me/reseau/swag"
+    CrowdSec: "https://docu.adenyrr.me/reseau/swag"
+    Fail2ban: "https://docu.adenyrr.me/reseau/swag"
+    Home Assistant: "https://docu.adenyrr.me/hassio/install"
 
 stats:
   totalCpuCores: 32
   totalRamGB: 80
-  totalServices: 18
   cephStorage: "3×2 To"
   nasStorage: "2×12 To"
-
-# -----------------------------------------------------------------------------
-# OPTIONS D'AFFICHAGE
-# -----------------------------------------------------------------------------
-display:
-  hideMonitoring: true
-  hideThroughput: true
 
 # -----------------------------------------------------------------------------
 # ONGLETS (activables/désactivables)
@@ -34,14 +46,29 @@ tabs:
     enabled: true
     label: "/srv"
     icon: "Boxes"
+    hash: "srv"
+    countLabel: "services"
+    description: "Nœuds, machines virtuelles, conteneurs et services actifs"
   lan:
     enabled: true
     label: "/lan"
     icon: "Network"
+    hash: "lan"
+    countLabel: "réseaux"
+    description: "Segmentation réseau, zones de confiance et équipements"
   wan:
     enabled: true
     label: "/wan"
     icon: "Globe"
+    hash: "wan"
+    countLabel: "expositions"
+    description: "Chemin d’exposition, sécurité périmétrique et routage TLS"
+
+vlanCategories:
+  critical: { label: ".critical", color: "red" }
+  production: { label: ".prod", color: "blue" }
+  network: { label: ".net", color: "green" }
+  access: { label: ".access", color: "purple" }
 
 # -----------------------------------------------------------------------------
 # NODES PROXMOX
@@ -51,42 +78,16 @@ proxmoxNodes:
     cpu: "Intel i7-6700K"
     ram: "8c / 16 GB"
     color: "cyan"
-    services:
-      - { name: "CEPH (mon, mgr, osd)", type: "Natif" }
-      - { name: "Opensense", type: "VM" }
-      - { name: "SIEM", type: "VM" }
-      - { name: "DNS", type: "LXC" }
-      - { name: "Net-tools", type: "LXC" }
-      - { name: "Proxy", type: "LXC" }
-      - { name: "ACME", type: "LXC" }
 
   - name: "Anne"
     cpu: "AMD Ryzen 5 3500 GE Pro"
     ram: "8c / 16 GB"
     color: "purple"
-    services:
-      - { name: "CEPH (mon, mgr)", type: "Natif" }
-      - { name: "Gitlab-CE", type: "VM" }
-      - { name: "Deploy", type: "LXC" }
-      - { name: "Analytics", type: "LXC" }
-      - { name: "Monitoring", type: "LXC" }
-      - { name: "DCManager", type: "LXC" }
-      - { name: "PVE-Export", type: "LXC" }
 
   - name: "Grace"
     cpu: "AMD Ryzen 7 2700X"
     ram: "16c / 48 GB"
     color: "green"
-    services:
-      - { name: "CEPH (mon, mgr, osd)", type: "Natif" }
-      - { name: "Stockage", type: "VM" }
-      - { name: "Médias", type: "VM" }
-      - { name: "Cloud", type: "VM" }
-      - { name: "Frontend", type: "VM" }
-      - { name: "LLM", type: "VM" }
-      - { name: "Lab", type: "VM" }
-      - { name: "KubeMaster", type: "VM" }
-      - { name: "KubeWorker", type: "VM" }
 
 # -----------------------------------------------------------------------------
 # PÉRIPHÉRIQUES RÉSEAU
@@ -97,8 +98,6 @@ networkDevices:
     ram: "4 GB"
     color: "red"
     icon: "Server"
-    services:
-      - { name: "Home Assistant", type: "Natif" }
 
   - name: "Routeur Opensense"
     cpu: "NIC Intel 4x2.5G"

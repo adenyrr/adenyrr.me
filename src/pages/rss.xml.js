@@ -1,11 +1,13 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
+import { getSiteConfig } from '../utils/config';
 
 export async function GET(context) {
   const posts = await getCollection('blog');
+  const config = getSiteConfig();
   return rss({
-    title: 'adenyrr.me - Blog',
-    description: 'Blog personnel - Tech, Homelab & DevOps',
+    title: config.blog.rssTitle,
+    description: config.blog.rssDescription,
     site: context.site,
     items: posts
       .sort((a, b) => (b.data.pubDate?.valueOf() || 0) - (a.data.pubDate?.valueOf() || 0))

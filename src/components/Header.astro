@@ -7,21 +7,22 @@ import { ExternalLink, Github, Menu, Terminal, X } from '@lucide/astro';
 const config = getSiteConfig();
 const currentPath = Astro.url.pathname;
 const navItems = (config.header?.navigation || []).filter(
-  (item: any) => item.enabled && config.features?.[item.label] !== false,
+  (item: any) => item.enabled && (!item.feature || config.features[item.feature]),
 );
 const socialLinks = (config.header?.socialLinks || []).filter((link: any) => link.enabled);
+const githubLink = socialLinks.find((link: any) => link.label.toLowerCase() === 'github');
 
 function active(item: any) {
   return !item.external && (currentPath === item.route || (item.route !== '/' && currentPath.startsWith(item.route)));
 }
 ---
 
-<header id="site-header">
+{config.header.show && <header id="site-header">
   <a class="skip-link" href="#main">Aller au contenu principal</a>
   <div class="header-shell">
-    <a class="brand" href="/" aria-label="adenyrr — accueil">
+    <a class="brand" href="/" aria-label={`${config.header.brandName} — accueil`}>
       <span class="brand-glyph"><Terminal size={15} /></span>
-      <span>adenyrr</span><span class="brand-host">@home</span>
+      <span>{config.header.brandName}</span><span class="brand-host">{config.header.brandHost}</span>
     </a>
 
     <nav class="desktop-nav" aria-label="Navigation principale">
@@ -38,7 +39,7 @@ function active(item: any) {
     </nav>
 
     <div class="header-actions">
-      <a class="github-link" href="https://github.com/adenyrr" target="_blank" rel="noopener noreferrer" aria-label="GitHub d’adenyrr"><Github size={17} /></a>
+      {githubLink && <a class="github-link" href={githubLink.url} target="_blank" rel="noopener noreferrer" aria-label={githubLink.label}><Github size={17} /></a>}
       <ReadingModeToggle />
       <ThemeToggle />
       <details class="mobile-menu">
@@ -64,7 +65,7 @@ function active(item: any) {
       </details>
     </div>
   </div>
-</header>
+</header>}
 
 <style>
   #site-header {

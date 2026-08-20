@@ -1,17 +1,23 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
-import { getHomeConfig, getInfraConfig } from '../utils/config';
+import { getHomeConfig, getInfraConfig, getSiteConfig } from '../utils/config';
 import { fetchCredlyBadges } from '../utils/credly';
 import {
-  ArrowDownRight, ArrowUpRight, BookOpen, Box, Braces, Cloud,
-  ExternalLink, Github, Network, Server, ShieldCheck, Sparkles,
+  ArrowDownRight, ArrowUpRight, BookOpen, Box, Braces, Cloud, Download,
+  Github, KeyRound, Mail, MessageCircle, Network, Server, ShieldCheck,
 } from '@lucide/astro';
 
 const portfolio = getHomeConfig();
 const infra = getInfraConfig() as any;
+const siteConfig = getSiteConfig();
 const profile = portfolio.profile || {};
 const sections = portfolio.sections || {};
+const hero = portfolio.hero;
+const widget = portfolio.systemWidget;
+const sectionHeaders = portfolio.sectionHeaders;
+const journeyContent = portfolio.journey;
+const contactContent = portfolio.contact;
 
 let credlyBadges: any[] = [];
 if (portfolio.credly?.enabled && portfolio.credly?.username) {
@@ -27,69 +33,95 @@ const certifications = (credlyBadges.length > 0
       id: badge.id, title: badge.title, issuer: badge.issuer, date: badge.date,
       credly_url: badge.credlyUrl, badge_image: badge.imageUrl, pinned: badge.pinned ?? false,
     }))
-  : (portfolio.certifications || [])).slice(0, 9);
+  : (portfolio.certifications || []));
 
-const projectPriority: Record<string, number> = { murmurOS: 0, alyx: 1, 'infra & docu': 2, trainCerts: 3 };
-const projects = [...(portfolio.projects || [])].sort(
-  (a: any, b: any) => (projectPriority[a.id] ?? 99) - (projectPriority[b.id] ?? 99),
-);
-const heroLinks = (portfolio.heroLinks || []).filter((link: any) => link.enabled !== false);
-const iconMap: Record<string, any> = { Library: BookOpen, Server, FileText: Braces, Code: Braces, Globe: Cloud };
+const projects = portfolio.projects || [];
+const iconMap: Record<string, any> = {
+  Library: BookOpen, Server, FileText: Braces, Code: Braces,
+  Globe: Cloud, ShieldCheck, Box, Network,
+};
+const socialLinks = siteConfig.header?.socialLinks || [];
+const discordUrl = socialLinks.find((link: any) => link.label.toLowerCase() === 'discord' && link.enabled !== false)?.url;
+const emailUrl = socialLinks.find((link: any) => link.label.toLowerCase() === 'email' && link.enabled !== false)?.url
+  || `mailto:${siteConfig.site.email}`;
+const gpgKeyUrl = siteConfig.gpg?.enabled ? siteConfig.gpg.publicKeyUrl : undefined;
+const gpgFingerprint = siteConfig.gpg?.fingerprint;
 const documentedWorkloads = (infra.serviceGroups || []).reduce(
   (total: number, group: any) => total + (group.services || []).length,
   0,
 );
 const exposedServices = (infra.wanExposure?.exposedServices || []).length;
 
-const labNodes = [
-  { id: 'edge', label: 'Edge', eyebrow: 'WAN / frontière', title: 'Edge & sécurité', text: 'Filtrage, terminaison TLS et contrôle des flux avant exposition des services.', tech: 'OPNsense · BunkerWeb · CrowdSec', icon: ShieldCheck },
-  { id: 'compute', label: 'Compute', eyebrow: 'Cluster / calcul', title: 'Nœuds Proxmox', text: `${infra.proxmoxNodes?.length || 3} nœuds orchestrent les charges virtuelles, les conteneurs et le stockage distribué.`, tech: `${infra.stats?.totalCpuCores || 32} cœurs · ${infra.stats?.totalRamGB || 80} Go RAM · Ceph`, icon: Server },
-  { id: 'platform', label: 'Platform', eyebrow: 'Services / plateforme', title: 'Services souverains', text: 'Applications, identité, observabilité et workloads Kubernetes exploités en autonomie.', tech: `${infra.stats?.totalServices || 18}+ services · Kubernetes · OIDC`, icon: Box },
-  { id: 'data', label: 'Data', eyebrow: 'Stockage / résilience', title: 'Données & sauvegardes', text: 'Stockage distribué et NAS isolé pour concilier disponibilité, capacité et reprise.', tech: `Ceph ${infra.stats?.cephStorage || '3×2 To'} · NAS ${infra.stats?.nasStorage || '2×12 To'}`, icon: Network },
-];
+const metricText: Record<string, string> = {
+  compute: `${infra.stats?.totalCpuCores || 32} cœurs · ${infra.stats?.totalRamGB || 80} Go RAM · Ceph`,
+  platform: `${documentedWorkloads} services · Kubernetes · OIDC`,
+  storage: `Ceph ${infra.stats?.cephStorage || '3×2 To'} · NAS ${infra.stats?.nasStorage || '2×12 To'}`,
+};
+const labNodes = (portfolio.labLayers || []).map((layer: any) => ({
+  ...layer,
+  tech: layer.tech || metricText[layer.metrics] || '',
+  icon: iconMap[layer.icon] || Server,
+}));
 
-const networkTechnician = certifications.find((cert: any) =>
-  /network technician/i.test(cert.title || ''),
-);
-const highlightedCerts = [
-  ...certifications.slice(0, 3),
-  ...(networkTechnician && !certifications.slice(0, 3).some((cert: any) => cert.id === networkTechnician.id)
-    ? [networkTechnician]
-    : []),
-];
+const highlightedCerts = certifications.slice(0, portfolio.credly?.featuredCount || 4);
 const highlightedIds = new Set(highlightedCerts.map((cert: any) => cert.id));
 const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert.id));
+
+const careerEntries = [
+  ...(sections.jobs === false ? [] : (portfolio.jobs || []).map((job: any) => ({
+    id: `job-${job.id}`,
+    type: journeyContent.experienceLabel,
+    period: job.period,
+    title: job.title,
+    detail: [job.company, job.location].filter(Boolean).join(' · '),
+  }))),
+  ...(sections.diplomas === false ? [] : (portfolio.diplomas || []).map((diploma: any) => ({
+    id: `diploma-${diploma.id}`,
+    type: journeyContent.educationLabel,
+    period: diploma.period,
+    title: diploma.title,
+    detail: diploma.institution,
+  }))),
+].sort((a: any, b: any) => {
+  const years = (period: string = '') => [...period.matchAll(/(?:19|20)\d{2}/g)].map((match) => Number(match[0]));
+  return Math.max(...years(b.period), 0) - Math.max(...years(a.period), 0);
+});
 ---
 
 <BaseLayout title="Home" description={profile.tagline}>
   <div class="portfolio-shell">
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="hero-kicker"><span aria-hidden="true">$</span> whoami</p>
+        <p class="hero-kicker"><span aria-hidden="true">$</span> {hero.kicker}</p>
         <h1 id="hero-title"><span class="title-prefix">.</span>{profile.pseudo}</h1>
-        <p class="hero-role">sysadmin | infra &amp; cloud; open source | privacy | sovereignty</p>
-        <p class="hero-statement">Je construis des infrastructures <strong>ouvertes</strong>, <strong>souveraines</strong> et <strong>automatisées</strong>.</p>
+        <p class="hero-role">{hero.role}</p>
+        <p class="hero-statement">
+          {hero.statementLead}{' '}
+          {hero.qualities.map((quality: string, index: number) => (
+            <><strong>{quality}</strong>{index < hero.qualities.length - 2 ? ', ' : index === hero.qualities.length - 2 ? ' et ' : '.'}</>
+          ))}
+        </p>
 
-        <div class="hero-console" aria-label="Technologies pratiquées">
-          <span class="console-prompt" aria-hidden="true">adenyrr@workstation:~$</span>
-          <span id="hero-command">terraform plan</span>
+        <div class="hero-console" aria-label="Technologies pratiquées" data-commands={JSON.stringify(hero.consoleCommands)}>
+          <span class="console-prompt" aria-hidden="true">{hero.consolePrompt}</span>
+          <span id="hero-command">{hero.consoleCommands[0]}</span>
           <span class="console-cursor" aria-hidden="true"></span>
         </div>
 
         <div class="hero-actions">
-          <a class="action action-primary" href="#projects">Explorer mes projets <ArrowDownRight size={17} /></a>
-          <a class="action action-secondary" href="/infra">Ouvrir ~/lab <ArrowUpRight size={16} /></a>
+          <a class="action action-primary" href={hero.primaryAction.url}>{hero.primaryAction.label} <ArrowDownRight size={17} /></a>
+          <a class="action action-secondary" href={hero.secondaryAction.url}>{hero.secondaryAction.label} <ArrowUpRight size={16} /></a>
         </div>
       </div>
 
-      <aside class="system-card glass-surface" aria-label="Résumé système d’adenyrr">
+      <aside class="system-card glass-surface" aria-label={widget.ariaLabel}>
         <header class="tui-titlebar">
-          <span class="tui-title"><b aria-hidden="true">╭─</b> system.profile <b aria-hidden="true">─╮</b></span>
-          <span class="tui-view">tty / 01</span>
-          <span class="tui-online"><i aria-hidden="true"></i> ready</span>
+          <span class="tui-title"><b aria-hidden="true">╭─</b> {widget.windowTitle} <b aria-hidden="true">─╮</b></span>
+          <span class="tui-view">{widget.terminal}</span>
+          <span class="tui-online"><i aria-hidden="true"></i> {widget.status}</span>
         </header>
 
-        <p class="tui-command"><span class="tui-prompt">adenyrr@home:~$</span> fastfetch <span class="tui-flag">--config sovereign.toml</span><i aria-hidden="true"></i></p>
+        <p class="tui-command"><span class="tui-prompt">{widget.prompt}</span> {widget.command} <span class="tui-flag">{widget.commandFlag}</span><i aria-hidden="true"></i></p>
 
         <div class="fetch-body">
           <div class="fetch-orbit" aria-hidden="true">
@@ -97,62 +129,43 @@ const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert
             <span class="orbit-axis orbit-axis-y"></span>
             <span class="orbit-ring orbit-ring-outer"><i></i></span>
             <span class="orbit-ring orbit-ring-inner"><i></i></span>
-            <span class="orbit-core"><b>A</b><small>SYS</small></span>
+            <span class="orbit-core"><b>{widget.monogram}</b><small>{widget.orbitLabel}</small></span>
           </div>
 
           <div class="fetch-heading">
-            <span class="fetch-mark" aria-hidden="true">A<span>:</span></span>
-            <div><strong>adenyrr<span>@home</span></strong><small>sovereign systems operator</small></div>
+            <span class="fetch-mark" aria-hidden="true">{widget.monogram}<span>:</span></span>
+            <div><strong>{widget.identity}<span>{widget.hostSuffix}</span></strong><small>{widget.subtitle}</small></div>
           </div>
 
           <dl class="fetch-list">
-            <div><dt><span>01</span>identity</dt><dd><strong>adenyrr</strong> / operator</dd></div>
-            <div><dt><span>02</span>host</dt><dd>adenyrr.me</dd></div>
-            <div><dt><span>03</span>role</dt><dd>sysadmin · Charleroi, BE</dd></div>
-            <div><dt><span>04</span>cluster</dt><dd>{infra.proxmoxNodes?.length || 3}× Proxmox VE · 1× ARM edge</dd></div>
-            <div><dt><span>05</span>compute</dt><dd>{infra.stats?.totalCpuCores || 32} cores · x86_64</dd></div>
-            <div><dt><span>06</span>memory</dt><dd>{infra.stats?.totalRamGB || 80} GiB · DDR4</dd></div>
+            <div><dt><span>01</span>identity</dt><dd><strong>{widget.identity}</strong> / {widget.operator}</dd></div>
+            <div><dt><span>02</span>host</dt><dd>{widget.host}</dd></div>
+            <div><dt><span>03</span>role</dt><dd>{widget.role} · {widget.location}</dd></div>
+            <div><dt><span>04</span>cluster</dt><dd>{infra.proxmoxNodes?.length || 3}× Proxmox VE · {widget.edgeNodes}× ARM edge</dd></div>
+            <div><dt><span>05</span>compute</dt><dd>{infra.stats?.totalCpuCores || 32} cores · {widget.architecture}</dd></div>
+            <div><dt><span>06</span>memory</dt><dd>{infra.stats?.totalRamGB || 80} GiB · {widget.memoryType}</dd></div>
             <div><dt><span>07</span>storage</dt><dd>{infra.stats?.cephStorage || '3×2 To'} Ceph · {infra.stats?.nasStorage || '2×12 To'} NAS</dd></div>
-            <div><dt><span>08</span>network</dt><dd>{infra.vlans?.length || 11} VLAN · OPNsense · WireGuard</dd></div>
+            <div><dt><span>08</span>network</dt><dd>{infra.vlans?.length || 11} VLAN · {widget.networkStack.join(' · ')}</dd></div>
             <div><dt><span>09</span>services</dt><dd>{documentedWorkloads} workloads · <em>{exposedServices} exposed</em></dd></div>
-            <div><dt><span>10</span>security</dt><dd>CrowdSec · BunkerWeb · step-ca</dd></div>
-            <div><dt><span>11</span>platform</dt><dd>Traefik · Authentik · Kubernetes</dd></div>
-            <div><dt><span>12</span>systems</dt><dd>openSUSE · Debian</dd></div>
+            <div><dt><span>10</span>security</dt><dd>{widget.securityStack.join(' · ')}</dd></div>
+            <div><dt><span>11</span>platform</dt><dd>{widget.platformStack.join(' · ')}</dd></div>
+            <div><dt><span>12</span>systems</dt><dd>{widget.systems.join(' · ')}</dd></div>
           </dl>
         </div>
 
         <footer class="tui-footer">
           <span class="fetch-palette" aria-label="Palette du site"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-          <span class="fetch-state"><i aria-hidden="true"></i> available</span>
+          <span class="fetch-state"><i aria-hidden="true"></i> {widget.availability}</span>
           <span class="tui-clock"><span id="local-time">--:--:--</span> · up <span id="page-uptime">00:00</span></span>
         </footer>
       </aside>
     </section>
 
-    <section class="about-strip" aria-label="Présentation">
-      <div class="section-index">01</div>
-      <p class="about-command"><span>~/about.md</span> <span aria-hidden="true">—</span> {profile.title}</p>
-      <div class="about-body">
-        <p>{profile.bio}</p>
-        <div class="about-links">
-          {heroLinks.map((link: any) => {
-            const Icon = iconMap[link.icon];
-            const isExternal = link.internal === false;
-            return (
-              <a href={link.url} target={isExternal ? '_blank' : undefined} rel={isExternal ? 'noopener noreferrer' : undefined}>
-                {Icon && <Icon size={15} />} {link.label}{isExternal && <ExternalLink size={12} />}
-              </a>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-
     {sections.projects && (
       <section class="work-section" id="projects" aria-labelledby="projects-title">
         <header class="editorial-heading">
-          <div><p class="path-label"><span>02</span> ~/work</p><h2 id="projects-title">Selected work</h2></div>
-          <p>Des systèmes conçus pour être compris, automatisés et réellement opérables.</p>
+          <div><p class="path-label"><span>{sectionHeaders.projects.index}</span> {sectionHeaders.projects.path}</p><h2 id="projects-title">{sectionHeaders.projects.title}</h2></div>
+          <p>{sectionHeaders.projects.introduction}</p>
         </header>
 
         <div class="projects-bento">
@@ -180,14 +193,14 @@ const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert
       </section>
     )}
 
-    <section class="lab-section" aria-labelledby="lab-title">
+    {sections.lab && <section class="lab-section" id="lab" aria-labelledby="lab-title">
       <header class="editorial-heading">
-        <div><p class="path-label"><span>03</span> ~/lab</p><h2 id="lab-title">Infrastructure, en direct du plan.</h2></div>
-        <p>Explorez les couches d’un homelab qui sert autant de plateforme que de terrain d’expérimentation.</p>
+        <div><p class="path-label"><span>{sectionHeaders.lab.index}</span> {sectionHeaders.lab.path}</p><h2 id="lab-title">{sectionHeaders.lab.title}</h2></div>
+        <p>{sectionHeaders.lab.introduction}</p>
       </header>
 
       <div class="lab-console glass-surface">
-        <div class="lab-toolbar"><span><i aria-hidden="true"></i> topology.map</span><span>{infra.stats?.totalServices || 18} services <b aria-hidden="true">·</b> documentés</span></div>
+        <div class="lab-toolbar"><span><i aria-hidden="true"></i> topology.map</span><span>{documentedWorkloads} services <b aria-hidden="true">·</b> documentés</span></div>
         <div class="lab-workspace">
           <div class="topology" role="group" aria-label="Couches de l’infrastructure">
             <span class="topology-source">Internet</span><span class="topology-line" aria-hidden="true"></span>
@@ -210,26 +223,30 @@ const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert
           </aside>
         </div>
       </div>
-    </section>
+    </section>}
 
-    <section class="journey-section" aria-labelledby="journey-title">
+    {sections.journey && <section class="journey-section" id="journey" aria-labelledby="journey-title">
       <header class="editorial-heading">
-        <div><p class="path-label"><span>04</span> ~/journey</p><h2 id="journey-title">Parcours & credentials</h2></div>
-        <p>Un parcours non linéaire, guidé par le concret, la curiosité et l’apprentissage continu.</p>
+        <div><p class="path-label"><span>{sectionHeaders.journey.index}</span> {sectionHeaders.journey.path}</p><h2 id="journey-title">{sectionHeaders.journey.title}</h2></div>
+        <p>{sectionHeaders.journey.introduction}</p>
       </header>
 
       <div class="journey-grid">
         <div class="timeline-panel glass-surface">
-          <p class="panel-label">journalctl --career</p>
+          <p class="panel-label">{journeyContent.careerCommand}</p>
           <ol class="career-timeline">
-            {(portfolio.jobs || []).map((job: any) => <li><time>{job.period}</time><div><span>Expérience</span><h3>{job.title}</h3><p>{job.company} · {job.location}</p></div></li>)}
-            {(portfolio.diplomas || []).slice().reverse().map((diploma: any) => <li><time>{diploma.period}</time><div><span>Formation</span><h3>{diploma.title}</h3><p>{diploma.institution}</p></div></li>)}
+            {careerEntries.map((entry: any) => (
+              <li>
+                <time>{entry.period}</time>
+                <div><span>{entry.type}</span><h3>{entry.title}</h3><p>{entry.detail}</p></div>
+              </li>
+            ))}
           </ol>
         </div>
 
         {sections.certifications && certifications.length > 0 && (
           <div class="credentials-panel glass-surface">
-            <div class="credential-heading"><div><p class="panel-label">ls ~/credentials</p><h3>Certifications récentes</h3></div><ShieldCheck size={22} aria-hidden="true" /></div>
+            <div class="credential-heading"><div><p class="panel-label">{journeyContent.credentialsCommand}</p><h3>{journeyContent.credentialsTitle}</h3></div><ShieldCheck size={22} aria-hidden="true" /></div>
             <div class="credential-list">
               {highlightedCerts.map((cert: any) => (
                 <a href={cert.credly_url} target="_blank" rel="noopener noreferrer" class="credential">
@@ -240,20 +257,38 @@ const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert
             </div>
             {otherCerts.length > 0 && (
               <details class="other-credentials">
-                <summary><span>+ {otherCerts.length} autres credentials</span><span class="details-plus" aria-hidden="true">+</span></summary>
+                <summary><span>+ {otherCerts.length} {journeyContent.otherCredentialsLabel}</span><span class="details-plus" aria-hidden="true">+</span></summary>
                 <ul>{otherCerts.map((cert: any) => <li><a href={cert.credly_url} target="_blank" rel="noopener noreferrer">{cert.title}<ArrowUpRight size={13} /></a></li>)}</ul>
               </details>
             )}
           </div>
         )}
       </div>
-    </section>
+    </section>}
 
-    <section class="contact-panel" aria-labelledby="contact-title">
-      <div><p class="path-label"><span>05</span> ~/contact</p><h2 id="contact-title">Construisons quelque chose de robuste.</h2></div>
-      <p>Une idée, une infrastructure à fiabiliser ou simplement envie de parler Linux et open source&nbsp;?</p>
-      <a class="action action-primary" href="mailto:adenyrr@proton.me">Démarrer une conversation <Sparkles size={16} /></a>
-    </section>
+    {sections.contact && <section class="contact-panel" id="contact" aria-labelledby="contact-title">
+      <div><p class="path-label"><span>{sectionHeaders.contact.index}</span> {sectionHeaders.contact.path}</p><h2 id="contact-title">{sectionHeaders.contact.title}</h2></div>
+      <p>{sectionHeaders.contact.introduction}</p>
+      <div class="contact-actions">
+        {discordUrl && <a class="action action-primary" href={discordUrl} target="_blank" rel="noopener noreferrer">{contactContent.discordLabel} <MessageCircle size={17} /></a>}
+        <a class="action action-secondary" href={emailUrl}>{contactContent.emailLabel} <Mail size={16} /></a>
+      </div>
+
+      <div class:list={['gpg-slot', { 'gpg-slot-ready': gpgKeyUrl }]}>
+        <span class="gpg-icon" aria-hidden="true"><KeyRound size={19} /></span>
+        <div class="gpg-copy">
+          <p><span>{sectionHeaders.contact.index}.a</span> {contactContent.gpgPath}</p>
+          <strong>{contactContent.gpgTitle}</strong>
+          <small>{contactContent.gpgDescription}</small>
+          {gpgFingerprint && <code>{gpgFingerprint}</code>}
+        </div>
+        {gpgKeyUrl ? (
+          <a class="gpg-download" href={gpgKeyUrl} download="adenyrr-public-key.asc">{contactContent.gpgDownloadLabel} <Download size={15} /></a>
+        ) : (
+          <span class="gpg-pending"><i aria-hidden="true"></i> {contactContent.gpgPendingLabel}</span>
+        )}
+      </div>
+    </section>}
   </div>
 </BaseLayout>
 
@@ -371,14 +406,6 @@ const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert
   .fetch-state { display: inline-flex; align-items: center; gap: .35rem; color: var(--accent-teal); }
   .fetch-state > i { width: 6px; height: 6px; border-radius: 1px; background: currentColor; box-shadow: 0 0 8px rgba(var(--teal-rgb), .65); }
   .tui-clock { margin-left: auto; color: var(--text-secondary); }
-  .about-strip { display: grid; grid-template-columns: 80px minmax(170px, .48fr) 1fr; gap: 1.5rem; align-items: start; padding: 1.5rem 0; border-block: 1px solid var(--glass-border); }
-  .section-index { color: var(--accent-amber); font: 700 .75rem var(--font-code); }
-  .about-command { margin: 0; color: var(--text-muted); font: .78rem/1.6 var(--font-code); }
-  .about-command span:first-child { color: var(--accent-blue); }
-  .about-body > p { max-width: 68ch; margin: 0; color: var(--text-secondary); font-size: 1.04rem; }
-  .about-links { display: flex; flex-wrap: wrap; gap: .55rem 1rem; margin-top: 1rem; }
-  .about-links a { display: inline-flex; align-items: center; gap: .35rem; color: var(--text-primary); font: .75rem var(--font-code); text-underline-offset: 4px; }
-  .about-links a:hover { color: var(--accent-blue); }
   .work-section, .lab-section, .journey-section { padding-top: clamp(5rem, 10vw, 8rem); scroll-margin-top: 5rem; }
   .editorial-heading { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(260px, .55fr); gap: 3rem; align-items: end; margin-bottom: 2.25rem; }
   .path-label span { color: var(--accent-amber); margin-right: 1rem; }
@@ -450,26 +477,40 @@ const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert
   .other-credentials ul { margin: .5rem 0 0; padding: 0; list-style: none; }
   .other-credentials a { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .42rem .3rem; color: var(--text-secondary); font-size: .73rem; text-decoration: none; }
   .other-credentials a:hover { color: var(--text-primary); }
-  .contact-panel { display: grid; grid-template-columns: 1.1fr .75fr auto; gap: 2rem; align-items: end; margin-top: clamp(5rem, 12vw, 9rem); padding: clamp(1.5rem, 4vw, 3rem); border: 1px solid var(--glass-border); border-radius: 18px; background: linear-gradient(120deg, rgba(var(--amber-rgb), .1), rgba(var(--blue-rgb), .06)); box-shadow: inset 0 1px var(--glint); }
+  .contact-panel { display: grid; grid-template-columns: 1.1fr .72fr auto; gap: 2rem; align-items: end; margin-top: clamp(5rem, 12vw, 9rem); padding: clamp(1.5rem, 4vw, 3rem); border: 1px solid var(--glass-border); border-radius: 18px; background: linear-gradient(120deg, rgba(var(--amber-rgb), .1), rgba(var(--blue-rgb), .06)); box-shadow: inset 0 1px var(--glint); }
   .contact-panel h2 { font-size: clamp(2rem, 4vw, 3.5rem); }
   .contact-panel > p { margin: 0; color: var(--text-secondary); font-size: .92rem; }
   .contact-panel .action { white-space: nowrap; }
+  .contact-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .65rem; }
+  .gpg-slot { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .85rem; margin-top: .35rem; padding-top: 1.1rem; border-top: 1px dashed var(--glass-border); }
+  .gpg-icon { display: grid; place-items: center; width: 39px; height: 39px; color: var(--text-muted); border: 1px solid var(--glass-border); border-radius: 8px; background: color-mix(in srgb, var(--bg-1) 72%, transparent); }
+  .gpg-slot-ready .gpg-icon { color: var(--accent-teal); border-color: rgba(var(--teal-rgb), .38); }
+  .gpg-copy { display: grid; min-width: 0; gap: .2rem; }
+  .gpg-copy p { margin: 0; color: var(--text-muted); font: .55rem var(--font-code); letter-spacing: .08em; text-transform: uppercase; }
+  .gpg-copy p span { color: var(--accent-amber); margin-right: .45rem; }
+  .gpg-copy strong { color: var(--text-primary); font-size: .82rem; }
+  .gpg-copy small { color: var(--text-muted); font-size: .7rem; line-height: 1.45; }
+  .gpg-copy code { display: block; margin-top: .25rem; overflow-wrap: anywhere; color: var(--accent-teal); font: .6rem/1.5 var(--font-code); }
+  .gpg-pending { display: inline-flex; align-items: center; gap: .4rem; padding: .48rem .6rem; color: var(--text-muted); border: 1px solid var(--glass-border); border-radius: 6px; font: .54rem var(--font-code); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .gpg-pending i { width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; }
+  .gpg-download { display: inline-flex; align-items: center; gap: .45rem; padding: .58rem .7rem; color: var(--accent-teal); border: 1px solid rgba(var(--teal-rgb), .4); border-radius: 7px; background: rgba(var(--teal-rgb), .07); font: 650 .62rem var(--font-code); text-decoration: none; white-space: nowrap; }
+  .gpg-download:hover { color: var(--text-primary); border-color: var(--accent-teal); }
 
   @media (max-width: 900px) {
     .hero { min-height: auto; grid-template-columns: 1fr; padding-top: 4rem; } .system-card { min-height: 0; }
-    .about-strip { grid-template-columns: 55px 1fr; } .about-body { grid-column: 2; }
     .editorial-heading { grid-template-columns: 1fr; gap: 1rem; }
     .lab-workspace { grid-template-columns: 1fr; } .topology { min-height: 330px; padding: 3.3rem 2rem 2rem; border-right: 0; border-bottom: 1px solid var(--glass-border); }
-    .journey-grid { grid-template-columns: 1fr; } .contact-panel { grid-template-columns: 1fr; align-items: start; } .contact-panel .action { justify-self: start; }
+    .journey-grid { grid-template-columns: 1fr; } .contact-panel { grid-template-columns: 1fr; align-items: start; } .contact-actions { justify-content: flex-start; }
   }
   @media (max-width: 650px) {
     .portfolio-shell { width: min(100% - 1.25rem, 1180px); padding-top: 1.5rem; } .hero h1 { font-size: clamp(3.7rem, 20vw, 6rem); }
     .hero-role { max-width: 42ch; } .hero-console { font-size: .69rem; } .console-prompt { max-width: 8.2rem; overflow: hidden; text-overflow: ellipsis; }
-    .system-card { min-height: 0; } .tui-titlebar { grid-template-columns: 1fr auto; } .tui-view { display: none; } .tui-command { padding-inline: .7rem; font-size: .61rem; } .fetch-body { padding-inline: .7rem; } .fetch-orbit { top: -2.7rem; right: -3.8rem; width: 180px; opacity: .24; } .fetch-list > div { grid-template-columns: 98px minmax(0, 1fr); } .fetch-list dt { grid-template-columns: 19px 1fr; padding-inline: .4rem; font-size: .59rem; } .fetch-list dt span { font-size: .44rem; } .fetch-list dd { padding-left: 1.1rem; font-size: .63rem; } .fetch-list dd::before { left: .38rem; } .fetch-state { display: none; } .about-strip { grid-template-columns: 38px 1fr; gap: .75rem; } .about-body > p { font-size: .96rem; }
+    .system-card { min-height: 0; } .tui-titlebar { grid-template-columns: 1fr auto; } .tui-view { display: none; } .tui-command { padding-inline: .7rem; font-size: .61rem; } .fetch-body { padding-inline: .7rem; } .fetch-orbit { top: -2.7rem; right: -3.8rem; width: 180px; opacity: .24; } .fetch-list > div { grid-template-columns: 98px minmax(0, 1fr); } .fetch-list dt { grid-template-columns: 19px 1fr; padding-inline: .4rem; font-size: .59rem; } .fetch-list dt span { font-size: .44rem; } .fetch-list dd { padding-left: 1.1rem; font-size: .63rem; } .fetch-list dd::before { left: .38rem; } .fetch-state { display: none; }
     .projects-bento { grid-template-columns: 1fr; grid-template-rows: auto; } .project-primary, .project-panel { grid-row: auto; min-height: 460px; } .project-panel:not(.project-primary) { min-height: 390px; }
     .topology { grid-template-columns: 1fr; min-height: auto; padding: 4rem 1rem 1.5rem; } .topology-line { display: none; } .node-inspector { padding: 2rem 1.2rem; } .lab-toolbar span:last-child { display: none; }
     .career-timeline::before { left: 75px; } .career-timeline li { grid-template-columns: 60px 1fr; gap: 1.6rem; } .career-timeline li::before { left: 71px; }
     .credential { grid-template-columns: 47px 1fr auto; } .credential :global(img) { width: 43px; height: 43px; }
+    .gpg-slot { grid-template-columns: auto minmax(0, 1fr); align-items: start; } .gpg-pending, .gpg-download { grid-column: 2; justify-self: start; }
   }
   @media (prefers-reduced-motion: reduce) { .console-cursor, .tui-command > i, .orbit-ring { animation: none; } .project-panel, .project-art, .credential, .action, .topology-node { transition: none; } }
   @media (prefers-reduced-transparency: reduce) { .glass-surface { background: var(--bg-1); backdrop-filter: none; -webkit-backdrop-filter: none; } }
@@ -477,7 +518,6 @@ const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert
 </style>
 
 <script>
-  const commands = ['terraform plan', 'kubectl get nodes', 'ansible-playbook deploy.yml', 'podman ps --format table'];
   let commandTimer: number | undefined;
   let uptimeTimer: number | undefined;
   let pageStarted = Date.now();
@@ -485,6 +525,8 @@ const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert
   function initHome() {
     window.clearInterval(commandTimer); window.clearInterval(uptimeTimer); pageStarted = Date.now();
     const command = document.querySelector<HTMLElement>('#hero-command');
+    const commandShell = command?.closest<HTMLElement>('[data-commands]');
+    const commands: string[] = commandShell?.dataset.commands ? JSON.parse(commandShell.dataset.commands) : [];
     const time = document.querySelector<HTMLElement>('#local-time');
     const uptime = document.querySelector<HTMLElement>('#page-uptime');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -494,7 +536,7 @@ const otherCerts = certifications.filter((cert: any) => !highlightedIds.has(cert
       if (uptime) { const elapsed = Math.floor((Date.now() - pageStarted) / 1000); uptime.textContent = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`; }
     };
     updateClock(); uptimeTimer = window.setInterval(updateClock, 1000);
-    if (command && !reduceMotion) {
+    if (command && commands.length > 1 && !reduceMotion) {
       commandTimer = window.setInterval(() => {
         command.animate([{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-5px)' }], { duration: 180, fill: 'forwards' }).finished.then(() => {
           commandIndex = (commandIndex + 1) % commands.length; command.textContent = commands[commandIndex];

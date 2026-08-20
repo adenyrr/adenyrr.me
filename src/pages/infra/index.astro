@@ -3,7 +3,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getInfraConfig, isFeatureEnabled } from '../../utils/config';
 import {
   Server, Network, Boxes, Cpu, HardDrive, Globe,
-  Shield, ExternalLink, Lock, ArrowUpRight, Terminal
+  Shield, ExternalLink, Lock, ArrowUpRight, Terminal,
+  Router, Wifi, Monitor, GitBranch, Workflow, Printer,
 } from '@lucide/astro';
 
 if (!isFeatureEnabled('infra')) {
@@ -11,26 +12,25 @@ if (!isFeatureEnabled('infra')) {
 }
 
 const infra = getInfraConfig();
+const page = infra.page;
 const tabs = infra.tabs || {};
 const enabledTabs = Object.entries(tabs).filter(([_, v]: any) => v.enabled);
+const initialTabKey = enabledTabs[0]?.[0] || 'services';
 
 const colorMap: Record<string, string> = {
   cyan: '#5ecfba', purple: '#b08fcf', green: '#7fd9c0',
   red: '#e07d6a', orange: '#e0a86a', blue: '#6ab0e0',
 };
-
-const categoryLabels: Record<string, string> = {
-  critical: '.critical',
-  production: '.prod',
-  network: '.net',
-  access: '.access',
-};
-
-const categoryColors: Record<string, string> = {
-  critical: '#e07d6a', production: '#6ab0e0', network: '#7fd9c0', access: '#b08fcf',
+const iconMap: Record<string, any> = {
+  Server, Network, Boxes, Cpu, HardDrive, Globe, Shield, Lock,
+  Router, Wifi, Monitor, GitBranch, Workflow, Printer,
 };
 
 const wan = infra.wanExposure || {};
+const serviceCount = (infra.serviceGroups || []).reduce(
+  (total: number, group: any) => total + (group.services || []).length,
+  0,
+);
 
 // Group serviceGroups by physical node for hierarchical /srv view
 const allPhysicalNodes: any[] = [...(infra.proxmoxNodes || []), ...(infra.networkDevices || [])];
@@ -41,63 +41,47 @@ const srvByNode: Record<string, any[]> = (infra.serviceGroups || []).reduce(
     return acc;
   }, {}
 );
-const srvNodeEntries = allPhysicalNodes
-  .filter((n: any) => srvByNode[n.name])
-  .map((n: any) => ({ name: n.name, specs: n, vmGroups: srvByNode[n.name] }));
+const srvNodeEntries = allPhysicalNodes.map((node: any) => {
+  const fallbackGroup = node.services?.length ? [{
+    vm: node.name,
+    node: node.name,
+    type: 'Natif',
+    services: node.services.map((service: any) => ({ ...service, status: 'online', description: service.type })),
+  }] : [];
+  return { name: node.name, specs: node, vmGroups: srvByNode[node.name] || fallbackGroup };
+}).filter((node: any) => node.vmGroups.length > 0);
 
-const tabMeta: Record<string, any> = {
-  services: {
-    icon: Boxes,
-    hash: 'srv',
-    count: infra.stats?.totalServices || 0,
-    countLabel: 'services',
-    description: 'Nœuds, machines virtuelles, conteneurs et services actifs',
-  },
-  lan: {
-    icon: Network,
-    hash: 'lan',
-    count: (infra.vlans || []).length,
-    countLabel: 'réseaux',
-    description: 'Segmentation réseau, zones de confiance et équipements',
-  },
-  wan: {
-    icon: Globe,
-    hash: 'wan',
-    count: (wan.exposedServices || []).length,
-    countLabel: 'expositions',
-    description: 'Chemin d’exposition, sécurité périmétrique et routage TLS',
-  },
+const tabCounts: Record<string, number> = {
+  services: serviceCount,
+  lan: (infra.vlans || []).length,
+  wan: (wan.exposedServices || []).length,
 };
-
-const docLinks: Record<string, string> = {
-  'Jellyfin': 'https://docu.adenyrr.me/services/jellyfin',
-  'Ollama': 'https://docu.adenyrr.me/services/ollama',
-  'Open WebUI': 'https://docu.adenyrr.me/services/ollama',
-  'step-ca': 'https://docu.adenyrr.me/reseau/stepca',
-  'Nginx Proxy Manager': 'https://docu.adenyrr.me/reseau/swag',
-  'CrowdSec': 'https://docu.adenyrr.me/reseau/swag',
-  'Fail2ban': 'https://docu.adenyrr.me/reseau/swag',
-  'Home Assistant': 'https://docu.adenyrr.me/hassio/install',
-};
+const tabMeta = Object.fromEntries(Object.entries(tabs).map(([key, tab]: any) => [key, {
+  ...tab,
+  icon: iconMap[tab.icon],
+  count: tabCounts[key] || 0,
+}]));
+const categoryEntries = Object.entries(infra.vlanCategories || {});
+const docLinks: Record<string, string> = infra.documentation.serviceLinks || {};
 ---
 
-<BaseLayout title="Infrastructure" description="Infrastructure homelab">
+<BaseLayout title={page.title} description={page.description}>
   <div class="container infra-page">
     <header class="infra-hero">
       <div>
-        <p class="infra-path"><span>~/</span>lab <i aria-hidden="true">▍</i></p>
-        <h1>Une infrastructure<br /><em>vivante et documentée.</em></h1>
-        <p class="infra-lead">Un homelab souverain pour expérimenter, comprendre et opérer chaque couche — du réseau physique aux services exposés.</p>
+        <p class="infra-path"><span>~/</span>{page.path} <i aria-hidden="true">▍</i></p>
+        <h1>{page.heading}<br /><em>{page.headingAccent}</em></h1>
+        <p class="infra-lead">{page.introduction}</p>
         <div class="infra-actions">
-          <a href="#explorer">Explorer la topologie <span aria-hidden="true">↓</span></a>
-          <a href={infra.documentation?.url} target="_blank" rel="noopener noreferrer">Lire la documentation <ArrowUpRight size={15} /></a>
+          <a href="#explorer">{page.explorerLabel} <span aria-hidden="true">↓</span></a>
+          <a href={infra.documentation.url} target="_blank" rel="noopener noreferrer">{infra.documentation.label} <ArrowUpRight size={15} /></a>
         </div>
       </div>
       <aside class="infra-terminal" aria-label="Résumé de l’infrastructure">
-        <div><Terminal size={14} /><span>infra.summary</span><span class="infra-online"><i></i> online</span></div>
+        <div><Terminal size={14} /><span>{page.terminalTitle}</span><span class="infra-online"><i></i> {page.terminalStatus}</span></div>
         <code><span>$</span> pvesh get /nodes<br /><b>{(infra.proxmoxNodes || []).length} nodes</b> ready</code>
         <code><span>$</span> ip -brief link<br /><b>{(infra.vlans || []).length} VLANs</b> isolated</code>
-        <code><span>$</span> systemctl list-units<br /><b>{infra.stats?.totalServices || 18}+ services</b> documented</code>
+        <code><span>$</span> systemctl list-units<br /><b>{serviceCount} services</b> documented</code>
       </aside>
     </header>
 
@@ -150,8 +134,8 @@ const docLinks: Record<string, string> = {
     <!-- Explorateur de l’infrastructure -->
     <div class="tabs-frame" id="explorer">
       <div class="tab-context">
-        <span class="tab-command"><i aria-hidden="true">$</i> cd <strong id="active-tab-path">~/srv</strong></span>
-        <span class="tab-description" id="active-tab-description" aria-live="polite">{tabMeta.services.description}</span>
+        <span class="tab-command"><i aria-hidden="true">$</i> cd <strong id="active-tab-path">~/{tabMeta[initialTabKey]?.hash}</strong></span>
+        <span class="tab-description" id="active-tab-description" aria-live="polite">{tabMeta[initialTabKey]?.description}</span>
         <span class="tab-ready"><i aria-hidden="true"></i> ready</span>
       </div>
       <div class="tabs" role="tablist" aria-label="Explorer l’infrastructure">
@@ -184,22 +168,22 @@ const docLinks: Record<string, string> = {
 
     <!-- LAN Tab -->
     {tabs.lan?.enabled && (
-      <div class="tab-panel" data-panel="lan" role="tabpanel" id="panel-lan" aria-labelledby="tab-lan">
+      <div class:list={['tab-panel', { 'active-panel': initialTabKey === 'lan' }]} data-panel="lan" role="tabpanel" id="panel-lan" aria-labelledby="tab-lan">
         <h2 class="term-head-path"><span class="term-tilde">~/</span><span class="gradient-text">lan</span></h2>
-        {Object.entries(categoryLabels).map(([cat, label], ci) => {
+        {categoryEntries.map(([cat, category]: any, ci) => {
           const categoryVlans = (infra.vlans || []).filter((v: any) => v.category === cat);
           if (categoryVlans.length === 0) return null;
           return (
             <div class="vlan-category slide-in" style={`--stage-delay: ${ci * 0.05}s`}>
-              <div class="vlan-cat-header" style={`--cat-color: ${categoryColors[cat]}`}>
-                <span class="vlan-cat-badge">{label}</span>
+              <div class="vlan-cat-header" style={`--cat-color: ${colorMap[category.color] || 'var(--accent)'}`}>
+                <span class="vlan-cat-badge">{category.label}</span>
                 <span class="vlan-cat-count">{categoryVlans.length}</span>
               </div>
               <div class="vlans-grid">
                 {categoryVlans.map((vlan: any, vi: number) => (
                   <div class="card vlan-card slide-in" style={`border-left: 3px solid ${colorMap[vlan.color] || 'var(--accent)'}; --stage-delay: ${ci * 0.05 + vi * 0.04}s`}>
                     <div class="vlan-header">
-                      <h4>{vlan.name}</h4>
+                      <h4>{iconMap[vlan.icon] && (() => { const Icon = iconMap[vlan.icon]; return <Icon size={14} aria-hidden="true" />; })()}{vlan.name}</h4>
                       <span class="tag">{vlan.subnet}</span>
                     </div>
                     <div class="vlan-devices">
@@ -228,50 +212,35 @@ const docLinks: Record<string, string> = {
       const vmGroups = Object.values(svcByVm) as any[];
 
       return (
-        <div class="tab-panel" data-panel="wan" role="tabpanel" id="panel-wan" aria-labelledby="tab-wan">
+        <div class:list={['tab-panel', { 'active-panel': initialTabKey === 'wan' }]} data-panel="wan" role="tabpanel" id="panel-wan" aria-labelledby="tab-wan">
           <h2 class="term-head-path"><span class="term-tilde">~/</span><span class="gradient-text">wan</span></h2>
           {wan.description && <p class="wan-description">{wan.description}</p>}
 
           <!-- Schema diagram -->
           <div class="wan-schema">
-            <!-- WAN entry -->
-            <div class="schema-row schema-entry slide-in">
-              <div class="schema-node schema-wan">
-                <Globe size={22} />
-                <span>WAN / Internet</span>
-              </div>
-            </div>
-            <div class="schema-connector-v"></div>
-
-            <!-- nginx (edge) -->
-            <div class="schema-row slide-in" style="--stage-delay: 0.1s">
-              <div class="schema-node schema-nginx">
-                <Shield size={20} />
-                <div class="schema-node-content">
-                  <span class="schema-node-title">nginx (Edge)</span>
-                  <span class="schema-node-sub">CrowdSec · Fail2Ban · db-ip</span>
-                </div>
-              </div>
-            </div>
-            <div class="schema-connector-v"></div>
-
-            <!-- Shared services row (ACME + Authentik) -->
-            <div class="schema-shared-row slide-in" style="--stage-delay: 0.15s">
-              <div class="schema-node schema-shared">
-                <Lock size={16} />
-                <div class="schema-node-content">
-                  <span class="schema-node-title">step-ca (ACME)</span>
-                  <span class="schema-node-sub">PKI interne — TLS end-to-end</span>
-                </div>
-              </div>
-              <div class="schema-node schema-shared">
-                <Shield size={16} />
-                <div class="schema-node-content">
-                  <span class="schema-node-title">Authentik (SSO)</span>
-                  <span class="schema-node-sub">Authentification centralisée</span>
-                </div>
-              </div>
-            </div>
+            {(wan.chain || []).map((step: any, index: number) => {
+              const Icon = iconMap[step.icon] || Network;
+              return (
+                <>
+                  <div class="schema-row slide-in" style={`--stage-delay: ${index * 0.06}s`}>
+                    <div class="schema-node schema-config" style={`--schema-color: ${colorMap[step.color] || 'var(--accent)'}`}>
+                      <Icon size={18} aria-hidden="true" />
+                      <div class="schema-node-content">
+                        <span class="schema-node-title">{step.step}</span>
+                        <span class="schema-node-sub">{step.description}</span>
+                        {step.features?.length > 0 && (
+                          <details class="schema-features">
+                            <summary>{step.features.length} contrôles</summary>
+                            <ul>{step.features.map((feature: string) => <li>{feature}</li>)}</ul>
+                          </details>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {index < wan.chain.length - 1 && <div class="schema-connector-v"></div>}
+                </>
+              );
+            })}
 
             <!-- Fan-out lines -->
             <div class="schema-fanout">
@@ -294,7 +263,7 @@ const docLinks: Record<string, string> = {
                     {group.services.map((svc: any) => (
                       <div class="schema-service">
                         <span class="schema-svc-dot"></span>
-                        <span class="schema-svc-name">{svc.name}</span>
+                        <span class="schema-svc-name">{svc.name}<small>{svc.domain}</small></span>
                       </div>
                     ))}
                   </div>
@@ -308,17 +277,19 @@ const docLinks: Record<string, string> = {
 
     <!-- Services / Rack Tab (merged infrastructure + services) -->
     {tabs.services?.enabled && (
-      <div class="tab-panel active-panel" data-panel="services" role="tabpanel" id="panel-services" aria-labelledby="tab-services">
+      <div class:list={['tab-panel', { 'active-panel': initialTabKey === 'services' }]} data-panel="services" role="tabpanel" id="panel-services" aria-labelledby="tab-services">
         <h2 class="sr-only">Services et nœuds</h2>
         <div class="rack-nodes">
           {srvNodeEntries.map((node: any, ni: number) => {
             const nodeColor = colorMap[node.specs?.color] || 'var(--accent)';
             const totalSvcs = node.vmGroups.reduce((a: number, g: any) => a + g.services.length, 0);
             const isPve = (infra.proxmoxNodes || []).some((n: any) => n.name === node.name);
+            const NodeIcon = iconMap[node.specs?.icon] || (isPve ? Server : Network);
             return (
               <div class="rack-node slide-in" style={`--node-color: ${nodeColor}; --stage-delay: ${ni * 0.1}s`}>
                 <div class="rack-node-header">
                   <span class="rack-led" aria-hidden="true"></span>
+                  <span class="rack-node-icon" aria-hidden="true"><NodeIcon size={14} /></span>
                   <div class="rack-identity">
                     <span class="rack-node-name">{node.name}</span>
                     <span class:list={['rack-node-type', isPve ? 'rack-node-type--pve' : 'rack-node-type--device']}>
@@ -335,7 +306,7 @@ const docLinks: Record<string, string> = {
                   {node.vmGroups.map((group: any) => {
                     const typeKey = group.type === 'VM' ? 'vm' : group.type === 'LXC' ? 'lxc' : 'natif';
                     return (
-                      <div class="rack-vm-row">
+                      <div class="rack-vm-row" style={`--group-color: ${colorMap[group.color] || nodeColor}`}>
                         <span class:list={['rack-vm-type', `rack-vm-type--${typeKey}`]}>{group.type}</span>
                         <span class="rack-vm-name">{group.vm}</span>
                         <div class="rack-chips">
@@ -603,7 +574,8 @@ const docLinks: Record<string, string> = {
   }
   .vlan-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
   .vlan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-  .vlan-header h4 { font-size: 0.9rem; margin: 0; font-family: var(--font-code); }
+  .vlan-header h4 { display: inline-flex; align-items: center; gap: .4rem; font-size: 0.9rem; margin: 0; font-family: var(--font-code); }
+  .vlan-header h4 :global(svg) { color: var(--accent-blue); }
   .vlan-devices { display: flex; flex-wrap: wrap; gap: 0.3rem; }
   .vlan-device { font-family: var(--font-code); font-size: 0.72rem; color: var(--text-secondary); background: color-mix(in srgb, var(--text) 5%, transparent); padding: 0.1rem 0.4rem; border-radius: 0.2rem; border: 1px solid var(--card-border); }
 
@@ -639,15 +611,16 @@ const docLinks: Record<string, string> = {
     transform: translateY(-1px);
   }
 
-  .schema-wan { border-color: rgba(224, 125, 106, 0.3); color: #e07d6a; }
-  .schema-nginx { border-left: 3px solid var(--accent); }
-
   .schema-node-content { display: flex; flex-direction: column; gap: 0.15rem; }
   .schema-node-title { font-weight: 600; font-size: 0.85rem; }
   .schema-node-sub { font-size: 0.7rem; color: var(--muted-text); font-weight: 400; }
-
-  .schema-shared-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-  .schema-shared { border-left: 3px solid #5ecfba; font-size: 0.8rem; }
+  .schema-config { align-items: flex-start; width: min(520px, 88vw); border-left: 3px solid var(--schema-color); white-space: normal; }
+  .schema-config > :global(svg) { flex: 0 0 auto; margin-top: .1rem; color: var(--schema-color); }
+  .schema-config .schema-node-content { flex: 1; min-width: 0; }
+  .schema-features { margin-top: .45rem; color: var(--text-secondary); }
+  .schema-features summary { color: var(--accent-blue); font: .62rem var(--font-code); cursor: pointer; }
+  .schema-features ul { display: grid; gap: .3rem; margin: .5rem 0 0; padding: 0 0 0 1rem; }
+  .schema-features li { font: .64rem/1.45 var(--font-code); }
 
   .schema-fanout {
     display: flex; justify-content: center;
@@ -693,7 +666,8 @@ const docLinks: Record<string, string> = {
     background: #5ecfba; flex-shrink: 0;
     box-shadow: 0 0 4px color-mix(in srgb, var(--banner-teal) 30%, transparent);
   }
-  .schema-svc-name { color: var(--text); font-weight: 500; white-space: nowrap; }
+  .schema-svc-name { display: grid; color: var(--text); font-weight: 500; white-space: nowrap; }
+  .schema-svc-name small { color: var(--muted-text); font-size: .55rem; font-weight: 400; }
 
   /* ── Rack manifest (/srv) ── */
   .rack-nodes { display: flex; flex-direction: column; gap: 0.85rem; }
@@ -722,6 +696,7 @@ const docLinks: Record<string, string> = {
     box-shadow: 0 0 6px color-mix(in srgb, var(--node-color) 55%, transparent);
     animation: led-pulse 3s ease-in-out infinite;
   }
+  .rack-node-icon { display: grid; place-items: center; color: var(--node-color); }
   @keyframes led-pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.45; box-shadow: 0 0 2px color-mix(in srgb, var(--node-color) 25%, transparent); }
@@ -758,6 +733,7 @@ const docLinks: Record<string, string> = {
     gap: 0 0.85rem;
     padding: 0.38rem 1.1rem;
     border-bottom: 1px solid color-mix(in srgb, var(--card-border) 40%, transparent);
+    box-shadow: inset 2px 0 color-mix(in srgb, var(--group-color) 28%, transparent);
     transition: background 0.15s ease;
   }
   .rack-vm-row:last-child { border-bottom: none; }
@@ -823,7 +799,6 @@ const docLinks: Record<string, string> = {
     .schema-vms-row { flex-direction: column; align-items: center; }
     .schema-vm-col { max-width: 100%; min-width: unset; width: 80%; }
     .schema-fanout { display: none; }
-    .schema-shared-row { flex-direction: column; }
     .rack-vm-row { grid-template-columns: 46px 110px 1fr; gap: 0 0.5rem; padding: 0.38rem 0.75rem; }
     .rack-node-header { padding: 0.65rem 0.75rem; }
     .rack-hw { display: none; }

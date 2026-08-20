@@ -2,7 +2,7 @@
 import { getSiteConfig } from '../utils/config';
 
 const config = getSiteConfig();
-const lang = 'fr';
+const lang = config.site.locale;
 
 interface Props {
   title?: string;
@@ -17,7 +17,7 @@ const siteTitle = title
   ? `${title} — ${config.site.title}` 
   : config.site.title;
 const siteDescription = description || config.site.description;
-const siteImage = image || '/images/og-default.jpg';
+const siteImage = image || config.site.defaultImage;
 const canonicalURL = new URL(Astro.url.pathname, config.site.url);
 ---
 

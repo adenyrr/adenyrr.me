@@ -1,4 +1,7 @@
 import { defineMiddleware } from 'astro:middleware';
+import { getSiteConfig } from './utils/config';
+
+const productionHostname = new URL(getSiteConfig().site.url).hostname;
 
 /**
  * Security middleware for adding CSP and other security headers
@@ -9,9 +12,9 @@ export const onRequest = defineMiddleware((context, next) => {
     // Content Security Policy (CSP) - strict but practical
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' fonts.googleapis.com",
-      "style-src 'self' 'unsafe-inline' fonts.googleapis.com fonts.gstatic.com",
-      "font-src 'self' fonts.gstatic.com data:",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
       "img-src 'self' data: https: blob:",
       "connect-src 'self'",
       "base-uri 'self'",
@@ -34,7 +37,7 @@ export const onRequest = defineMiddleware((context, next) => {
 
     // HSTS (Strict-Transport-Security) - encourage HTTPS
     // Only on production domain
-    if (context.url.hostname === 'adenyrr.me') {
+    if (context.url.hostname === productionHostname) {
       response.headers.set(
         'Strict-Transport-Security',
         'max-age=31536000; includeSubDomains; preload'

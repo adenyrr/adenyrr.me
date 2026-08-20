@@ -7,67 +7,155 @@
 
 profile:
   pseudo: "adenyrr"
-  title: "adminsys cloud"
-  tagline: "Administrateur système, cloud et self-hosting"
-  bio: "administrateur système passionné par l'infrastructure, du hardware au déploiement de services finaux. j'ai un kink pour la protection des données et l'opensource."
-  avatar: "/images/avatar.jpg"
+  tagline: "Sysadmin, infrastructure cloud, open source, confidentialité et souveraineté"
 
 # -----------------------------------------------------------------------------
-# LIENS HERO (boutons affichés sous la bio)
+# HERO
 # -----------------------------------------------------------------------------
-heroLinks:
-  - label: "Documentation"
-    url: "https://docu.adenyrr.me"
-    icon: "Library"
-    internal: false
-    enabled: true
-  - label: "Infra"
+hero:
+  kicker: "whoami"
+  role: "infra & cloud; open source | privacy | sovereignty"
+  statementLead: "Je construis des infrastructures"
+  qualities: ["ouvertes", "souveraines", "automatisées"]
+  consolePrompt: "adenyrr@workstation:~$"
+  consoleCommands:
+    - "terraform plan"
+    - "kubectl get nodes"
+    - "ansible-playbook deploy.yml"
+    - "podman ps --format table"
+  primaryAction:
+    label: "Explorer mes projets"
+    url: "#projects"
+  secondaryAction:
+    label: "Ouvrir ~/lab"
     url: "/infra"
-    icon: "Server"
-    internal: true
-    enabled: true
-  - label: "Blog"
-    url: "/blog"
-    icon: "FileText"
-    internal: true
-    enabled: true
+
+systemWidget:
+  ariaLabel: "Résumé système d’adenyrr"
+  monogram: "a"
+  orbitLabel: "SYS"
+  windowTitle: "system.profile"
+  terminal: "tty / 01"
+  status: "ready"
+  prompt: "adenyrr@home:~$"
+  command: "fastfetch"
+  commandFlag: "--config about.toml"
+  identity: "adenyrr"
+  hostSuffix: "@home"
+  subtitle: "sovereign systems operator"
+  operator: "operator"
+  host: "adenyrr.me"
+  role: "sysops"
+  location: "Namur, BE"
+  edgeNodes: 1
+  architecture: "x86_64"
+  memoryType: "DDR4"
+  networkStack: ["OPNsense", "WireGuard", "BunkerWeb"]
+  securityStack: ["SIEM", "CVE", "SOAR"]
+  platformStack: ["Proxmox", "CEPH", "Kubernetes", "Podman"]
+  systems: ["openSUSE", "Debian"]
+  availability: "available"
 
 # -----------------------------------------------------------------------------
 # SECTIONS ACTIVABLES
 # -----------------------------------------------------------------------------
 sections:
   projects: true
+  lab: true
+  journey: true
+  contact: true
   diplomas: true
   certifications: true
   jobs: true
 
+sectionHeaders:
+  projects:
+    index: "01"
+    path: "~/work"
+    title: "Selected work"
+    introduction: "Des systèmes conçus pour être compris, automatisés et réellement opérables."
+  lab:
+    index: "02"
+    path: "~/lab"
+    title: "Infrastructure, en direct du plan."
+    introduction: "Explorez les couches d’un homelab qui sert autant de plateforme que de terrain d’expérimentation."
+  journey:
+    index: "03"
+    path: "~/journey"
+    title: "Parcours & credentials"
+    introduction: "Un parcours non linéaire, guidé par le concret, la curiosité et l’apprentissage continu."
+  contact:
+    index: "04"
+    path: "~/contact"
+    title: "Construisons quelque chose de robuste."
+    introduction: "Une idée, une infrastructure à fiabiliser ou simplement envie de parler Linux et open source ?"
+
+labLayers:
+  - id: "edge"
+    label: "Edge"
+    eyebrow: "WAN / frontière"
+    title: "Edge & sécurité"
+    text: "Filtrage, terminaison TLS et contrôle des flux avant exposition des services."
+    tech: "OPNsense · BunkerWeb · CrowdSec"
+    icon: "ShieldCheck"
+  - id: "compute"
+    label: "Compute"
+    eyebrow: "Cluster / calcul"
+    title: "Nœuds Proxmox"
+    text: "Les nœuds orchestrent les charges virtuelles, les conteneurs et le stockage distribué."
+    metrics: "compute"
+    icon: "Server"
+  - id: "platform"
+    label: "Platform"
+    eyebrow: "Services / plateforme"
+    title: "Services souverains"
+    text: "Applications, identité, observabilité et workloads Kubernetes exploités en autonomie."
+    metrics: "platform"
+    icon: "Box"
+  - id: "data"
+    label: "Data"
+    eyebrow: "Stockage / résilience"
+    title: "Données & sauvegardes"
+    text: "Stockage distribué et NAS isolé pour concilier disponibilité, capacité et reprise."
+    metrics: "storage"
+    icon: "Network"
+
+journey:
+  careerCommand: "journalctl --career"
+  experienceLabel: "Expérience"
+  educationLabel: "Formation"
+  credentialsCommand: "ls ~/credentials"
+  credentialsTitle: "Certifications récentes"
+  otherCredentialsLabel: "autres credentials"
+
+contact:
+  discordLabel: "discord"
+  emailLabel: "mail"
+  gpgPath: "gpg.public-key"
+  gpgTitle: "Chiffrer un e-mail à mon intention"
+  gpgDescription: "Téléchargez ma clé publique pour chiffrer votre message et vérifier mes signatures."
+  gpgDownloadLabel: "Télécharger .asc"
+  gpgPendingLabel: "key not published"
+
 # -----------------------------------------------------------------------------
-# CREDLY (instantané local par défaut : aucun appel à leur API pendant le build)
+# CREDLY (synchronisation du profil public pendant le build, avec fallback local)
 # -----------------------------------------------------------------------------
 credly:
-  enabled: false
+  enabled: true
   username: "adenyrr"
+  featuredCount: 4
   # IDs des badges à mettre en avant (l'API Credly ne les expose pas nativement).
   # Les IDs se trouvent dans l'URL des badges sur credly.com.
   pinnedIds:
     - "c471f130-a990-4523-bb7e-a26272b0b760"  # KCNA: Kubernetes and Cloud Native Associate
     - "add7642d-d71d-4acc-93f6-a7c418dfa4c3"  # LFCA: Linux Foundation Certified IT Associate
     - "c4616749-9f53-4780-a816-51b50b18606b"  # Ethical Hacker
+    - "807dfb6c-29ef-43a7-9352-19fdfffafdb5"  # Network Technician Career Path
 
 # -----------------------------------------------------------------------------
 # PROJETS
 # -----------------------------------------------------------------------------
 projects:
-  - id: "infra & docu"
-    title: "Infra OSS & Documentation"
-    description: "Documentation de l'infrastructure, tutoriels et bonnes pratiques (self-hosted)."
-    tech: ["Virtu", "Containers", "Réseau", "Home Assistant"]
-    icon: "Library"
-    link: "https://docu.adenyrr.me"
-    repo: "https://gitlab.com/adenyrr/adenyrr.me"
-    year: 2024
-    image: "/images/docu.png"
-
   - id: "alyx"
     title: "Alyx - Orchestrateur d'agents"
     description: "Alyx est un orchestrateur d'agents intelligents conçu pour faciliter la création de systèmes complexes et adaptatifs, en intégrant des modèles de langage avancés et des capacités multimodales."
@@ -77,6 +165,16 @@ projects:
     repo: "https://github.com/adenyrr/alyx"
     year: 2026
     image: "/images/alyx.png"
+
+  - id: "infra & docu"
+    title: "Infra OSS & Documentation"
+    description: "Documentation de l'infrastructure, tutoriels et bonnes pratiques (self-hosted)."
+    tech: ["Virtu", "Containers", "Réseau", "Home Assistant"]
+    icon: "Library"
+    link: "https://docu.adenyrr.me"
+    repo: "https://gitlab.com/adenyrr/adenyrr.me"
+    year: 2024
+    image: "/images/docu.png"
 
   - id: "trainCerts"
     title: "Entrainement aux certifications QCM"
@@ -96,15 +194,11 @@ diplomas:
     title: "CQ6 - Technicien Chimiste QC"
     institution: "IPES @ Ath"
     period: "2011 - 2013"
-    description: "Chimie analytique, instrumentale, organique et mise en production. Analyse du suivi de la production, mise en conformité, respect des normes."
-    tags: ["Chimie", "QC", "Production"]
 
   - id: "adminsys"
     title: "Adminsys - Coordination équipe & infra IT"
     institution: "A6k - E6k @ Charleroi"
     period: "2023 - 2026"
-    description: "Infrastructure, Hardware, Troubleshooting, Customer Care. Réseau Cisco, Active Directory, gestion de projets. Introduction à AWS, Linux et VMWare."
-    tags: ["Infrastructure", "Cisco", "AWS", "Linux", "VMWare"]
 
 # -----------------------------------------------------------------------------
 # CERTIFICATIONS (fallback si Credly indisponible)
@@ -182,4 +276,3 @@ jobs:
     company: "Thym & Romarin"
     location: "Rocroi"
     period: "2018 - 2021"
-    description: "Maraichage, culture de légumes et herbes aromatiques, gestion de la ferme."
