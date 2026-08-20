@@ -8,7 +8,7 @@ import { z } from 'astro/zod';
  * Ensures data consistency and type safety at build time
  */
 
-const siteConfigSchema = z.object({
+const siteConfigSchemaBase = z.object({
   site: z.object({
     title: z.string().min(1), description: z.string().min(1), url: z.string().url(),
     author: z.string().min(1), email: z.string().email().optional(),
@@ -18,13 +18,13 @@ const siteConfigSchema = z.object({
     enabled: z.boolean().default(false), publicKeyUrl: z.string().min(1).optional(),
     fingerprint: z.string().min(1).optional(),
   }).strict().optional(),
-  features: z.object({ infra: z.boolean(), blog: z.boolean(), docu: z.boolean() }).strict(),
+  features: z.record(z.string(), z.boolean()),
   appearance: z.object({ ambientBackground: z.boolean() }).strict(),
   header: z.object({
     show: z.boolean().default(true), brandName: z.string().min(1), brandHost: z.string(),
     navigation: z.array(z.object({
       label: z.string(), route: z.string().optional(), url: z.string().optional(),
-      feature: z.enum(['infra', 'blog', 'docu']).optional(),
+      feature: z.string().min(1).optional(),
       enabled: z.boolean().default(true), external: z.boolean().optional(),
     }).strict()),
     socialLinks: z.array(z.object({
@@ -48,6 +48,34 @@ const siteConfigSchema = z.object({
     rssTitle: z.string(), rssDescription: z.string(),
   }).strict(),
 }).strict();
+
+const siteConfigSchema = siteConfigSchemaBase.superRefine((config, context) => {
+  config.header.navigation.forEach((item, index) => {
+    if (item.feature && !(item.feature in config.features)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['header', 'navigation', index, 'feature'],
+        message: `Feature flag "${item.feature}" absent de la section features`,
+      });
+    }
+
+    if (item.external && !item.url) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['header', 'navigation', index, 'url'],
+        message: 'Une navigation externe doit définir url',
+      });
+    }
+
+    if (!item.external && !item.route) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['header', 'navigation', index, 'route'],
+        message: 'Une navigation interne doit définir route',
+      });
+    }
+  });
+});
 
 const actionSchema = z.object({ label: z.string(), url: z.string() }).strict();
 const sectionHeaderSchema = z.object({
@@ -210,9 +238,10 @@ export function loadConfig<T = Record<string, any>>(
     return result as T;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error(`Configuration validation error in ${filename}:`, error.errors);
+      const issues = error.issues || [];
+      console.error(`Configuration validation error in ${filename}:`, issues);
       throw new Error(
-        `Invalid configuration in ${filename}: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+        `Invalid configuration in ${filename}: ${issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ')}`
       );
     }
     throw error;

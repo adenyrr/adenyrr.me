@@ -31,6 +31,7 @@ features:
   infra: true
   blog: true
   docu: true
+  train: true
 
 # -----------------------------------------------------------------------------
 # APPARENCE
@@ -60,6 +61,11 @@ header:
     - label: "docu"
       url: "https://docu.adenyrr.me"
       feature: "docu"
+      enabled: true
+      external: true
+    - label: "train"
+      url: "https://train.adenyrr.me"
+      feature: "train"
       enabled: true
       external: true
   socialLinks:
@@ -93,7 +99,7 @@ footer:
   author: "adenyrr"
   authorUrl: "https://adenyrr.me"
   signatureCommand: 'echo "thanks for visiting"'
-  note: "Infrastructure · Cloud · Open source\nConstruit sobrement, hébergé avec intention."
+  note: "infrastructure · cloud · open source\nConstruit sobrement, hébergé avec intention."
   navigationLabel: "~/sitemap"
   connectLabel: "~/connect"
   backToTopLabel: "Haut de page"
