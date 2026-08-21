@@ -1,64 +1,63 @@
-# =============================================================================
-# CONFIGURATION DU PORTFOLIO
-# =============================================================================
-# Modifiez ce fichier pour personnaliser votre portfolio.
-# Chaque section peut être activée/désactivée individuellement.
-# =============================================================================
-
 profile:
-  pseudo: "adenyrr"
-  tagline: "Sysadmin, infrastructure cloud, open source, confidentialité et souveraineté"
-
-# -----------------------------------------------------------------------------
-# HERO
-# -----------------------------------------------------------------------------
+  pseudo: adenyrr
+  tagline: Sysadmin, infrastructure cloud, open source, confidentialité et souveraineté
 hero:
-  kicker: "whoami"
-  role: "infra & cloud; open source | privacy | sovereignty"
-  statementLead: "Je construis des infrastructures"
-  qualities: ["ouvertes", "souveraines", "automatisées"]
-  consolePrompt: "adenyrr@workstation:~$"
+  kicker: whoami
+  role: infra & cloud; open source | privacy | sovereignty
+  statementLead: Je construis des infrastructures
+  qualities:
+    - ouvertes
+    - souveraines
+    - automatisées
+  consolePrompt: adenyrr@workstation:~$
   consoleCommands:
-    - "terraform plan"
-    - "kubectl get nodes"
-    - "ansible-playbook deploy.yml"
-    - "podman ps --format table"
+    - terraform plan
+    - kubectl get nodes
+    - ansible-playbook deploy.yml
+    - podman ps --format table
   primaryAction:
-    label: "Explorer mes projets"
+    label: Explorer mes projets
     url: "#projects"
   secondaryAction:
-    label: "Ouvrir ~/lab"
-    url: "/infra"
-
+    label: Ouvrir ~/lab
+    url: /infra
 systemWidget:
-  ariaLabel: "Résumé système d’adenyrr"
-  monogram: "a"
-  orbitLabel: "SYS"
-  windowTitle: "system.profile"
-  terminal: "tty / 01"
-  status: "ready"
-  prompt: "adenyrr@home:~$"
-  command: "fastfetch"
-  commandFlag: "--config about.toml"
-  identity: "adenyrr"
+  ariaLabel: Résumé système d’adenyrr
+  monogram: a
+  orbitLabel: SYS
+  windowTitle: system.profile
+  terminal: tty / 01
+  status: ready
+  prompt: adenyrr@home:~$
+  command: fastfetch
+  commandFlag: --config about.toml
+  identity: adenyrr
   hostSuffix: "@home"
-  subtitle: "sovereign systems operator"
-  operator: "operator"
-  host: "adenyrr.me"
-  role: "sysops"
-  location: "Namur, BE"
+  subtitle: sovereign systems operator
+  operator: operator
+  host: adenyrr.me
+  role: sysops
+  location: Namur, BE
   edgeNodes: 1
-  architecture: "x86_64"
-  memoryType: "DDR4"
-  networkStack: ["OPNsense", "WireGuard", "BunkerWeb"]
-  securityStack: ["SIEM", "CVE", "SOAR"]
-  platformStack: ["Proxmox", "CEPH", "Kubernetes", "Podman"]
-  systems: ["openSUSE", "Debian"]
-  availability: "available"
-
-# -----------------------------------------------------------------------------
-# SECTIONS ACTIVABLES
-# -----------------------------------------------------------------------------
+  architecture: x86_64
+  memoryType: DDR4
+  networkStack:
+    - OPNsense
+    - WireGuard
+    - BunkerWeb
+  securityStack:
+    - SIEM
+    - CVE
+    - SOAR
+  platformStack:
+    - Proxmox
+    - CEPH
+    - Kubernetes
+    - Podman
+  systems:
+    - openSUSE
+    - Debian
+  availability: available
 sections:
   projects: true
   lab: true
@@ -67,212 +66,229 @@ sections:
   diplomas: true
   certifications: true
   jobs: true
-
 sectionHeaders:
   projects:
     index: "01"
-    path: "~/work"
-    title: "Selected work"
-    introduction: "Des systèmes conçus pour être compris, automatisés et réellement opérables."
+    path: ~/work
+    title: Selected work
+    introduction: Des systèmes conçus pour être compris, automatisés et réellement opérables.
   lab:
     index: "02"
-    path: "~/lab"
-    title: "Infrastructure, en direct du plan."
-    introduction: "Explorez les couches d’un homelab qui sert autant de plateforme que de terrain d’expérimentation."
+    path: ~/lab
+    title: Infrastructure, en direct du plan.
+    introduction: Explorez les couches d’un homelab qui sert autant de plateforme que de terrain d’expérimentation.
   journey:
     index: "03"
-    path: "~/journey"
-    title: "Parcours & credentials"
-    introduction: "Un parcours non linéaire, guidé par le concret, la curiosité et l’apprentissage continu."
+    path: ~/journey
+    title: Parcours & credentials
+    introduction: Un parcours non linéaire, guidé par le concret, la curiosité et l’apprentissage continu.
   contact:
     index: "04"
-    path: "~/contact"
-    title: "Construisons quelque chose de robuste."
-    introduction: "Une idée, une infrastructure à fiabiliser ou simplement envie de parler Linux et open source ?"
-
+    path: ~/contact
+    title: Construisons quelque chose de robuste.
+    introduction: Une idée, une infrastructure à fiabiliser ou simplement envie de parler Linux et open source ?
 labLayers:
-  - id: "edge"
-    label: "Edge"
-    eyebrow: "WAN / frontière"
-    title: "Edge & sécurité"
-    text: "Filtrage, terminaison TLS et contrôle des flux avant exposition des services."
-    tech: "OPNsense · BunkerWeb · CrowdSec"
-    icon: "ShieldCheck"
-  - id: "compute"
-    label: "Compute"
-    eyebrow: "Cluster / calcul"
-    title: "Nœuds Proxmox"
-    text: "Les nœuds orchestrent les charges virtuelles, les conteneurs et le stockage distribué."
-    metrics: "compute"
-    icon: "Server"
-  - id: "platform"
-    label: "Platform"
-    eyebrow: "Services / plateforme"
-    title: "Services souverains"
-    text: "Applications, identité, observabilité et workloads Kubernetes exploités en autonomie."
-    metrics: "platform"
-    icon: "Box"
-  - id: "data"
-    label: "Data"
-    eyebrow: "Stockage / résilience"
-    title: "Données & sauvegardes"
-    text: "Stockage distribué et NAS isolé pour concilier disponibilité, capacité et reprise."
-    metrics: "storage"
-    icon: "Network"
-
+  - id: edge
+    label: Edge
+    eyebrow: WAN / frontière
+    title: Edge & sécurité
+    text: Filtrage, terminaison TLS et contrôle des flux avant exposition des services.
+    tech: OPNsense · BunkerWeb · CrowdSec
+    icon: ShieldCheck
+  - id: compute
+    label: Compute
+    eyebrow: Cluster / calcul
+    title: Nœuds Proxmox
+    text: Les nœuds orchestrent les charges virtuelles, les conteneurs et le stockage distribué.
+    metrics: compute
+    icon: Server
+  - id: platform
+    label: Platform
+    eyebrow: Services / plateforme
+    title: Services souverains
+    text: Applications, identité, observabilité et workloads Kubernetes exploités en autonomie.
+    metrics: platform
+    icon: Box
+  - id: data
+    label: Data
+    eyebrow: Stockage / résilience
+    title: Données & sauvegardes
+    text: Stockage distribué et NAS isolé pour concilier disponibilité, capacité et reprise.
+    metrics: storage
+    icon: Network
 journey:
-  careerCommand: "journalctl --career"
-  experienceLabel: "Expérience"
-  educationLabel: "Formation"
-  credentialsCommand: "ls ~/credentials"
-  credentialsTitle: "Certifications récentes"
-  otherCredentialsLabel: "autres credentials"
-
+  careerCommand: journalctl --career
+  experienceLabel: Expérience
+  educationLabel: Formation
+  credentialsCommand: ls ~/credentials
+  credentialsTitle: Certifications récentes
+  otherCredentialsLabel: autres credentials
 contact:
-  discordLabel: "discord"
-  emailLabel: "mail"
-  gpgPath: "gpg.public-key"
-  gpgTitle: "Chiffrer un e-mail à mon intention"
-  gpgDescription: "Téléchargez ma clé publique pour chiffrer votre message et vérifier mes signatures."
-  gpgDownloadLabel: "Télécharger .asc"
-  gpgPendingLabel: "key not published"
-
-# -----------------------------------------------------------------------------
-# CREDLY (synchronisation du profil public pendant le build, avec fallback local)
-# -----------------------------------------------------------------------------
+  discordLabel: discord
+  emailLabel: mail
+  gpgPath: gpg.public-key
+  gpgTitle: Chiffrer un e-mail à mon intention
+  gpgDescription: Téléchargez ma clé publique pour chiffrer votre message et vérifier mes signatures.
+  gpgDownloadLabel: Télécharger .asc
+  gpgPendingLabel: key not published
 credly:
   enabled: true
-  username: "adenyrr"
+  username: adenyrr
   featuredCount: 4
-  # IDs des badges à mettre en avant (l'API Credly ne les expose pas nativement).
-  # Les IDs se trouvent dans l'URL des badges sur credly.com.
   pinnedIds:
-    - "c471f130-a990-4523-bb7e-a26272b0b760"  # KCNA: Kubernetes and Cloud Native Associate
-    - "add7642d-d71d-4acc-93f6-a7c418dfa4c3"  # LFCA: Linux Foundation Certified IT Associate
-    - "c4616749-9f53-4780-a816-51b50b18606b"  # Ethical Hacker
-    - "807dfb6c-29ef-43a7-9352-19fdfffafdb5"  # Network Technician Career Path
-
-# -----------------------------------------------------------------------------
-# PROJETS
-# -----------------------------------------------------------------------------
+    - c471f130-a990-4523-bb7e-a26272b0b760
+    - add7642d-d71d-4acc-93f6-a7c418dfa4c3
+    - c4616749-9f53-4780-a816-51b50b18606b
+    - 807dfb6c-29ef-43a7-9352-19fdfffafdb5
 projects:
-  - id: "alyx"
-    title: "Alyx - Orchestrateur d'agents"
-    description: "Alyx est un orchestrateur d'agents intelligents conçu pour faciliter la création de systèmes complexes et adaptatifs, en intégrant des modèles de langage avancés et des capacités multimodales."
-    tech: ["Mistral", "Agents", "MCP"]
-    icon: "Server"
-    link: "https://github.com/adenyrr/alyx"
-    repo: "https://github.com/adenyrr/alyx"
+  - id: alyx
+    title: Alyx - Orchestrateur d'agents
+    description: Alyx est un orchestrateur d'agents intelligents conçu pour faciliter la création de systèmes complexes et adaptatifs, en intégrant des modèles de langage avancés et des capacités multimodales.
+    tech:
+      - Mistral
+      - Agents
+      - MCP
+    icon: Server
+    link: https://github.com/adenyrr/alyx
+    repo: https://github.com/adenyrr/alyx
     year: 2026
-    image: "/images/alyx.png"
-
-  - id: "infra & docu"
-    title: "Infra OSS & Documentation"
-    description: "Documentation de l'infrastructure, tutoriels et bonnes pratiques (self-hosted)."
-    tech: ["Virtu", "Containers", "Réseau", "Home Assistant"]
-    icon: "Library"
-    link: "https://docu.adenyrr.me"
-    repo: "https://gitlab.com/adenyrr/adenyrr.me"
+    image: /images/alyx.png
+  - id: infra & docu
+    title: Infra OSS & Documentation
+    description: Documentation de l'infrastructure, tutoriels et bonnes pratiques (self-hosted).
+    tech:
+      - Virtu
+      - Containers
+      - Réseau
+      - Home Assistant
+    icon: Library
+    link: https://docu.adenyrr.me
+    repo: https://gitlab.com/adenyrr/adenyrr.me
     year: 2024
-    image: "/images/docu.png"
-
-  - id: "trainCerts"
-    title: "Entrainement aux certifications QCM"
-    description: "Entraînement libre ou examen blanc chronométré, progression stockée localement"
-    tech: ["Virtu", "Containers", "Réseau", "Linux"]
-    icon: "Library"
-    link: "https://train.adenyrr.me"
-    repo: "https://gitlab.com/adenyrr/train"
+    image: /images/docu.png
+  - id: trainCerts
+    title: Entrainement aux certifications QCM
+    description: Entraînement libre ou examen blanc chronométré, progression stockée localement
+    tech:
+      - Virtu
+      - Containers
+      - Réseau
+      - Linux
+    icon: Library
+    link: https://train.adenyrr.me
+    repo: https://gitlab.com/adenyrr/train
     year: 2026
-    image: "/images/train.png"
-
-# -----------------------------------------------------------------------------
-# DIPLÔMES
-# -----------------------------------------------------------------------------
+    image: /images/train.png
 diplomas:
-  - id: "chimie"
-    title: "CQ6 - Technicien Chimiste QC"
-    institution: "IPES @ Ath"
-    period: "2011 - 2013"
-
-  - id: "adminsys"
-    title: "Adminsys - Coordination équipe & infra IT"
-    institution: "A6k - E6k @ Charleroi"
-    period: "2023 - 2026"
-
-# -----------------------------------------------------------------------------
-# CERTIFICATIONS (fallback si Credly indisponible)
-# -----------------------------------------------------------------------------
+  - id: chimie
+    title: CQ6 - Technicien Chimiste QC
+    institution: IPES @ Ath
+    period: 2011 - 2013
+  - id: adminsys
+    title: Adminsys - Coordination équipe & infra IT
+    institution: A6k - E6k @ Charleroi
+    period: 2023 - 2026
 certifications:
-  - id: "c471f130-a990-4523-bb7e-a26272b0b760"
+  - id: c471f130-a990-4523-bb7e-a26272b0b760
     title: "KCNA: Kubernetes and Cloud Native Associate"
-    issuer: "The Linux Foundation"
-    date: "2026-07-24"
-    credly_url: "https://www.credly.com/badges/c471f130-a990-4523-bb7e-a26272b0b760/public_url"
-    badge_image: "https://images.credly.com/images/f28f1d88-428a-47f6-95b5-7da1dd6c1000/KCNA_badge.png"
-
-  - id: "add7642d-d71d-4acc-93f6-a7c418dfa4c3"
+    issuer: The Linux Foundation
+    date: 2026-07-24
+    credly_url: https://www.credly.com/badges/c471f130-a990-4523-bb7e-a26272b0b760/public_url
+    badge_image: https://images.credly.com/images/f28f1d88-428a-47f6-95b5-7da1dd6c1000/KCNA_badge.png
+  - id: add7642d-d71d-4acc-93f6-a7c418dfa4c3
     title: "LFCA: Linux Foundation Certified IT Associate"
-    issuer: "The Linux Foundation"
-    date: "2026-07-10"
-    credly_url: "https://www.credly.com/badges/add7642d-d71d-4acc-93f6-a7c418dfa4c3/public_url"
-    badge_image: "https://images.credly.com/images/a2c14e0a-56cb-4990-809a-23b0850c1f96/Training_Badges_LFCA_for_acclaim.png"
-
-  - id: "c4616749-9f53-4780-a816-51b50b18606b"
-    title: "Ethical Hacker"
-    issuer: "Cisco"
-    date: "2026-02-23"
-    credly_url: "https://www.credly.com/badges/c4616749-9f53-4780-a816-51b50b18606b/public_url"
-    badge_image: "https://images.credly.com/images/242902b5-f527-42ad-865e-977c9e1b5b58/image.png"
-
-  - id: "1678e893-4977-4b8b-b86c-f034297c5c59"
-    title: "AI Skills Fest 2026"
-    issuer: "Microsoft"
-    date: "2026-06-18"
-    credly_url: "https://www.credly.com/badges/1678e893-4977-4b8b-b86c-f034297c5c59/public_url"
-    badge_image: "https://images.credly.com/images/082c8d0c-5232-4597-b6c4-6bebcc4f3046/blob"
-
-  - id: "67004c78-af82-4459-ac46-558b0c035371"
-    title: "Cisco Networking Academy Learn-A-Thon 2026"
-    issuer: "Cisco"
-    date: "2026-04-29"
-    credly_url: "https://www.credly.com/badges/67004c78-af82-4459-ac46-558b0c035371/public_url"
-    badge_image: "https://images.credly.com/images/7bf55491-f0df-488f-84bf-4d51ada45316/blob"
-
-  - id: "807dfb6c-29ef-43a7-9352-19fdfffafdb5"
-    title: "Network Technician Career Path"
-    issuer: "Cisco"
-    date: "2026-02-28"
-    credly_url: "https://www.credly.com/badges/807dfb6c-29ef-43a7-9352-19fdfffafdb5/public_url"
-    badge_image: "https://images.credly.com/images/978f88dc-c247-4093-9d39-6efac3651297/image.png"
-
-  - id: "8fd5497a-84a6-44b6-ad89-54ca8e9165ff"
-    title: "Introduction to Cybersecurity"
-    issuer: "Cisco"
-    date: "2026-02-27"
-    credly_url: "https://www.credly.com/badges/8fd5497a-84a6-44b6-ad89-54ca8e9165ff/public_url"
-    badge_image: "https://images.credly.com/images/af8c6b4e-fc31-47c4-8dcb-eb7a2065dc5b/I2CS__1_.png"
-
-  - id: "bb3e6ff7-52e4-4287-8958-57d780cfa03d"
-    title: "Data Analytics Essentials"
-    issuer: "Cisco"
-    date: "2026-02-23"
-    credly_url: "https://www.credly.com/badges/bb3e6ff7-52e4-4287-8958-57d780cfa03d/public_url"
-    badge_image: "https://images.credly.com/images/1fdfeaeb-e61c-4450-bdfe-a07bd4e715df/image.png"
-
-  - id: "25bb41f3-03c8-41a8-8c92-632973f9b362"
-    title: "Introduction to Data Science"
-    issuer: "Cisco"
-    date: "2026-02-23"
-    credly_url: "https://www.credly.com/badges/25bb41f3-03c8-41a8-8c92-632973f9b362/public_url"
-    badge_image: "https://images.credly.com/images/b38a42e0-dc58-4ce2-b6c0-28d978e8aaad/image.png"
-
-# -----------------------------------------------------------------------------
-# EXPÉRIENCES PROFESSIONNELLES
-# -----------------------------------------------------------------------------
+    issuer: The Linux Foundation
+    date: 2026-07-10
+    credly_url: https://www.credly.com/badges/add7642d-d71d-4acc-93f6-a7c418dfa4c3/public_url
+    badge_image: https://images.credly.com/images/a2c14e0a-56cb-4990-809a-23b0850c1f96/Training_Badges_LFCA_for_acclaim.png
+  - id: c4616749-9f53-4780-a816-51b50b18606b
+    title: Ethical Hacker
+    issuer: Cisco
+    date: 2026-02-23
+    credly_url: https://www.credly.com/badges/c4616749-9f53-4780-a816-51b50b18606b/public_url
+    badge_image: https://images.credly.com/images/242902b5-f527-42ad-865e-977c9e1b5b58/image.png
+  - id: 807dfb6c-29ef-43a7-9352-19fdfffafdb5
+    title: Network Technician Career Path
+    issuer: Cisco
+    date: 2026-02-28
+    credly_url: https://www.credly.com/badges/807dfb6c-29ef-43a7-9352-19fdfffafdb5/public_url
+    badge_image: https://images.credly.com/images/978f88dc-c247-4093-9d39-6efac3651297/image.png
+  - id: be017fab-dcee-4dd8-9d80-5cee13951e66
+    title: Claude Partner Badge - Claude Code
+    issuer: Anthropic
+    date: 2026-08-21
+    credly_url: https://www.credly.com/badges/be017fab-dcee-4dd8-9d80-5cee13951e66/public_url
+    badge_image: https://images.credly.com/images/d8bc1ecf-6369-4bf9-8920-84169b35d918/blob
+  - id: 1678e893-4977-4b8b-b86c-f034297c5c59
+    title: AI Skills Fest 2026
+    issuer: Microsoft
+    date: 2026-06-18
+    credly_url: https://www.credly.com/badges/1678e893-4977-4b8b-b86c-f034297c5c59/public_url
+    badge_image: https://images.credly.com/images/082c8d0c-5232-4597-b6c4-6bebcc4f3046/blob
+  - id: 67004c78-af82-4459-ac46-558b0c035371
+    title: Cisco Networking Academy Learn-A-Thon 2026
+    issuer: Cisco
+    date: 2026-04-29
+    credly_url: https://www.credly.com/badges/67004c78-af82-4459-ac46-558b0c035371/public_url
+    badge_image: https://images.credly.com/images/7bf55491-f0df-488f-84bf-4d51ada45316/blob
+  - id: 8fd5497a-84a6-44b6-ad89-54ca8e9165ff
+    title: Introduction to Cybersecurity
+    issuer: Cisco
+    date: 2026-02-27
+    credly_url: https://www.credly.com/badges/8fd5497a-84a6-44b6-ad89-54ca8e9165ff/public_url
+    badge_image: https://images.credly.com/images/af8c6b4e-fc31-47c4-8dcb-eb7a2065dc5b/I2CS__1_.png
+  - id: bb3e6ff7-52e4-4287-8958-57d780cfa03d
+    title: Data Analytics Essentials
+    issuer: Cisco
+    date: 2026-02-23
+    credly_url: https://www.credly.com/badges/bb3e6ff7-52e4-4287-8958-57d780cfa03d/public_url
+    badge_image: https://images.credly.com/images/1fdfeaeb-e61c-4450-bdfe-a07bd4e715df/image.png
+  - id: 25bb41f3-03c8-41a8-8c92-632973f9b362
+    title: Introduction to Data Science
+    issuer: Cisco
+    date: 2026-02-23
+    credly_url: https://www.credly.com/badges/25bb41f3-03c8-41a8-8c92-632973f9b362/public_url
+    badge_image: https://images.credly.com/images/b38a42e0-dc58-4ce2-b6c0-28d978e8aaad/image.png
+  - id: 24e17f59-1ccd-46d1-8f8d-7ab8b1a7871c
+    title: Introduction to Modern AI
+    issuer: Cisco
+    date: 2026-02-23
+    credly_url: https://www.credly.com/badges/24e17f59-1ccd-46d1-8f8d-7ab8b1a7871c/public_url
+    badge_image: https://images.credly.com/images/e2d12302-10f9-40d4-8ff1-066a7008b61d/blob
+  - id: 67779045-f549-415b-b281-3288e4883f73
+    title: "LFC108: Cybersecurity Essentials"
+    issuer: The Linux Foundation
+    date: 2026-02-01
+    credly_url: https://www.credly.com/badges/67779045-f549-415b-b281-3288e4883f73/public_url
+    badge_image: https://images.credly.com/images/e79f9317-b3f7-4b57-a859-f24d5f25fe36/blob
+  - id: 9bfdc52c-0206-4286-965a-3e31380d97cb
+    title: "LFS101: Introduction to Linux"
+    issuer: The Linux Foundation
+    date: 2026-02-01
+    credly_url: https://www.credly.com/badges/9bfdc52c-0206-4286-965a-3e31380d97cb/public_url
+    badge_image: https://images.credly.com/images/97a95d07-04c3-4afb-952a-6bcf46ddb87e/blob
+  - id: dd6844a0-5979-42dd-b5e8-796d0a81f125
+    title: "LFS151: Introduction to Cloud Infrastructure Technologies"
+    issuer: The Linux Foundation
+    date: 2026-02-01
+    credly_url: https://www.credly.com/badges/dd6844a0-5979-42dd-b5e8-796d0a81f125/public_url
+    badge_image: https://images.credly.com/images/c52b0e6e-e171-41c2-a459-b8e618ea1e72/blob
+  - id: 711b64b0-eec0-4beb-aef2-2120bc1c738d
+    title: Linux Essentials
+    issuer: Cisco
+    date: 2025-04-18
+    credly_url: https://www.credly.com/badges/711b64b0-eec0-4beb-aef2-2120bc1c738d/public_url
+    badge_image: https://images.credly.com/images/e8fe3d67-2967-43d0-bc4a-7a268a37f47b/image.png
+  - id: 77fa8888-b83e-41b9-8d9f-8e43b035db07
+    title: IT Essentials
+    issuer: Cisco
+    date: 2025-02-11
+    credly_url: https://www.credly.com/badges/77fa8888-b83e-41b9-8d9f-8e43b035db07/public_url
+    badge_image: https://images.credly.com/images/04e8034c-81f5-4f7f-ab23-e8b428c31ce9/ITE.png
 jobs:
-  - id: "ferme"
-    title: "Maraichage"
-    company: "Thym & Romarin"
-    location: "Rocroi"
-    period: "2018 - 2021"
+  - id: ferme
+    title: Maraichage
+    company: Thym & Romarin
+    location: Rocroi
+    period: 2018 - 2021
+
