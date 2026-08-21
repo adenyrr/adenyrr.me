@@ -44,28 +44,9 @@ deploy_cloudflare_pages:
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
 
-renovate:
-  stage: maintenance
-  image:
-    name: ghcr.io/renovatebot/renovate:latest
-    entrypoint: [""]
-  variables:
-    RENOVATE_PLATFORM: gitlab
-    RENOVATE_REPOSITORIES: "$CI_PROJECT_PATH"
-    RENOVATE_GITLAB_TOKEN: "$RENOVATE_TOKEN"
-    RENOVATE_REQUIRE_CONFIG: "true"
-  script:
-    - renovate
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-      when: manual
-
 credly_sync:
   stage: maintenance
   image: node:22-alpine
-  variables:
-    CREDLY_PUSH_TOKEN: "$RENOVATE_TOKEN"
   before_script:
     - apk add --no-cache git
     - 'test -n "$CREDLY_PUSH_TOKEN" || (echo "Missing CI/CD variable: CREDLY_PUSH_TOKEN"; exit 1)'
