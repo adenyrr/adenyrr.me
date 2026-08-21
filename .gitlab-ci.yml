@@ -8,11 +8,6 @@ stages:
   - deploy
   - maintenance
 
-schedules:
-  - cron: "0 3 * * 0"
-    branch: $CI_DEFAULT_BRANCH
-    pipeline: default
-
 build:
   stage: build
   cache:
