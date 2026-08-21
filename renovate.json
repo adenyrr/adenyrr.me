@@ -3,10 +3,6 @@
   "extends": [
     "config:recommended"
   ],
-  "schedule": [
-    "0 3 * * 0"
-  ],
-  "timezone": "Europe/Brussels",
   "prHourlyLimit": 2,
   "labels": [
     "dependencies",

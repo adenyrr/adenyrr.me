@@ -64,6 +64,8 @@ renovate:
 credly_sync:
   stage: maintenance
   image: node:22-alpine
+  variables:
+    CREDLY_PUSH_TOKEN: "$RENOVATE_TOKEN"
   before_script:
     - apk add --no-cache git
     - 'test -n "$CREDLY_PUSH_TOKEN" || (echo "Missing CI/CD variable: CREDLY_PUSH_TOKEN"; exit 1)'
