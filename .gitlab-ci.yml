@@ -6,6 +6,12 @@ variables:
 stages:
   - build
   - deploy
+  - maintenance
+
+schedules:
+  - cron: "0 3 * * 0"
+    branch: $CI_DEFAULT_BRANCH
+    pipeline: default
 
 build:
   stage: build
@@ -42,3 +48,38 @@ deploy_cloudflare_pages:
       artifacts: true
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+renovate:
+  stage: maintenance
+  image:
+    name: ghcr.io/renovatebot/renovate:latest
+    entrypoint: [""]
+  variables:
+    RENOVATE_PLATFORM: gitlab
+    RENOVATE_REPOSITORIES: "$CI_PROJECT_PATH"
+    RENOVATE_GITLAB_TOKEN: "$RENOVATE_TOKEN"
+    RENOVATE_REQUIRE_CONFIG: "true"
+  script:
+    - renovate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: manual
+
+credly_sync:
+  stage: maintenance
+  image: node:22-alpine
+  before_script:
+    - npm ci --prefer-offline --legacy-peer-deps
+  script:
+    - npm run sync:credly
+    - |
+      if ! git diff --quiet -- config/home.yaml; then
+        git config user.name "GitLab CI"
+        git config user.email "gitlab-ci@localhost"
+        git add config/home.yaml
+        git commit -m "chore: sync Credly certifications"
+        git push "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "HEAD:${CI_COMMIT_REF_NAME}"
+      fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: manual

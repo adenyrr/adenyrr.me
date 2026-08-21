@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "sync:credly": "node scripts/sync-credly.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^5.0.0",
