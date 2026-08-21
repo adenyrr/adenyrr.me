@@ -4,9 +4,9 @@ variables:
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
 
 stages:
+  - maintenance
   - build
   - deploy
-  - maintenance
 
 build:
   stage: build
@@ -26,7 +26,7 @@ build:
       - dist/
     expire_in: 1 week
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
 
 deploy_cloudflare_pages:
   stage: deploy
@@ -42,7 +42,7 @@ deploy_cloudflare_pages:
     - job: build
       artifacts: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
 
 renovate:
   stage: maintenance
@@ -58,13 +58,15 @@ renovate:
     - renovate
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - when: manual
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
 
 credly_sync:
   stage: maintenance
   image: node:22-alpine
   before_script:
     - apk add --no-cache git
+    - 'test -n "$CREDLY_PUSH_TOKEN" || (echo "Missing CI/CD variable: CREDLY_PUSH_TOKEN"; exit 1)'
     - npm ci --prefer-offline --legacy-peer-deps
   script:
     - npm run sync:credly
@@ -74,8 +76,11 @@ credly_sync:
         git config user.email "gitlab-ci@localhost"
         git add config/home.yaml
         git commit -m "chore: sync Credly certifications"
-        git push "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "HEAD:${CI_COMMIT_REF_NAME}"
+        git push "https://oauth2:${CREDLY_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "HEAD:${CI_DEFAULT_BRANCH}"
+      else
+        echo "[Credly] No certification change; build and deploy skipped."
       fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - when: manual
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
