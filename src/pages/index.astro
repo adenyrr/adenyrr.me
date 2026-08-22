@@ -5,7 +5,7 @@ import { getHomeConfig, getInfraConfig, getSiteConfig } from '../utils/config';
 import { fetchCredlyBadges } from '../utils/credly';
 import {
   ArrowDownRight, ArrowUpRight, BookOpen, Box, Braces, Cloud, Download,
-  Github, KeyRound, Mail, MessageCircle, Network, Server, ShieldCheck,
+  GitBranch, KeyRound, Mail, MessageCircle, Network, Server, ShieldCheck,
 } from '@lucide/astro';
 
 const portfolio = getHomeConfig();
@@ -183,7 +183,7 @@ const careerEntries = [
                   <ul class="tech-list" aria-label="Technologies">{(project.tech || []).map((tech: string) => <li>{tech}</li>)}</ul>
                   <div class="project-actions">
                     {project.link && <a href={project.link} target="_blank" rel="noopener noreferrer">Découvrir <ArrowUpRight size={15} /></a>}
-                    {project.repo && <a href={project.repo} target="_blank" rel="noopener noreferrer" aria-label={`Code source de ${project.title}`}><Github size={16} /> Code</a>}
+                    {project.repo && <a href={project.repo} target="_blank" rel="noopener noreferrer" aria-label={`Code source de ${project.title}`}><GitBranch size={16} /> Code</a>}
                   </div>
                 </div>
               </article>

@@ -18,6 +18,7 @@ build:
       - .npm/
     policy: pull-push
   before_script:
+    - apk add --no-cache git
     - npm ci --prefer-offline --legacy-peer-deps
   script:
     - npm run build
