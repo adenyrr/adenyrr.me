@@ -5,6 +5,8 @@ pubDate: 'Jan 10 2026'
 tags: ['blog', 'infra', 'devops']
 ---
 
+DRAFT
+
 Il était une fois un adminsys qui avait une furieuse envie de partager ses connaissances, notamment sur docker et home assistant. Après plusieurs semaines de recherches, il déploya un mk-docs, puis [mk-docs-materials](https://squidfunk.github.io/mkdocs-material/) sur github. Premier CI/CD, premier déploiement ... Une expérience précieuse, en plus du partage des acquis. La première version se nommait *become.sh*.
 
 Puis il a eu envie de se faire un portfolio. Pas qu'il ait des trucs à montrer en particulier, juste une envie d'avoir un truc un peu plus stylé que des CV à la pelle. On est en 2026, plutôt spécialistes en informatique alors pourquoi continuer le format papier que, de toute façon, personne ne lit ?
