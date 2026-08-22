@@ -1,12 +1,12 @@
 ---
 import { ClientRouter } from 'astro:transitions';
 import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import ParticleBackground from '../components/ParticleBackground.astro';
-import Animations from '../components/Animations.astro';
+import Header from '@adenyrr/astro-ui/Header.astro';
+import Footer from '@adenyrr/astro-ui/Footer.astro';
+import AmbientBackground from '@adenyrr/astro-ui/AmbientBackground.astro';
+import Animations from '@adenyrr/astro-ui/Animations.astro';
 import { getSiteConfig } from '../utils/config';
-import '../styles/global.css';
+import '@adenyrr/astro-ui/styles.css';
 
 interface Props {
   title?: string;
@@ -29,12 +29,12 @@ const config = getSiteConfig();
     <div id="scroll-progress" aria-hidden="true">
       <div class="scroll-progress-bar"></div>
     </div>
-    <ParticleBackground transition:persist="particle-bg" />
-    <Header />
+    <AmbientBackground enabled={config.appearance.ambientBackground} transition:persist="particle-bg" />
+    <Header config={config} currentPath={Astro.url.pathname} />
     <main id="main" class="page-content" style="position: relative; z-index: 1;">
       <slot />
     </main>
-    <Footer />
+    <Footer config={config} />
     <Animations />
 
     <style>

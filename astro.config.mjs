@@ -1,12 +1,12 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
+import { unified } from '@astrojs/markdown-remark';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import expressiveCode from 'astro-expressive-code';
 import robotsTxt from 'astro-robots-txt';
-import compress from '@playform/compress';
 import fs from 'node:fs';
 import YAML from 'yaml';
 import { remarkReadingTime } from './src/utils/reading-time.ts';
@@ -33,10 +33,9 @@ export default defineConfig({
       sitemap: `${siteConfig.site.url}/sitemap-index.xml`,
     })] : []),
     react(),
-    compress(),
   ],
   markdown: {
-    remarkPlugins: [remarkReadingTime],
+    processor: unified({ remarkPlugins: [remarkReadingTime] }),
   },
   image: {
     // Autorise l'optimisation au build des badges Credly. Leur CDN ignore
