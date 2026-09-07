@@ -38,8 +38,10 @@ const config = getSiteConfig();
     <Animations />
 
     <script>
+      // Listen during capture so Astro's ClientRouter cannot turn this same-page
+      // anchor into a navigation before we start the scroll.
       document.addEventListener('click', (event) => {
-        if (event.defaultPrevented || !(event.target instanceof Element)) return;
+        if (!(event.target instanceof Element)) return;
 
         const link = event.target.closest<HTMLAnchorElement>('a.back-top');
         if (!link) return;
@@ -49,7 +51,7 @@ const config = getSiteConfig();
           top: 0,
           behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
         });
-      });
+      }, { capture: true });
     </script>
 
     <style>
